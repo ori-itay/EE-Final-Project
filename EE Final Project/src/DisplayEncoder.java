@@ -13,16 +13,17 @@ enum ROW {
 
 public class DisplayEncoder {
 	
-	final static int MODULES_IN_ENCODED_IMAGE_DIM = 700;
+	final static int MODULES_IN_ENCODED_IMAGE_DIM = 500;
 	final static int MODULES_IN_MARGIN = 2;
-	final static int MODULES_IN_POS_DET = 7; //maybe change to 8 due to white margins from inside of position detector and draw them in position detector creation
+	final static int MODULES_IN_POS_DET_DIM = 7; //maybe change to 8 due to white margins from inside of position detector and draw them in position detector creation
 	final static int PIXELS_IN_MODULE = 3;
+	final static int NUM_OF_POSITION_DETECTORS = 3;
 	//final static int BLACK = 0xFF000000;
 	//final static int WHITE = 0x0000000;
 	final static int DATA_LEN_ENCODING_LENGTH = 20;
 	
 	public static void main(String... args) throws Exception {
-		String testData = "BLABLAa";
+		String testData = "BLABLAabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbccccccccccccccdddd";
 		encodeBytes(testData);
 	}
 	
@@ -39,8 +40,10 @@ public class DisplayEncoder {
 		//create position detector
 		createPositionDetectors(image, g);
 		//encode data length - 20 bits - masked
-		encodeDataLen(image, g, binaryData.length());
+		Position pos = new Position();
+		encodeDataLen(image, g, binaryData.length(), pos);
 		//encode data - masked
+		encodeData(image, g, binaryData, pos);
 		
 		//print image for testing
 		File newPathQr = new File("C:\\Users\\user\\Downloads\\new qrcode.png");
@@ -50,51 +53,88 @@ public class DisplayEncoder {
 	}
 
 
-	private static void encodeDataLen(BufferedImage image, Graphics2D g, int length) throws Exception {
+	private static void encodeData(BufferedImage image, Graphics2D g, String binaryData, Position pos) {
+		
+		final int BITS_IN_BYTE = 8;
+		int mask, bitInd;
+		boolean currBitIs1;
+		
+		byte[] stringAsBytes = binaryData.getBytes();
+		for (byte currByte:stringAsBytes){
+			mask = 1;
+			for(bitInd = 0; bitInd < BITS_IN_BYTE; bitInd++) {
+				currBitIs1 = (currByte&mask) == 1;
+			    encodeBit(image, g, pos, currBitIs1);
+			    checkForColumnEnd(pos);
+			    mask = mask<<1;
+			}
+		}	
+	}
+
+	private static void encodeDataLen(BufferedImage image, Graphics2D g, int length, Position pos) throws Exception {
 		//LSB is encoded as the first (leftmost) bit
 		int i;
 		boolean currBitIs1;
-		Position p = new Position();
-		p.row = MODULES_IN_MARGIN * PIXELS_IN_MODULE;
-		p.col = (MODULES_IN_MARGIN + MODULES_IN_POS_DET) * PIXELS_IN_MODULE;
-		p.colModul = MODULES_IN_MARGIN + MODULES_IN_POS_DET;
+		
+		pos.row = MODULES_IN_MARGIN * PIXELS_IN_MODULE;
+		pos.col = (MODULES_IN_MARGIN + MODULES_IN_POS_DET_DIM) * PIXELS_IN_MODULE;
+		pos.colModul = MODULES_IN_MARGIN + MODULES_IN_POS_DET_DIM;
 		final int LSB_MASK = 1;	
 		
-		if(length>0xFFFFF)
+		if(length>MODULES_IN_ENCODED_IMAGE_DIM*MODULES_IN_ENCODED_IMAGE_DIM - 4*MODULES_IN_MARGIN*MODULES_IN_ENCODED_IMAGE_DIM
+				-MODULES_IN_POS_DET_DIM*MODULES_IN_POS_DET_DIM*NUM_OF_POSITION_DETECTORS)
 			throw new Exception("Data is too large to be encoded!");
 		
 		for(i = 0; i < DATA_LEN_ENCODING_LENGTH; i++) {
 			currBitIs1 = (LSB_MASK&length) == 1;
-			encodeBit(image, g, p, currBitIs1);			
+			encodeBit(image, g, pos, currBitIs1);			
 			//maybe remove the following because this will probably wont be the situation
-			checkForColumnEnd(p);
+			checkForColumnEnd(pos);
 			length = length>>1;
 		}
-		
 	}
 
 
-	private static void encodeBit(BufferedImage image, Graphics2D g, Position p, boolean currBitIs1) {
+	private static void encodeBit(BufferedImage image, Graphics2D g, Position pos, boolean currBitIs1) {
 
 		boolean toggleBit;
 		
-		toggleBit = p.colModul%3 == 0;
-		p.colModul++;
+		toggleBit = pos.colModul%3 == 0;	
 		if(currBitIs1 ^ toggleBit)
-			g.fillRect(p.col, p.row, PIXELS_IN_MODULE, PIXELS_IN_MODULE);
-		p.col+= PIXELS_IN_MODULE;
+			g.fillRect(pos.col, pos.row, PIXELS_IN_MODULE, PIXELS_IN_MODULE);
+		pos.colModul++;
+		pos.col+= PIXELS_IN_MODULE;
 	}
 
-	private static void checkForColumnEnd(Position p) {
-		if(p.col == (MODULES_IN_ENCODED_IMAGE_DIM - MODULES_IN_MARGIN - MODULES_IN_POS_DET) * PIXELS_IN_MODULE &&
-				(p.row < (MODULES_IN_MARGIN + MODULES_IN_POS_DET) * PIXELS_IN_MODULE || 
-						p.row > (MODULES_IN_ENCODED_IMAGE_DIM - MODULES_IN_MARGIN - MODULES_IN_POS_DET) * PIXELS_IN_MODULE) ) {
-			p.col = (MODULES_IN_MARGIN + MODULES_IN_POS_DET) * PIXELS_IN_MODULE;
-			p.row+= PIXELS_IN_MODULE;
+	private static void checkForColumnEnd(Position pos) {
+		
+		if(pos.colModul == (MODULES_IN_ENCODED_IMAGE_DIM - MODULES_IN_MARGIN) ) {
+			//end of column in rows of position detector (except for the last top one)	
+			if(pos.rowModul < (MODULES_IN_MARGIN + MODULES_IN_POS_DET_DIM) ||
+					pos.row > (MODULES_IN_ENCODED_IMAGE_DIM - MODULES_IN_MARGIN - MODULES_IN_POS_DET_DIM) ) {	
+				pos.colModul = (MODULES_IN_MARGIN + MODULES_IN_POS_DET_DIM);
+				pos.row+= PIXELS_IN_MODULE;
+				pos.rowModul++;
+			}
+			//end of column when in last row of position detector	
+			else if (pos.rowModul == (MODULES_IN_MARGIN + MODULES_IN_POS_DET_DIM) ) {
+				pos.colModul = 0;
+				pos.row+= PIXELS_IN_MODULE;
+				pos.rowModul++;
+			}
+			pos.col = pos.colModul * PIXELS_IN_MODULE;
 		}
-		else if(p.col == (MODULES_IN_ENCODED_IMAGE_DIM - MODULES_IN_MARGIN) * PIXELS_IN_MODULE) {
-			p.col = 0;
-			p.row+= PIXELS_IN_MODULE;
+		//end of column in rows without position detector	
+		else if(pos.colModul == (MODULES_IN_ENCODED_IMAGE_DIM - MODULES_IN_MARGIN) ) {
+			//next row is with position detector
+			if(pos.rowModul == (MODULES_IN_ENCODED_IMAGE_DIM - MODULES_IN_MARGIN - MODULES_IN_POS_DET_DIM)) 
+				pos.colModul = MODULES_IN_MARGIN + MODULES_IN_POS_DET_DIM;
+			//next row is without position detector
+			else 
+				pos.colModul = MODULES_IN_MARGIN;
+			pos.row+= PIXELS_IN_MODULE;
+			pos.rowModul++;
+			pos.col = pos.colModul * PIXELS_IN_MODULE;
 		}
 	}
 
@@ -105,13 +145,13 @@ public class DisplayEncoder {
 		int rowTopLeft = MODULES_IN_MARGIN * PIXELS_IN_MODULE;
 		int colTopLeft = MODULES_IN_MARGIN * PIXELS_IN_MODULE;
 		int rowTopRight = MODULES_IN_MARGIN * PIXELS_IN_MODULE;
-		int colTopRight = (MODULES_IN_ENCODED_IMAGE_DIM-MODULES_IN_MARGIN-MODULES_IN_POS_DET) * PIXELS_IN_MODULE;
-		int rowBottomLeft = (MODULES_IN_ENCODED_IMAGE_DIM-MODULES_IN_MARGIN-MODULES_IN_POS_DET) * PIXELS_IN_MODULE;
+		int colTopRight = (MODULES_IN_ENCODED_IMAGE_DIM-MODULES_IN_MARGIN-MODULES_IN_POS_DET_DIM) * PIXELS_IN_MODULE;
+		int rowBottomLeft = (MODULES_IN_ENCODED_IMAGE_DIM-MODULES_IN_MARGIN-MODULES_IN_POS_DET_DIM) * PIXELS_IN_MODULE;
 		int colBottomLeft = MODULES_IN_MARGIN * PIXELS_IN_MODULE;
 		int rowModuleOffset, colModuleOffset;
 		
-		for(rowModuleOffset = 0; rowModuleOffset< MODULES_IN_POS_DET; rowModuleOffset++) {
-			for(colModuleOffset = 0; colModuleOffset< MODULES_IN_POS_DET; colModuleOffset++) {
+		for(rowModuleOffset = 0; rowModuleOffset< MODULES_IN_POS_DET_DIM; rowModuleOffset++) {
+			for(colModuleOffset = 0; colModuleOffset< MODULES_IN_POS_DET_DIM; colModuleOffset++) {
 				
 				if( !((rowModuleOffset == MID_LAYER_OFFSET_1 || rowModuleOffset == MID_LAYER_OFFSET_2) &&
 						(colModuleOffset >= MID_LAYER_OFFSET_1 && colModuleOffset <= MID_LAYER_OFFSET_2)) &&
@@ -126,13 +166,12 @@ public class DisplayEncoder {
 				}
 			}
 		}		
-	}	
-	
+	}		
 }
 
 class Position{
 	int row;
 	int col;
-	//int rowModul;
+	int rowModul;
 	int colModul;
 }
