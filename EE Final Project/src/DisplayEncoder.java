@@ -17,9 +17,8 @@ public class DisplayEncoder {
 	
 	public static void main(String... args) throws Exception {
 		//String testData = "BLABLAabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbccccccccccccccdddd";
-		String testData = "BLABLA";
+		String testData = "blablaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 		BufferedImage encodedImage = encodeBytes(testData);
-		
 		//print image for testing
 		File newPathQr = new File("C:\\Users\\user\\Downloads\\new qrcode.png");
 		ImageIO.write(encodedImage, "png", newPathQr);

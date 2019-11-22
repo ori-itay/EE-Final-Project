@@ -16,15 +16,15 @@ public class QrImage {
 	
 	static void checkForColumnEnd(Position pos) {
 		
-		if(pos.colModule == (QrImage.MODULES_IN_ENCODED_IMAGE_DIM - QrImage.MODULES_IN_MARGIN) ) {
+		if(pos.colModule == (QrImage.MODULES_IN_ENCODED_IMAGE_DIM - QrImage.MODULES_IN_MARGIN - QrImage.MODULES_IN_POS_DET_DIM) ) {
 			//end of column in rows of position detector (except for the last top one)	
 			if(pos.rowModule < (QrImage.MODULES_IN_MARGIN + QrImage.MODULES_IN_POS_DET_DIM) ||
-					pos.rowModule > (QrImage.MODULES_IN_ENCODED_IMAGE_DIM - QrImage.MODULES_IN_MARGIN - QrImage.MODULES_IN_POS_DET_DIM) ) {	
+					pos.rowModule >= (QrImage.MODULES_IN_ENCODED_IMAGE_DIM - QrImage.MODULES_IN_MARGIN - QrImage.MODULES_IN_POS_DET_DIM) ) {	
 				pos.colModule = (QrImage.MODULES_IN_MARGIN + QrImage.MODULES_IN_POS_DET_DIM);
 				pos.rowModule++;
 			}
-			//end of column when in last row of position detector	
-			else if (pos.rowModule == (QrImage.MODULES_IN_MARGIN + QrImage.MODULES_IN_POS_DET_DIM) ) {
+			//end of column when in last row of top position detector	
+			else if (pos.rowModule + 1 == (QrImage.MODULES_IN_MARGIN + QrImage.MODULES_IN_POS_DET_DIM) ) {
 				pos.colModule = QrImage.MODULES_IN_MARGIN;
 				pos.rowModule++;
 			}
@@ -32,7 +32,7 @@ public class QrImage {
 		//end of column in rows without position detector	
 		else if(pos.colModule == (QrImage.MODULES_IN_ENCODED_IMAGE_DIM - QrImage.MODULES_IN_MARGIN) ) {
 			//next row is with position detector
-			if(pos.rowModule == (QrImage.MODULES_IN_ENCODED_IMAGE_DIM - QrImage.MODULES_IN_MARGIN - QrImage.MODULES_IN_POS_DET_DIM)) 
+			if(pos.rowModule + 1 == (QrImage.MODULES_IN_ENCODED_IMAGE_DIM - QrImage.MODULES_IN_MARGIN - QrImage.MODULES_IN_POS_DET_DIM)) 
 				pos.colModule = QrImage.MODULES_IN_MARGIN + QrImage.MODULES_IN_POS_DET_DIM;
 			//next row is without position detector
 			else 
