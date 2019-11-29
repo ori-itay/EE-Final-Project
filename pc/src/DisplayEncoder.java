@@ -17,7 +17,7 @@ public class DisplayEncoder {
 	
 	public static void main(String... args) throws Exception {
 		//String testData = "BLABLAabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbccccccccccccccdddd";
-		String testData = "blablaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+		String testData = "blabla";
 		BufferedImage encodedImage = encodeBytes(testData);
 		//print image for testing
 		File newPathQr = new File("C:\\Users\\user\\Downloads\\new qrcode.png");
@@ -27,18 +27,18 @@ public class DisplayEncoder {
 	public static BufferedImage encodeBytes(String binaryData) throws Exception {
 		
 		//allocate space including white margins
-		BufferedImage image = new BufferedImage(QrImage.MODULES_IN_ENCODED_IMAGE_DIM*PIXELS_IN_MODULE,
-				QrImage.MODULES_IN_ENCODED_IMAGE_DIM*PIXELS_IN_MODULE, BufferedImage.TYPE_INT_ARGB);		 
+		BufferedImage image = new BufferedImage(RotatedImageSampler.MODULES_IN_ENCODED_IMAGE_DIM*PIXELS_IN_MODULE,
+				RotatedImageSampler.MODULES_IN_ENCODED_IMAGE_DIM*PIXELS_IN_MODULE, BufferedImage.TYPE_INT_ARGB);		 
 		// Clear the background with white
 		Graphics2D g = (Graphics2D) image.getGraphics();
 		g.setBackground(Color.WHITE);
-		g.clearRect(0, 0, QrImage.MODULES_IN_ENCODED_IMAGE_DIM*PIXELS_IN_MODULE, QrImage.MODULES_IN_ENCODED_IMAGE_DIM*PIXELS_IN_MODULE);
+		g.clearRect(0, 0, RotatedImageSampler.MODULES_IN_ENCODED_IMAGE_DIM*PIXELS_IN_MODULE, RotatedImageSampler.MODULES_IN_ENCODED_IMAGE_DIM*PIXELS_IN_MODULE);
 		g.setColor(Color.BLACK);
 		//create position detector
 		createPositionDetectors(image, g);
 		//encode data length - 20 bits - masked
 		Position pos = new Position();
-		encodeDataLen(image, g, binaryData.length() * QrImage.BITS_IN_BYTE, pos);
+		encodeDataLen(image, g, binaryData.length() * RotatedImageSampler.BITS_IN_BYTE, pos);
 		//encode data - masked
 		encodeData(image, g, binaryData, pos);
 		
@@ -55,10 +55,10 @@ public class DisplayEncoder {
 		byte[] stringAsBytes = binaryData.getBytes();
 		for (int i = 0; i<stringAsBytes.length; i++){
 			mask = 1;
-			for(bitInd = 0; bitInd < QrImage.BITS_IN_BYTE; bitInd++) {
+			for(bitInd = 0; bitInd < RotatedImageSampler.BITS_IN_BYTE; bitInd++) {
 				currBitIs1 = (stringAsBytes[i]&mask) != 0;
 			    encodeBit(image, g, pos, currBitIs1);
-			    QrImage.checkForColumnEnd(pos);
+			    RotatedImageSampler.checkForColumnEnd(pos);
 			    mask = mask<<1;
 			}
 		}	
@@ -69,20 +69,22 @@ public class DisplayEncoder {
 		int i;
 		boolean currBitIs1;
 		
-		pos.rowModule = QrImage.MODULES_IN_MARGIN;		
-		pos.colModule = QrImage.MODULES_IN_MARGIN + QrImage.MODULES_IN_POS_DET_DIM;
+		pos.rowModule = RotatedImageSampler.MODULES_IN_MARGIN;		
+		pos.colModule = RotatedImageSampler.MODULES_IN_MARGIN + RotatedImageSampler.MODULES_IN_POS_DET_DIM;
 		final int LSB_MASK = 1;	
 		
-		if(length>QrImage.MODULES_IN_ENCODED_IMAGE_DIM*QrImage.MODULES_IN_ENCODED_IMAGE_DIM - 
-				4*(QrImage.MODULES_IN_MARGIN*QrImage.MODULES_IN_ENCODED_IMAGE_DIM + QrImage.MODULES_IN_MARGIN*QrImage.MODULES_IN_MARGIN)
-				-QrImage.MODULES_IN_POS_DET_DIM*QrImage.MODULES_IN_POS_DET_DIM*QrImage.NUM_OF_POSITION_DETECTORS)
+		if(length>RotatedImageSampler.MODULES_IN_ENCODED_IMAGE_DIM*RotatedImageSampler.MODULES_IN_ENCODED_IMAGE_DIM - 
+				4*(RotatedImageSampler.MODULES_IN_MARGIN*RotatedImageSampler.MODULES_IN_ENCODED_IMAGE_DIM +
+						RotatedImageSampler.MODULES_IN_MARGIN*RotatedImageSampler.MODULES_IN_MARGIN)
+				-RotatedImageSampler.MODULES_IN_POS_DET_DIM*RotatedImageSampler.MODULES_IN_POS_DET_DIM*
+				RotatedImageSampler.NUM_OF_POSITION_DETECTORS)
 			throw new Exception("Data is too large to be encoded!");
 		
-		for(i = 0; i < QrImage.DATA_LEN_ENCODING_LENGTH; i++) {
+		for(i = 0; i < RotatedImageSampler.DATA_LEN_ENCODING_LENGTH; i++) {
 			currBitIs1 = (LSB_MASK&length) == 1;
 			encodeBit(image, g, pos, currBitIs1);			
 			//maybe remove the following because this will probably wont be the situation
-			QrImage.checkForColumnEnd(pos);
+			RotatedImageSampler.checkForColumnEnd(pos);
 			length = length>>1;
 		}
 	}
@@ -104,16 +106,18 @@ public class DisplayEncoder {
 		
 		final int MID_LAYER_OFFSET_1 = 1; final int MID_LAYER_OFFSET_2 = 5;
 		
-		int rowTopLeft = QrImage.MODULES_IN_MARGIN * PIXELS_IN_MODULE;
-		int colTopLeft = QrImage.MODULES_IN_MARGIN * PIXELS_IN_MODULE;
-		int rowTopRight = QrImage.MODULES_IN_MARGIN * PIXELS_IN_MODULE;
-		int colTopRight = (QrImage.MODULES_IN_ENCODED_IMAGE_DIM-QrImage.MODULES_IN_MARGIN-QrImage.MODULES_IN_POS_DET_DIM) * PIXELS_IN_MODULE;
-		int rowBottomLeft = (QrImage.MODULES_IN_ENCODED_IMAGE_DIM-QrImage.MODULES_IN_MARGIN-QrImage.MODULES_IN_POS_DET_DIM) * PIXELS_IN_MODULE;
-		int colBottomLeft = QrImage.MODULES_IN_MARGIN * PIXELS_IN_MODULE;
+		int rowTopLeft = RotatedImageSampler.MODULES_IN_MARGIN * PIXELS_IN_MODULE;
+		int colTopLeft = RotatedImageSampler.MODULES_IN_MARGIN * PIXELS_IN_MODULE;
+		int rowTopRight = RotatedImageSampler.MODULES_IN_MARGIN * PIXELS_IN_MODULE;
+		int colTopRight = (RotatedImageSampler.MODULES_IN_ENCODED_IMAGE_DIM-
+				RotatedImageSampler.MODULES_IN_MARGIN-RotatedImageSampler.MODULES_IN_POS_DET_DIM) * PIXELS_IN_MODULE;
+		int rowBottomLeft = (RotatedImageSampler.MODULES_IN_ENCODED_IMAGE_DIM-
+				RotatedImageSampler.MODULES_IN_MARGIN-RotatedImageSampler.MODULES_IN_POS_DET_DIM) * PIXELS_IN_MODULE;
+		int colBottomLeft = RotatedImageSampler.MODULES_IN_MARGIN * PIXELS_IN_MODULE;
 		int rowModuleOffset, colModuleOffset;
 		
-		for(rowModuleOffset = 0; rowModuleOffset< QrImage.MODULES_IN_POS_DET_DIM; rowModuleOffset++) {
-			for(colModuleOffset = 0; colModuleOffset< QrImage.MODULES_IN_POS_DET_DIM; colModuleOffset++) {
+		for(rowModuleOffset = 0; rowModuleOffset< RotatedImageSampler.MODULES_IN_POS_DET_DIM; rowModuleOffset++) {
+			for(colModuleOffset = 0; colModuleOffset< RotatedImageSampler.MODULES_IN_POS_DET_DIM; colModuleOffset++) {
 				
 				if( !((rowModuleOffset == MID_LAYER_OFFSET_1 || rowModuleOffset == MID_LAYER_OFFSET_2) &&
 						(colModuleOffset >= MID_LAYER_OFFSET_1 && colModuleOffset <= MID_LAYER_OFFSET_2)) &&
