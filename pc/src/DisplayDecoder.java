@@ -76,29 +76,30 @@ public class DisplayDecoder {
 
 private static int scanFromBottomRight(int[][] pixelMatrix) {
 	
-	int offset = 1, start = pixelMatrix[0].length, ind = 0, moduleSize = 0;
+	int offset = 1, start = pixelMatrix.length - 1, ind = 0, moduleSize = 0;
 
+	//search for first black pixel
 	while(start > pixelMatrix.length / 2) {
 		if(isBlackPixel(pixelMatrix[start][start])) 
-			break;
+			break; // found first black pixel
 		start--;
 	}
-	ind = start - offset;
-	while(ind < pixelMatrix.length) {
+	//search for first following white pixel and extract module size (binary search)
+	while(ind >=0) {
+		ind = start - offset;
 		while(!isBlackPixel(pixelMatrix[ind][ind])) 
 			ind++;
-		if(!isBlackPixel(pixelMatrix[ind+1][ind+1])) { 
-			moduleSize = start - (ind+1);
+		if(!isBlackPixel(pixelMatrix[ind-1][ind-1])) { 
+			moduleSize = start - (ind-1);
 			break;
 		}
 		else {
 			offset*=2;
 		}
-		ind = start - offset;
 	}
 	
 	if(foundPattern(pixelMatrix, moduleSize, 
-			start - moduleSize * ImageSampler.MODULES_IN_POS_DET_DIM, start - moduleSize * ImageSampler.MODULES_IN_POS_DET_DIM)) {
+			start + 1 - moduleSize * ImageSampler.MODULES_IN_POS_DET_DIM, start + 1 - moduleSize * ImageSampler.MODULES_IN_POS_DET_DIM)) {
 		return moduleSize;
 	}
 	return 0;
@@ -113,9 +114,10 @@ private static int scanFromTopLeft(int[][] pixelMatrix) {
 			break;
 		start++;
 	}
+	if(start>=pixelMatrix.length / 2) return 0;
 	ind = start + offset;
 	while(ind < pixelMatrix.length) {
-		while(!isBlackPixel(pixelMatrix[ind][ind])) 
+		while(!isBlackPixel(pixelMatrix[ind][ind]) && ind > 0) 
 			ind--;
 		if(!isBlackPixel(pixelMatrix[ind+1][ind+1])) { 
 			moduleSize = ind+1-start;
