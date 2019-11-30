@@ -14,55 +14,53 @@ public class EncodeDecodeCLI {
 	    String fileContent;
 	    File inputFile;
 	    
-	    System.out.println("Enter Decode/Encode command\n");
+	    System.out.println("Enter Decode/Encode command:");
 	    
 	    while(continueProgram) {
 	    	String userCommand = scanner.nextLine().toLowerCase();  // Read user input
-	    	if(!userCommand.startsWith("encode ") || !userCommand.startsWith("decode ")) {
+
+    		String[] splitedCommand = userCommand.split("\\s+");
+    		if(splitedCommand.length > 3 || (splitedCommand.length == 2 && splitedCommand[0].equals("encode"))
+    				|| (splitedCommand.length == 3 && splitedCommand[0].equals("decode")) ) {
 	    		System.out.println("Usage: 'Encode [filepath] [target encoded filepath]'\n"
-	    				+ "Usage: 'Decode [encoded filepath]");
-	    		continue;
-	    	}
-	    	else {
-	    		String[] splitedCommand = userCommand.split("\\s+");
-	    		if(splitedCommand.length > 3 || (splitedCommand.length == 2 && splitedCommand[0].equals("encode"))
-	    				|| (splitedCommand.length == 3 && splitedCommand[0].equals("decode")) ) {
-		    		System.out.println("Usage: 'Encode [filepath] [target encoded filepath]'\n"
-		    				+ "Usage: 'Decode [encoded filepath]");
-	    			continue;
-	    		}
-	    		else {
-	    			try {
-	    				inputFile = new File(splitedCommand[1]);	
-	    			}
-	    			catch(Exception NullPointerException){
-	    				System.out.println("Entered filepath doesn't exist.\n");
-	    				continue;
-	    			}
-	    			
-	    			switch (splitedCommand[0]) {
-	    			case "encode":
-	    				fileContent = new String(Files.readAllBytes(inputFile.toPath()));
-	    				BufferedImage encodedImage = DisplayEncoder.encodeBytes(fileContent);
-	    				File newPathQr = new File(splitedCommand[2]);
-	    				ImageIO.write(encodedImage, "png", newPathQr);	    			
-	    				break;
-	    			case "decode":
-	    				BufferedImage bufferedImageQr = ImageIO.read(inputFile);
-	    				String decodedString = DisplayDecoder.decodeImage(bufferedImageQr);
-	    				System.out.println("Decoded string is: "+decodedString+"\n");
-	    				break;
-	    			case "exit":
-	    				continueProgram = false;
-	    				System.out.println("Exiting..\n");
-	    				break;
-	    			default:
-	    		    		System.out.println("Usage: 'Encode [filepath] [target encoded filepath]'\n"
-	    		    				+ "Usage: 'Decode [encoded filepath]");
-	    			}
-	    				
-	    		}
-	    	}
+	    				+ "Usage: 'Decode [encoded filepath]'\n"
+	    				+ "Usage: 'Exit' to stop execution.");
+    			continue;
+    		}
+    		else {   
+    			switch (splitedCommand[0]) {
+    			case "encode":
+        			try {inputFile = new File(splitedCommand[1]);}	
+        			catch(Exception NullPointerException){
+        				System.out.println("Entered input filepath doesn't exist.\n");
+        				continue;
+        			}
+    				fileContent = new String(Files.readAllBytes(inputFile.toPath()));
+    				BufferedImage encodedImage = DisplayEncoder.encodeBytes(fileContent);
+    				ImageIO.write(encodedImage, "png", new File(splitedCommand[2]));	
+    				System.out.println("Encoded image was written to "+ splitedCommand[2]);
+    				break;
+    			case "decode":
+        			try {inputFile = new File(splitedCommand[1]);}	
+        			catch(Exception NullPointerException){
+        				System.out.println("Entered input filepath doesn't exist.\n");
+        				continue;
+        			}
+    				BufferedImage bufferedImageQr = ImageIO.read(inputFile);
+    				String decodedString = DisplayDecoder.decodeImage(bufferedImageQr);
+    				System.out.println("Decoded string is: "+decodedString+"\n");
+    				break;
+    			case "exit":
+    				continueProgram = false;
+    				System.out.println("Exiting..\n");
+    				break;
+    			default:
+    		    		System.out.println("Usage: 'Encode [filepath] [target encoded filepath]'\n"
+    		    				+ "Usage: 'Decode [encoded filepath]'\n"
+    		    				+ "Usage: 'Exit' to stop execution.");
+    			}
+    				
+    		}
 	    }	    
 	    scanner.close();
 	}
