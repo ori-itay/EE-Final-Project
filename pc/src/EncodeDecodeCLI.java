@@ -47,7 +47,7 @@ public class EncodeDecodeCLI {
         				continue;
         			}
     				BufferedImage bufferedImageQr = ImageIO.read(inputFile);
-    				String decodedString = DisplayDecoder.decodeImage(bufferedImageQr);
+    				String decodedString = new String(DisplayDecoder.decodeImage(bufferedImageQr).decodedData);
     				System.out.println("Decoded string is: "+decodedString+"\n");
     				break;
     			case "exit":

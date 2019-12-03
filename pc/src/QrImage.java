@@ -19,7 +19,8 @@ class StdImageSampler implements ImageSampler{
 	BufferedImage proccesedImage;
 	int[][] pixelMatrix;
 	int moduleSize;
-	int dataLength;		
+	int dataLength;	
+	byte[] decodedData;
 	
 	static void checkForColumnEnd(Position pos) {
 		
