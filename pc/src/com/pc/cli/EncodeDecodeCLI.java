@@ -1,8 +1,12 @@
+package com.pc.cli;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.nio.file.Files;
 import java.util.Scanner;
 import javax.imageio.ImageIO;
+
+import com.pc.encoderDecoder.DisplayDecoder;
+import com.pc.encoderDecoder.DisplayEncoder;
 
 
 public class EncodeDecodeCLI {

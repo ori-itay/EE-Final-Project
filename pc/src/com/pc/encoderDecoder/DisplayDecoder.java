@@ -1,3 +1,4 @@
+package com.pc.encoderDecoder;
 import java.awt.image.BufferedImage;
 
 public class DisplayDecoder {
@@ -57,15 +58,15 @@ public class DisplayDecoder {
 		}
 		else {
 			//seek pattern from top right
-			if(!foundPattern(imageSampler.pixelMatrix, moduleSize, moduleSize * ImageSampler.MODULES_IN_MARGIN,
-					moduleSize * (ImageSampler.MODULES_IN_ENCODED_IMAGE_DIM - 
-							ImageSampler.MODULES_IN_MARGIN - ImageSampler.MODULES_IN_POS_DET_DIM) )) {
+			if(!foundPattern(imageSampler.pixelMatrix, moduleSize, moduleSize * ImageSamplerInf.MODULES_IN_MARGIN,
+					moduleSize * (ImageSamplerInf.MODULES_IN_ENCODED_IMAGE_DIM - 
+							ImageSamplerInf.MODULES_IN_MARGIN - ImageSamplerInf.MODULES_IN_POS_DET_DIM) )) {
 				imageSampler.rotationCounterClockwise = 270;
 			}
 			//seek pattern from top bottom left
 			else if(!foundPattern(imageSampler.pixelMatrix, moduleSize, moduleSize *
-					(ImageSampler.MODULES_IN_ENCODED_IMAGE_DIM - 
-							ImageSampler.MODULES_IN_MARGIN - ImageSampler.MODULES_IN_POS_DET_DIM) ,moduleSize * ImageSampler.MODULES_IN_MARGIN) ) {
+					(ImageSamplerInf.MODULES_IN_ENCODED_IMAGE_DIM - 
+							ImageSamplerInf.MODULES_IN_MARGIN - ImageSamplerInf.MODULES_IN_POS_DET_DIM) ,moduleSize * ImageSamplerInf.MODULES_IN_MARGIN) ) {
 				imageSampler.rotationCounterClockwise = 90;
 			}
 			// else: pattern not found from bottom right - no need to rotate
@@ -105,7 +106,7 @@ private static int scanFromBottomRight(int[][] pixelMatrix) {
 	}
 	//search for position detector pattern
 	if(foundPattern(pixelMatrix, moduleSize, 
-			firstBlack + 1 - moduleSize * ImageSampler.MODULES_IN_POS_DET_DIM, firstBlack + 1 - moduleSize * ImageSampler.MODULES_IN_POS_DET_DIM)) {
+			firstBlack + 1 - moduleSize * ImageSamplerInf.MODULES_IN_POS_DET_DIM, firstBlack + 1 - moduleSize * ImageSamplerInf.MODULES_IN_POS_DET_DIM)) {
 		return moduleSize;
 	}
 	return 0;
@@ -180,11 +181,11 @@ private static boolean foundPattern(int[][] pixelMatrix, int moduleSize, int row
 
 	private static byte[] decodeConfiguredImage(RotatedImageSampler imageSampler, int bitLength, Position pos) {
 		
-		int byteLength = (int) Math.ceil((bitLength+0.0)/ImageSampler.BITS_IN_BYTE);
+		int byteLength = (int) Math.ceil((bitLength+0.0)/ImageSamplerInf.BITS_IN_BYTE);
 		byte[] decodedData = new byte[byteLength];
 		
 		for(int bitIndex = 0; bitIndex<bitLength; bitIndex++) {
-			decodeModule(decodedData, imageSampler, pos, bitIndex/ImageSampler.BITS_IN_BYTE, bitIndex%ImageSampler.BITS_IN_BYTE);
+			decodeModule(decodedData, imageSampler, pos, bitIndex/ImageSamplerInf.BITS_IN_BYTE, bitIndex%ImageSamplerInf.BITS_IN_BYTE);
 			pos.colModule++;
 			RotatedImageSampler.checkForColumnEnd(pos);
 			
