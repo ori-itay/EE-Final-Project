@@ -1,3 +1,10 @@
 <resources>
     <string name="app_name">VisualCrypto</string>
+    <string name="welcome_msg">Welcome to Visual Cryptography App!</string>
+    <string name="config_area">Picture Config</string>
+    <string name="decode_image_as_text">Decode Image As Text</string>
+    <string name="decode_image_as_image">Decode Image As Image</string>
+    <string name="dataText">Decoded data is:</string>
+    <string name="dataLengthText">Data length is:</string>
+    <string name="moduleSizeText">Module size is:</string>
 </resources>
