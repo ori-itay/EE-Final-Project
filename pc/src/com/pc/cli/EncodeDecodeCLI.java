@@ -1,4 +1,5 @@
 package com.pc.cli;
+
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.nio.file.Files;
@@ -50,7 +51,7 @@ public class EncodeDecodeCLI {
         				System.out.println("Entered input filepath doesn't exist.\n");
         				continue;
         			}
-    				String decodedString = new String(DisplayDecoder.decodeImage(inputFile).decodedData);
+    				String decodedString = new String(DisplayDecoder.decodeFile(inputFile).decodedData);
     				System.out.println("Decoded string is: "+decodedString+"\n");
     				break;
     			case "exit":
