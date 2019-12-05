@@ -40,7 +40,7 @@ public class StdImageSampler implements ImageSamplerInf{
 				pos.rowModule++;
 			}
 			//end of column when in last row of top position detector	
-			else if (pos.rowModule + 1 == (MODULES_IN_MARGIN + MODULES_IN_POS_DET_DIM) ) {
+			else if (pos.rowModule == (MODULES_IN_MARGIN + MODULES_IN_POS_DET_DIM) ) {
 				pos.colModule = MODULES_IN_MARGIN;
 				pos.rowModule++;
 			}
@@ -48,13 +48,8 @@ public class StdImageSampler implements ImageSamplerInf{
 		//end of column in rows without position detector	
 		else if(pos.colModule == (MODULES_IN_ENCODED_IMAGE_DIM - MODULES_IN_MARGIN) ) {
 			//next row is with position detector
-			if(pos.rowModule + 1 == (MODULES_IN_ENCODED_IMAGE_DIM - MODULES_IN_MARGIN - MODULES_IN_POS_DET_DIM)) 
+			if(pos.rowModule + 1 >= (MODULES_IN_ENCODED_IMAGE_DIM - MODULES_IN_MARGIN - MODULES_IN_POS_DET_DIM)) 
 				pos.colModule = MODULES_IN_MARGIN + MODULES_IN_POS_DET_DIM;
-			//end of column in rows of bottom position detectors
-			else if(pos.rowModule >= MODULES_IN_ENCODED_IMAGE_DIM - MODULES_IN_MARGIN - MODULES_IN_POS_DET_DIM) {
-				pos.colModule = MODULES_IN_MARGIN;
-				pos.rowModule++;
-			}
 			//next row is without position detector
 			else 
 				pos.colModule = MODULES_IN_MARGIN;
