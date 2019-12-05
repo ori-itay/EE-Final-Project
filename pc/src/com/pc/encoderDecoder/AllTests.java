@@ -37,7 +37,7 @@ class AllTests {
 		String path = "C:\\Users\\user\\Downloads\\qrcode.png";
 		File encodedFile = new File(path);
 		ImageIO.write(encodedImage, "png", encodedFile);
-		String decodedString = new String(DisplayDecoder.decodeImage(encodedFile).decodedData);
+		String decodedString = new String(DisplayDecoder.decodeFile(encodedFile).decodedData);
 		System.out.println(decodedString);
 		
 		assertEquals(testData.length(), decodedString.length());
@@ -89,7 +89,7 @@ class AllTests {
 			File newRotatedFile = null;
    			try {newRotatedFile = new File(rotatedPath);}	
 			catch(Exception NullPointerException){System.out.println("Entered input filepath doesn't exist.\n");}
-			String decodedString = new String(DisplayDecoder.decodeImage(newRotatedFile).decodedData);			
+			String decodedString = new String(DisplayDecoder.decodeFile(newRotatedFile).decodedData);			
 			//assert decode(encode(data)) == data
 			assertEquals(testData.length(), decodedString.length());
 			assertEquals(testData, decodedString);

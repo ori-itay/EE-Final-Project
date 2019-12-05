@@ -14,12 +14,12 @@ public class DisplayDecoder {
 		String path = "C:\\Users\\user\\Downloads\\qrcode.png";
 		File encodedFile = new File(path);
 		ImageIO.write(encodedImage, "png", encodedFile);
-		String decodedString = new String(decodeImage(encodedFile).decodedData);
+		String decodedString = new String(decodeFile(encodedFile).decodedData);
 		//print data for testing
 		System.out.println(decodedString);
 	}
 	
-	public static RotatedImageSampler decodeImage(File inputFile) throws Exception {
+	public static RotatedImageSampler decodeFile(File inputFile) throws Exception {
 		
 		BufferedImage encodedImage = ImageIO.read(inputFile);
 			
