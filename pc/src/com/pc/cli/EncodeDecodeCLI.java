@@ -50,8 +50,7 @@ public class EncodeDecodeCLI {
         				System.out.println("Entered input filepath doesn't exist.\n");
         				continue;
         			}
-    				BufferedImage bufferedImageQr = ImageIO.read(inputFile);
-    				String decodedString = new String(DisplayDecoder.decodeImage(bufferedImageQr).decodedData);
+    				String decodedString = new String(DisplayDecoder.decodeImage(inputFile).decodedData);
     				System.out.println("Decoded string is: "+decodedString+"\n");
     				break;
     			case "exit":

@@ -4,6 +4,27 @@ import java.awt.image.BufferedImage;
 
 public class StdImageSampler implements ImageSamplerInf{
 	
+	public BufferedImage getProccesedImage() {
+		return proccesedImage;
+	}
+
+	public int[][] getPixelMatrix() {
+		return pixelMatrix;
+	}
+
+	public int getModuleSize() {
+		return moduleSize;
+	}
+
+	public int getDataLength() {
+		return dataLength;
+	}
+
+	public byte[] getDecodedData() {
+		return decodedData;
+	}
+
+
 	BufferedImage proccesedImage;
 	int[][] pixelMatrix;
 	int moduleSize;
