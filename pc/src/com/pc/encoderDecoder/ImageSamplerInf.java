@@ -11,4 +11,10 @@ interface ImageSamplerInf{
 	public final static int NUM_OF_POSITION_DETECTORS = 3;
 	public final static int DATA_LEN_ENCODING_LENGTH = 20;
 	public static final int BITS_IN_BYTE = 8;
+	public static final int MAX_ENCODED_LENGTH = 
+			RotatedImageSampler.MODULES_IN_ENCODED_IMAGE_DIM*RotatedImageSampler.MODULES_IN_ENCODED_IMAGE_DIM 
+			-4*RotatedImageSampler.MODULES_IN_MARGIN*RotatedImageSampler.MODULES_IN_ENCODED_IMAGE_DIM
+			+4*RotatedImageSampler.MODULES_IN_MARGIN*RotatedImageSampler.MODULES_IN_MARGIN
+			-RotatedImageSampler.MODULES_IN_POS_DET_DIM*RotatedImageSampler.MODULES_IN_POS_DET_DIM*
+			RotatedImageSampler.NUM_OF_POSITION_DETECTORS-RotatedImageSampler.DATA_LEN_ENCODING_LENGTH;
 }

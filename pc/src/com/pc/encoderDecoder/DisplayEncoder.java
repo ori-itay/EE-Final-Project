@@ -65,12 +65,10 @@ public class DisplayEncoder {
 		pos.colModule = RotatedImageSampler.MODULES_IN_MARGIN + RotatedImageSampler.MODULES_IN_POS_DET_DIM;
 		final int LSB_MASK = 1;	
 		
-		if(length>RotatedImageSampler.MODULES_IN_ENCODED_IMAGE_DIM*RotatedImageSampler.MODULES_IN_ENCODED_IMAGE_DIM - 
-				4*(RotatedImageSampler.MODULES_IN_MARGIN*RotatedImageSampler.MODULES_IN_ENCODED_IMAGE_DIM +
-						RotatedImageSampler.MODULES_IN_MARGIN*RotatedImageSampler.MODULES_IN_MARGIN)
-				-RotatedImageSampler.MODULES_IN_POS_DET_DIM*RotatedImageSampler.MODULES_IN_POS_DET_DIM*
-				RotatedImageSampler.NUM_OF_POSITION_DETECTORS)
-			throw new Exception("Data is too large to be encoded!");
+		if(length> RotatedImageSampler.MAX_ENCODED_LENGTH) {
+			throw new Exception("Data len is: "+length+". file is too large to be encoded! Max legal len is: "
+		+RotatedImageSampler.MAX_ENCODED_LENGTH);
+		}
 		
 		for(i = 0; i < RotatedImageSampler.DATA_LEN_ENCODING_LENGTH; i++) {
 			currBitIs1 = (LSB_MASK&length) == 1;
