@@ -16,15 +16,6 @@ public class DisplayEncoder {
 	
 	private final static int PIXELS_IN_MODULE = 3;
 	
-	public static void main(String... args) throws Exception {
-		//String testData = "BLABLAabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbccccccccccccccdddd";
-		String testData = "blabla";
-		BufferedImage encodedImage = encodeBytes(testData);
-		//print image for testing
-		File newPathQr = new File("C:\\Users\\user\\Downloads\\new qrcode.png");
-		ImageIO.write(encodedImage, "png", newPathQr);
-	}
-	
 	public static BufferedImage encodeBytes(String binaryData) throws Exception {
 		
 		//allocate space including white margins
