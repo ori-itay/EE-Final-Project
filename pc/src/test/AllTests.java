@@ -1,4 +1,4 @@
-package com.pc.encoderDecoder;
+package test;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.awt.geom.AffineTransform;
@@ -11,6 +11,9 @@ import javax.imageio.ImageIO;
 
 import org.junit.jupiter.api.Test;
 
+import com.pc.encoderDecoder.DisplayDecoder;
+import com.pc.encoderDecoder.DisplayEncoder;
+
 class AllTests {
 
 	@Test
@@ -22,7 +25,7 @@ class AllTests {
 	@Test
 	void testByteArrayToInt() {
 		byte[] byteArray = {1,2,3};
-		int returnVal = DisplayDecoder.byteArrayToInt(byteArray);
+		int returnVal = DisplayDecoder.TestByteArrayToInt(byteArray);
 		assertEquals(returnVal, 197121);
 	}
 	
@@ -37,7 +40,7 @@ class AllTests {
 		String path = "C:\\Users\\user\\Downloads\\qrcode.png";
 		File encodedFile = new File(path);
 		ImageIO.write(encodedImage, "png", encodedFile);
-		String decodedString = new String(DisplayDecoder.decodeFile(encodedFile).decodedData);
+		String decodedString = new String(DisplayDecoder.decodeFilePC(encodedFile).getDecodedData());
 		System.out.println(decodedString);
 		
 		assertEquals(testData.length(), decodedString.length());
@@ -89,7 +92,7 @@ class AllTests {
 			File newRotatedFile = null;
    			try {newRotatedFile = new File(rotatedPath);}	
 			catch(Exception NullPointerException){System.out.println("Entered input filepath doesn't exist.\n");}
-			String decodedString = new String(DisplayDecoder.decodeFile(newRotatedFile).decodedData);			
+			String decodedString = new String(DisplayDecoder.decodeFilePC(newRotatedFile).getDecodedData());			
 			//assert decode(encode(data)) == data
 			assertEquals(testData.length(), decodedString.length());
 			assertEquals(testData, decodedString);
@@ -104,33 +107,5 @@ class AllTests {
 	    		}
 	    	}
 	}
-	
-//	
-//	@Test
-//	void testDecodeRotated() throws Exception {
-//		
-//		String testData = "blabla";
-//		File rotated90 = new File("C:\\Users\\user\\Downloads\\rotated90counter.png");
-//		BufferedImage rotImage90 = ImageIO.read(rotated90);
-//		File rotated180 = new File("C:\\Users\\user\\Downloads\\rotated180counter.png");
-//		BufferedImage rotImage180 = ImageIO.read(rotated180);
-//		File rotated270 = new File("C:\\Users\\user\\Downloads\\rotated270counter.png");
-//		BufferedImage rotImage270 = ImageIO.read(rotated270);
-//		
-//		String decodedString = DisplayDecoder.decodeImage(rotImage90);
-//		System.out.println(decodedString);
-//		assertEquals(testData.length(), decodedString.length());
-//		assertEquals(testData, decodedString);
-//		
-//		decodedString = DisplayDecoder.decodeImage(rotImage180);
-//		System.out.println(decodedString);
-//		assertEquals(testData.length(), decodedString.length());
-//		assertEquals(testData, decodedString);
-//		
-//		decodedString = DisplayDecoder.decodeImage(rotImage270);
-//		System.out.println(decodedString);
-//		assertEquals(testData.length(), decodedString.length());
-//		assertEquals(testData, decodedString);
-//	}
 
 }

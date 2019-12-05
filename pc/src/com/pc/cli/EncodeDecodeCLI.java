@@ -24,7 +24,8 @@ public class EncodeDecodeCLI {
 	    	String userCommand = scanner.nextLine().toLowerCase();  // Read user input
 
     		String[] splitedCommand = userCommand.split("\\s+");
-    		if(splitedCommand.length > 3 || (splitedCommand.length == 2 && splitedCommand[0].equals("encode"))
+    		if(splitedCommand.length > 3 || splitedCommand.length < 2 ||
+    				(splitedCommand.length == 2 && splitedCommand[0].equals("encode"))
     				|| (splitedCommand.length == 3 && splitedCommand[0].equals("decode")) ) {
 	    		System.out.println("Usage: 'Encode [filepath] [target encoded filepath]'\n"
 	    				+ "Usage: 'Decode [encoded filepath]'\n"
@@ -50,7 +51,7 @@ public class EncodeDecodeCLI {
         				System.out.println("Entered input filepath doesn't exist.\n");
         				continue;
         			}
-    				String decodedString = new String(DisplayDecoder.decodeImage(inputFile).decodedData);
+    				String decodedString = new String(DisplayDecoder.decodeFilePC(inputFile).getDecodedData());
     				System.out.println("Decoded string is: "+decodedString+"\n");
     				break;
     			case "exit":

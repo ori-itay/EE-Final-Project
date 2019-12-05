@@ -12,15 +12,3 @@ interface ImageSamplerInf{
 	public final static int DATA_LEN_ENCODING_LENGTH = 20;
 	public static final int BITS_IN_BYTE = 8;
 }
-
-
-class Position {
-	int rowModule;
-	int colModule;
-	
-	Position(){}
-	Position(int rowInit, int colInit){
-		rowModule = rowInit;
-		colModule = colInit;
-	}
-}

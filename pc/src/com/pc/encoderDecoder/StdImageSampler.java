@@ -29,7 +29,7 @@ public class StdImageSampler implements ImageSamplerInf{
 	int[][] pixelMatrix;
 	int moduleSize;
 	int dataLength;	
-	public byte[] decodedData;
+	byte[] decodedData;
 	
 	static void checkForColumnEnd(Position pos) {
 		
