@@ -27,7 +27,7 @@ public class StdImageSampler implements ImageSamplerInf{
 
 	BufferedImage proccesedImage;
 	int[][] pixelMatrix;
-	int moduleSize;
+	int moduleSize = 0;
 	int dataLength;	
 	byte[] decodedData;
 	
@@ -63,11 +63,11 @@ public class StdImageSampler implements ImageSamplerInf{
 	}
 	
 	public int getWidth() {
-	    return MODULES_IN_ENCODED_IMAGE_DIM;
+	    return MODULES_IN_ENCODED_IMAGE_DIM * moduleSize;
 	}
 
 	public int getHeight() {
-		return MODULES_IN_ENCODED_IMAGE_DIM;
+		return MODULES_IN_ENCODED_IMAGE_DIM * moduleSize;
 	}
 	
 }
