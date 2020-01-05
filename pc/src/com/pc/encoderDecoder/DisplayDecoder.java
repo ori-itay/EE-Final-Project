@@ -23,8 +23,7 @@ public class DisplayDecoder {
 		
 		RotatedImageSampler imageSampler = configureImage(pixelMatrix, pos);
 		//decode image data to byte array
-		System.out.println(imageSampler.dataLength);
-		imageSampler.decodedData = decodeConfiguredImage(imageSampler, imageSampler.dataLength, pos);
+		imageSampler.decodedData = decodeData(imageSampler, imageSampler.dataLength, pos);
 
 		return imageSampler;
 	}
@@ -35,10 +34,75 @@ public class DisplayDecoder {
 		configureModuleSizeAndRotation(imageSampler);
 		assert( imageSampler.moduleSize != 0);	
 		//configureCrop(imageSampler);
-		byte[] dataLengthBytes = decodeConfiguredImage(imageSampler, DATA_LEN_ENCODING_LENGTH_BYTES, pos);
+		byte[] dataLengthBytes = decodeData(imageSampler, DATA_LEN_ENCODING_LENGTH_BYTES, pos);
 		imageSampler.dataLength = byteArrayToInt(dataLengthBytes);
 		
 		return imageSampler;
+	}
+	
+	
+	private static byte[] decodeData(RotatedImageSampler imageSampler, int lengthInBytes, Position pos) {
+		
+		//int modulesToDecode = (int) Math.ceil(imageSampler.dataLength * BITS_IN_BYTE / ENCODING_BIT_GROUP_SIZE);
+		byte[] decodedData = new byte[lengthInBytes];
+		
+		
+		int bitsLeftToByte = BITS_IN_BYTE, currByteInd = 0, mask = BIT_GROUP_MASK_OF_ONES,	ones_in_mask = ENCODING_BIT_GROUP_SIZE;
+	
+		int sampledModuleVal = sampleModule(imageSampler, pos);// << BITS_IN_BYTE; // shift to ignore alpha
+		pos.colModule++;		
+		RotatedImageSampler.checkForColumnEnd(pos);
+		Color rgbColor = new Color(sampledModuleVal);
+		int redChannelValue = rgbColor.getRed() ;
+		byte currModule = (byte) (redChannelValue / GREY_SCALE_DELTA); //assuming only single channel encoded i.e one byte. also assuming ENCODING_COLOR_LEVELS<255
+		byte maskedData, currentData = 0;
+
+		while (true){
+			if(ones_in_mask < bitsLeftToByte) { //mask doesn't cover all bits left in current byte
+				currentData += (0xFF) & ((mask & currModule) << (BITS_IN_BYTE - bitsLeftToByte));
+				bitsLeftToByte-= ones_in_mask;
+				mask = 0;
+			}
+			else {  //mask covers all bits left in current byte
+				currentData += ((0xFF) & ((mask & currModule) >>> (ones_in_mask - bitsLeftToByte))) <<  (BITS_IN_BYTE - bitsLeftToByte);
+				mask = mask >>> bitsLeftToByte; //assuming ENCODING_COLOR_LEVELS is a power of 2!
+				ones_in_mask-= bitsLeftToByte;
+				bitsLeftToByte = 0;
+			}
+			
+			if(mask == 0) { // get next block
+				sampledModuleVal = sampleModule(imageSampler, pos);// << BITS_IN_BYTE; // shift to ignore alpha
+				pos.colModule++;		
+				RotatedImageSampler.checkForColumnEnd(pos);
+				rgbColor = new Color(sampledModuleVal);
+				redChannelValue = rgbColor.getRed() ;
+				currModule = (byte) (redChannelValue / GREY_SCALE_DELTA); //assuming only single channel encoded i.e one byte. also assuming ENCODING_COLOR_LEVELS<255
+				mask = BIT_GROUP_MASK_OF_ONES;
+				ones_in_mask = ENCODING_BIT_GROUP_SIZE;
+			}
+			
+			if(bitsLeftToByte == 0) {
+				//maskedBits = maskDataBits(currentData);
+				maskedData = currentData;
+				decodedData[currByteInd] = maskedData;
+				if(currByteInd+1<lengthInBytes) {
+					currByteInd++;
+					bitsLeftToByte = BITS_IN_BYTE;
+					currentData = 0;
+				}
+				else 
+					return decodedData;
+			}
+		}
+	}
+
+	private static int sampleModule(RotatedImageSampler imageSampler, Position pos) {
+		
+		int rowPixel = pos.rowModule * imageSampler.moduleSize;
+		int colPixel = pos.colModule * imageSampler.moduleSize; 
+		
+		return imageSampler.getPixel(rowPixel, colPixel);
+
 	}
 	
 	 // packing an array of bytes to an int - Little Endian
@@ -167,74 +231,7 @@ public class DisplayDecoder {
 			return true;
 		}
 		return false;
-	}
-
-
-
-	private static byte[] decodeConfiguredImage(RotatedImageSampler imageSampler, int lengthInBytes, Position pos) {
-		
-		//int modulesToDecode = (int) Math.ceil(imageSampler.dataLength * BITS_IN_BYTE / ENCODING_BIT_GROUP_SIZE);
-		byte[] decodedData = new byte[lengthInBytes];
-		
-		
-		int bitsLeftToByte = BITS_IN_BYTE, currByteInd = 0, mask = BIT_GROUP_MASK_OF_ONES,	ones_in_mask = ENCODING_BIT_GROUP_SIZE;
-	
-		int sampledModuleVal = sampleModule(imageSampler, pos);// << BITS_IN_BYTE; // shift to ignore alpha
-		pos.colModule++;		
-		RotatedImageSampler.checkForColumnEnd(pos);
-		Color rgbColor = new Color(sampledModuleVal);
-		int redChannelValue = rgbColor.getRed() ;
-		byte currModule = (byte) (redChannelValue / GREY_SCALE_DELTA); //assuming only single channel encoded i.e one byte. also assuming ENCODING_COLOR_LEVELS<255
-		byte maskedData, currentData = 0;
-
-		while (true){
-			if(ones_in_mask < bitsLeftToByte) { //mask doesn't cover all bits left in current byte
-				currentData += (0xFF) & ((mask & currModule) << (BITS_IN_BYTE - bitsLeftToByte));
-				bitsLeftToByte-= ones_in_mask;
-				mask = 0;
-			}
-			else {  //mask covers all bits left in current byte
-				currentData += ((0xFF) & ((mask & currModule) >>> (ones_in_mask - bitsLeftToByte))) <<  (BITS_IN_BYTE - bitsLeftToByte);
-				mask = mask >>> bitsLeftToByte; //assuming ENCODING_COLOR_LEVELS is a power of 2!
-				ones_in_mask-= bitsLeftToByte;
-				bitsLeftToByte = 0;
-			}
-			
-			if(mask == 0) { // get next block
-				sampledModuleVal = sampleModule(imageSampler, pos);// << BITS_IN_BYTE; // shift to ignore alpha
-				pos.colModule++;		
-				RotatedImageSampler.checkForColumnEnd(pos);
-				rgbColor = new Color(sampledModuleVal);
-				redChannelValue = rgbColor.getRed() ;
-				currModule = (byte) (redChannelValue / GREY_SCALE_DELTA); //assuming only single channel encoded i.e one byte. also assuming ENCODING_COLOR_LEVELS<255
-				mask = BIT_GROUP_MASK_OF_ONES;
-				ones_in_mask = ENCODING_BIT_GROUP_SIZE;
-			}
-			
-			if(bitsLeftToByte == 0) {
-				//maskedBits = maskDataBits(currentData);
-				maskedData = currentData;
-				decodedData[currByteInd] = maskedData;
-				if(currByteInd+1<lengthInBytes) {
-					currByteInd++;
-					bitsLeftToByte = BITS_IN_BYTE;
-					currentData = 0;
-				}
-				else 
-					return decodedData;
-			}
-		}
-	}
-
-	private static int sampleModule(RotatedImageSampler imageSampler, Position pos) {
-		
-		int rowPixel = pos.rowModule * imageSampler.moduleSize;
-		int colPixel = pos.colModule * imageSampler.moduleSize; 
-		
-		return imageSampler.getPixel(rowPixel, colPixel);
-
-	}
-	
+	}	
 	
 	
 	private static boolean isBlackPixel(int pixel) {

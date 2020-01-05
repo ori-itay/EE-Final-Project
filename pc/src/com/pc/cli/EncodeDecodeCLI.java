@@ -42,7 +42,7 @@ public class EncodeDecodeCLI {
         				continue;
         			}
     				fileContent = new String(Files.readAllBytes(inputFile.toPath()));
-    				BufferedImage encodedImage = DisplayEncoder.encodeBytes(fileContent);
+    				BufferedImage encodedImage = DisplayEncoder.encodeBytes(fileContent.getBytes());
     				ImageIO.write(encodedImage, "png", new File(splitedCommand[2]));	
     				System.out.println("Encoded image was written to "+ splitedCommand[2]);
     				break;

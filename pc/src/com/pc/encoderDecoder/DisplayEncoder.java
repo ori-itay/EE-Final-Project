@@ -14,7 +14,7 @@ enum ROW {
 public class DisplayEncoder {
 	
 
-	public static BufferedImage encodeBytes(String binaryData) throws Exception {
+	public static BufferedImage encodeBytes(byte[] binaryData) throws Exception {
 		
 		//allocate space including white margins
 		BufferedImage image = new BufferedImage(MODULES_IN_ENCODED_IMAGE_DIM*PIXELS_IN_MODULE,
@@ -28,7 +28,7 @@ public class DisplayEncoder {
 		createPositionDetectors(image, g);
 		//encode data length - 20 bits - masked
 		Position pos = new Position();
-		encodeDataLen(image, g, binaryData.length(), pos); //in bytes
+		encodeDataLen(image, g, binaryData.length, pos); //in bytes
 		//encode data - masked
 		encodeData(image, g, binaryData, pos);
 		
@@ -36,16 +36,14 @@ public class DisplayEncoder {
 	}
 
 
-	private static void encodeData(BufferedImage image, Graphics2D g, String binaryData, Position pos) {
+	private static void encodeData(BufferedImage image, Graphics2D g, byte[] binaryData, Position pos) {
 		
 		int currentData = 0, maskedData = 0, bitsLeftInByte = BITS_IN_BYTE, currByteInd = 0, mask = BIT_GROUP_MASK_OF_ONES,
 				ones_in_mask = ENCODING_BIT_GROUP_SIZE, level;
 		byte currByte;
 		Color color;
 		
-		byte[] stringAsBytes = binaryData.getBytes();
-		
-		currByte = stringAsBytes[currByteInd];
+		currByte = binaryData[currByteInd];
 		
 		while (true){
 			if(ones_in_mask < bitsLeftInByte) { //mask doesn't cover all bits left in current byte
@@ -76,9 +74,9 @@ public class DisplayEncoder {
 			}
 			
 			if(bitsLeftInByte == 0) {
-				if(currByteInd+1<stringAsBytes.length) {
+				if(currByteInd+1<binaryData.length) {
 					currByteInd++;
-					currByte = stringAsBytes[currByteInd];
+					currByte = binaryData[currByteInd];
 					bitsLeftInByte = BITS_IN_BYTE;
 				}
 				else {
@@ -104,11 +102,11 @@ public class DisplayEncoder {
 		pos.rowModule = MODULES_IN_MARGIN;		
 		pos.colModule = MODULES_IN_MARGIN + MODULES_IN_POS_DET_DIM;
 		
-		if(length> MAX_ENCODED_LENGTH) {
+		if(length * 8 > MAX_ENCODED_LENGTH) {
 			throw new Exception("Data len is: "+length+". file is too large to be encoded! Max legal len is: "+MAX_ENCODED_LENGTH);
 		}
-		String lengthAsString = new String(new byte[] {(byte)length,  (byte)(length >>> 8), (byte)(length >>> 16), (byte)(length >>> 24)});
-		encodeData(image, g, lengthAsString, pos);
+		byte[] lengthAsBytes = new byte[] {(byte)length,  (byte)(length >>> 8), (byte)(length >>> 16), (byte)(length >>> 24)};
+		encodeData(image, g, lengthAsBytes, pos);
 	}
 
 

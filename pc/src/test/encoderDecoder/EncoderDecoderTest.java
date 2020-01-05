@@ -6,8 +6,10 @@ import static com.pc.configuration.Constants.*;
 import java.awt.geom.AffineTransform;
 import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.util.Arrays;
+import java.util.Random;
 
 import javax.imageio.ImageIO;
 
@@ -30,10 +32,13 @@ public class EncoderDecoderTest {
 		
 		//String testData = "BLABLABLABLABLA";
 		int length = MAX_ENCODED_LENGTH;
+		//int length = 1229310 + 1;
 		byte[] byteArr = new byte [length/8];
-		Arrays.fill(byteArr, 0, length/8 -1, (byte) 1);
+		Random rand = new Random(); 
+		for(int i = 0; i < byteArr.length; i++) { byteArr[i] = (byte) rand.nextInt(127);}
+		//Arrays.fill(byteArr, 0, byteArr.length -1, (byte) 127);
 		String testData = new String(byteArr);
-		BufferedImage encodedImage = DisplayEncoder.encodeBytes(testData);
+		BufferedImage encodedImage = DisplayEncoder.encodeBytes(testData.getBytes());
 		//save encoded image
 		String path = "C:\\Users\\user\\Downloads\\qrcode.png";
 		File encodedFile = new File(path);
@@ -44,7 +49,7 @@ public class EncoderDecoderTest {
 		assertEquals(testData.length(), decodedString.length());
 		assertEquals(testData, decodedString);
 		
-		BufferedImage newEncodedImage = DisplayEncoder.encodeBytes(decodedString);
+		BufferedImage newEncodedImage = DisplayEncoder.encodeBytes(decodedString.getBytes());
 
 		assertEquals(newEncodedImage.getWidth(), encodedImage.getWidth());
 		assertEquals(newEncodedImage.getHeight(), encodedImage.getHeight());
@@ -65,7 +70,7 @@ public class EncoderDecoderTest {
 		
 		for(rotation = 0; rotation <360; rotation+=90)
 			//encode data to image
-			encodedImage = DisplayEncoder.encodeBytes(testData);
+			encodedImage = DisplayEncoder.encodeBytes(testData.getBytes());
 			
 			//rotate encoded image
 			final double rads = Math.toRadians(rotation);
@@ -96,7 +101,7 @@ public class EncoderDecoderTest {
 			assertEquals(testData, decodedString);
 			
 			//assert encode(decode(data)) == encode(data)
-			newEncodedImage = DisplayEncoder.encodeBytes(decodedString);
+			newEncodedImage = DisplayEncoder.encodeBytes(decodedString.getBytes());
 			assertEquals(newEncodedImage.getWidth(), encodedImage.getWidth());
 			assertEquals(newEncodedImage.getHeight(), encodedImage.getHeight());
 	    	for (int row=0 ; row < newEncodedImage.getHeight() ; row++) {
