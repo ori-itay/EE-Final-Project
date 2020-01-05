@@ -29,8 +29,7 @@ public class EncoderDecoderTest {
 	public void testEncodeDecodeEncodeIdempotent() throws Exception {
 		
 		//String testData = "BLABLABLABLABLA";
-		//int length = MAX_ENCODED_LENGTH*8+10;
-		int length = 31*8;
+		int length = MAX_ENCODED_LENGTH;
 		byte[] byteArr = new byte [length/8];
 		Arrays.fill(byteArr, 0, length/8 -1, (byte) 1);
 		String testData = new String(byteArr);

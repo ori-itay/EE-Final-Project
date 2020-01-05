@@ -100,30 +100,15 @@ public class DisplayEncoder {
 	private static void encodeDataLen(BufferedImage image, Graphics2D g, int length, Position pos) throws Exception {
 		//LSB is encoded as the first (leftmost) module - little endian
 		//data length is encoded in bytes
-		int i, currentData, maskedData, level;
-		Color color;
 		
 		pos.rowModule = MODULES_IN_MARGIN;		
 		pos.colModule = MODULES_IN_MARGIN + MODULES_IN_POS_DET_DIM;
 		
-		
 		if(length> MAX_ENCODED_LENGTH) {
 			throw new Exception("Data len is: "+length+". file is too large to be encoded! Max legal len is: "+MAX_ENCODED_LENGTH);
 		}
-		
-		for(i = 0; i < DATA_LEN_ENCODING_LENGTH_MODULES; i++) {
-			currentData = BIT_GROUP_MASK_OF_ONES & length;
-			//maskedBits = maskDataBits(currentData);
-			maskedData = currentData;
-			level = maskedData*GREY_SCALE_DELTA;
-			color = new Color(level, level, level);
-			g.setColor(color);
-			g.fillRect(pos.colModule * PIXELS_IN_MODULE, pos.rowModule * PIXELS_IN_MODULE, PIXELS_IN_MODULE, PIXELS_IN_MODULE);
-			pos.colModule++;		
-			//maybe remove the following because this will probably wont be the situation
-			RotatedImageSampler.checkForColumnEnd(pos);
-			length = length>>>ENCODING_BIT_GROUP_SIZE;
-		}
+		String lengthAsString = new String(new byte[] {(byte)length,  (byte)(length >>> 8), (byte)(length >>> 16), (byte)(length >>> 24)});
+		encodeData(image, g, lengthAsString, pos);
 	}
 
 
