@@ -25,4 +25,8 @@ public class Encryptor {
 		new SecureRandom().nextBytes(iv);
 		return new IvParameterSpec(iv);
 	}
+	
+	public static byte[] encryptImage(byte[] imageBytes, byte[] generatedXorBytes) {
+		return EncryptorDecryptor.xorPaddedImage(imageBytes, generatedXorBytes);
+	}
 }

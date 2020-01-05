@@ -80,7 +80,7 @@ public class EncryptorTest {
 		IvParameterSpec ivB = Encryptor.generateIv(ivLength);
 		byte[] generatedXorBytes = EncryptorDecryptor.generateXorBytes(skeyB, ivB);
 		byte[] imageBytes = new byte[maxImageSizeBytes];
-		byte[] xoredImage = EncryptorDecryptor.xorPaddedImage(generatedXorBytes, imageBytes);
+		byte[] xoredImage = Encryptor.encryptImage(generatedXorBytes, imageBytes);
 		
 		assertTrue(Arrays.equals(xoredImage, generatedXorBytes)); // a XOR 0 = a
 	}
