@@ -21,7 +21,7 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 @DisplayName("Encryptor Tests")
-public class EncryptorTest {
+public class EncryptorTests {
 	
 	private static IvParameterSpec ivA;
 	private static SecretKey skeyA;

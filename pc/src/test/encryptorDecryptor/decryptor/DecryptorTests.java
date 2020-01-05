@@ -20,7 +20,7 @@ import com.pc.encryptorDecryptor.encryptor.Encryptor;
 
 
 @DisplayName("Decryptor Tests")
-public class DecryptorTest {
+public class DecryptorTests {
 
 	@Test
 	public void testDecryptImage() throws Exception {
