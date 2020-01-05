@@ -38,8 +38,8 @@ public class DisplayEncoder {
 
 	private static void encodeData(BufferedImage image, Graphics2D g, String binaryData, Position pos) {
 		
-		int currentData = 0, maskedData, bitsLeftInByte = BITS_IN_BYTE, currByteInd = 0, mask = BIT_GROUP_MASK_OF_ONES,
-				ones_in_mask = ENCODING_BIT_GROUP_SIZE;
+		int currentData = 0, maskedData = 0, bitsLeftInByte = BITS_IN_BYTE, currByteInd = 0, mask = BIT_GROUP_MASK_OF_ONES,
+				ones_in_mask = ENCODING_BIT_GROUP_SIZE, level;
 		byte currByte;
 		Color color;
 		
@@ -48,23 +48,24 @@ public class DisplayEncoder {
 		currByte = stringAsBytes[currByteInd];
 		
 		while (true){
-	
-			currentData += mask & currByte; 
-			if(mask < (1<<(bitsLeftInByte-1)) - 1) { //mask doesn't cover all bits left in current byte
+			if(ones_in_mask < bitsLeftInByte) { //mask doesn't cover all bits left in current byte
+				currentData += mask & currByte;
 				currByte = (byte) (currByte >>> ones_in_mask);
 				bitsLeftInByte-= ones_in_mask;
 				mask = 0;
 			}
 			else {  //mask covers all bits left in current byte
+				currentData += (mask & currByte) << (ones_in_mask - bitsLeftInByte);
+				mask = mask >>> bitsLeftInByte; //assuming ENCODING_COLOR_LEVELS is a power of 2!
+				ones_in_mask-= bitsLeftInByte;
 				bitsLeftInByte = 0;
-				mask = mask >>> BITS_IN_BYTE; //assuming ENCODING_COLOR_LEVELS is a power of 2!
-				ones_in_mask-= BITS_IN_BYTE;
 			}
 			
 			if(mask == 0) { // encode block
-				//maskedBits = maskDataBits(currentData);
+				//maskedData = maskDataBits(currentData);
 				maskedData = currentData;
-				color = new Color(maskedData*GREY_SCALE_DELTA, maskedData*GREY_SCALE_DELTA, maskedData*GREY_SCALE_DELTA);
+				level = maskedData*GREY_SCALE_DELTA;
+				color = new Color(level, level, level);
 				g.setColor(color);
 				g.fillRect(pos.colModule * PIXELS_IN_MODULE, pos.rowModule * PIXELS_IN_MODULE, PIXELS_IN_MODULE, PIXELS_IN_MODULE);
 				pos.colModule++;		
@@ -80,8 +81,17 @@ public class DisplayEncoder {
 					currByte = stringAsBytes[currByteInd];
 					bitsLeftInByte = BITS_IN_BYTE;
 				}
-				else 
+				else {
+					//maskedData = maskDataBits(currentData);
+					maskedData = currentData & 0xFF;
+					level = maskedData*GREY_SCALE_DELTA;
+					color = new Color(level, level, level);
+					g.setColor(color);
+					g.fillRect(pos.colModule * PIXELS_IN_MODULE, pos.rowModule * PIXELS_IN_MODULE, PIXELS_IN_MODULE, PIXELS_IN_MODULE);
+					pos.colModule++;		
+					RotatedImageSampler.checkForColumnEnd(pos);
 					return;
+				}
 			}
 		}
 
@@ -90,8 +100,7 @@ public class DisplayEncoder {
 	private static void encodeDataLen(BufferedImage image, Graphics2D g, int length, Position pos) throws Exception {
 		//LSB is encoded as the first (leftmost) module - little endian
 		//data length is encoded in bytes
-		int i;
-		int currentData, maskedData;
+		int i, currentData, maskedData, level;
 		Color color;
 		
 		pos.rowModule = MODULES_IN_MARGIN;		
@@ -106,7 +115,8 @@ public class DisplayEncoder {
 			currentData = BIT_GROUP_MASK_OF_ONES & length;
 			//maskedBits = maskDataBits(currentData);
 			maskedData = currentData;
-			color = new Color(maskedData*GREY_SCALE_DELTA, maskedData*GREY_SCALE_DELTA, maskedData*GREY_SCALE_DELTA);
+			level = maskedData*GREY_SCALE_DELTA;
+			color = new Color(level, level, level);
 			g.setColor(color);
 			g.fillRect(pos.colModule * PIXELS_IN_MODULE, pos.rowModule * PIXELS_IN_MODULE, PIXELS_IN_MODULE, PIXELS_IN_MODULE);
 			pos.colModule++;		

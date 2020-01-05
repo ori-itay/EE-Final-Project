@@ -36,12 +36,12 @@ public class StdImageSampler implements ImageSamplerInf{
 		
 		if(pos.colModule == (MODULES_IN_ENCODED_IMAGE_DIM - MODULES_IN_MARGIN - MODULES_IN_POS_DET_DIM) ) {
 			//end of column in rows of top position detectors (except for the last top one)	
-			if(pos.rowModule < MODULES_IN_MARGIN + MODULES_IN_POS_DET_DIM) {	
+			if(pos.rowModule + 1 < MODULES_IN_MARGIN + MODULES_IN_POS_DET_DIM) {	
 				pos.colModule = (MODULES_IN_MARGIN + MODULES_IN_POS_DET_DIM);
 				pos.rowModule++;
 			}
 			//end of column when in last row of top position detector	
-			else if (pos.rowModule == (MODULES_IN_MARGIN + MODULES_IN_POS_DET_DIM) ) {
+			else if (pos.rowModule + 1 == (MODULES_IN_MARGIN + MODULES_IN_POS_DET_DIM) ) {
 				pos.colModule = MODULES_IN_MARGIN;
 				pos.rowModule++;
 			}

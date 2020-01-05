@@ -1,6 +1,7 @@
 package test.encoderDecoder;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static com.pc.configuration.Constants.*;
 
 import java.awt.geom.AffineTransform;
 import java.awt.image.AffineTransformOp;
@@ -18,12 +19,6 @@ import com.pc.encoderDecoder.DisplayEncoder;
 public class EncoderDecoderTest {
 	
 	@Test
-	public void test() {
-		//fail("Not yet implemented");
-		assertEquals(1, 1);
-	}
-	
-	@Test
 	public void testByteArrayToInt() {
 		byte[] byteArray = {1,2,3};
 		int returnVal = DisplayDecoder.TestByteArrayToInt(byteArray);
@@ -33,9 +28,11 @@ public class EncoderDecoderTest {
 	@Test
 	public void testEncodeDecodeEncodeIdempotent() throws Exception {
 		
-		//String testData = "BLABLA";
-		byte[] byteArr = new byte [245849/8];
-		Arrays.fill(byteArr, 0, 24549/8 -1, (byte) 1);
+		//String testData = "BLABLABLABLABLA";
+		//int length = MAX_ENCODED_LENGTH*8+10;
+		int length = 31*8;
+		byte[] byteArr = new byte [length/8];
+		Arrays.fill(byteArr, 0, length/8 -1, (byte) 1);
 		String testData = new String(byteArr);
 		BufferedImage encodedImage = DisplayEncoder.encodeBytes(testData);
 		//save encoded image

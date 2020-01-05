@@ -1,9 +1,9 @@
 package com.pc.encoderDecoder;
-import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import javax.imageio.ImageIO;
 import static com.pc.configuration.Constants.*;
+import java.awt.Color;
 
 public class DisplayDecoder {
 	
@@ -23,7 +23,7 @@ public class DisplayDecoder {
 		
 		RotatedImageSampler imageSampler = configureImage(pixelMatrix, pos);
 		//decode image data to byte array
-		
+		System.out.println(imageSampler.dataLength);
 		imageSampler.decodedData = decodeConfiguredImage(imageSampler, imageSampler.dataLength, pos);
 
 		return imageSampler;
@@ -173,65 +173,57 @@ public class DisplayDecoder {
 
 	private static byte[] decodeConfiguredImage(RotatedImageSampler imageSampler, int lengthInBytes, Position pos) {
 		
-		int modulesToDecode = (int) Math.ceil(imageSampler.dataLength * BITS_IN_BYTE / ENCODING_BIT_GROUP_SIZE);
+		//int modulesToDecode = (int) Math.ceil(imageSampler.dataLength * BITS_IN_BYTE / ENCODING_BIT_GROUP_SIZE);
 		byte[] decodedData = new byte[lengthInBytes];
-		
-		for(int bitIndex = 0; bitIndex<bitLength; bitIndex++) {
-			decodeModule(decodedData, imageSampler, pos, bitIndex/BITS_IN_BYTE, bitIndex%BITS_IN_BYTE);
-			pos.colModule++;
-			RotatedImageSampler.checkForColumnEnd(pos);
-			
-		}
 		
 		
 		int bitsLeftToByte = BITS_IN_BYTE, currByteInd = 0, mask = BIT_GROUP_MASK_OF_ONES,	ones_in_mask = ENCODING_BIT_GROUP_SIZE;
 	
-		byte currByte = (byte) sampleModule(imageSampler, pos); //assuming only single channel encoded i.e one byte. also assuming ENCODING_COLOR_LEVELS<255
+		int sampledModuleVal = sampleModule(imageSampler, pos);// << BITS_IN_BYTE; // shift to ignore alpha
+		pos.colModule++;		
+		RotatedImageSampler.checkForColumnEnd(pos);
+		Color rgbColor = new Color(sampledModuleVal);
+		int redChannelValue = rgbColor.getRed() ;
+		byte currModule = (byte) (redChannelValue / GREY_SCALE_DELTA); //assuming only single channel encoded i.e one byte. also assuming ENCODING_COLOR_LEVELS<255
 		byte maskedData, currentData = 0;
 
 		while (true){
-			currentData += mask & currByte; 
-			if(mask < (1<<(bitsLeftInByte-1)) - 1) { //mask doesn't cover all bits left in current byte
-				currByte = (byte) (currByte >>> ones_in_mask);
-				bitsLeftInByte-= ones_in_mask;
+			if(ones_in_mask < bitsLeftToByte) { //mask doesn't cover all bits left in current byte
+				currentData += (0xFF) & ((mask & currModule) << (BITS_IN_BYTE - bitsLeftToByte));
+				bitsLeftToByte-= ones_in_mask;
 				mask = 0;
 			}
 			else {  //mask covers all bits left in current byte
-				bitsLeftInByte = 0;
-				mask = mask >>> BITS_IN_BYTE; //assuming ENCODING_COLOR_LEVELS is a power of 2!
-				ones_in_mask-= BITS_IN_BYTE;
+				currentData += ((0xFF) & ((mask & currModule) >>> (ones_in_mask - bitsLeftToByte))) <<  (BITS_IN_BYTE - bitsLeftToByte);
+				mask = mask >>> bitsLeftToByte; //assuming ENCODING_COLOR_LEVELS is a power of 2!
+				ones_in_mask-= bitsLeftToByte;
+				bitsLeftToByte = 0;
 			}
 			
-			if(mask == 0) { // encode block
+			if(mask == 0) { // get next block
+				sampledModuleVal = sampleModule(imageSampler, pos);// << BITS_IN_BYTE; // shift to ignore alpha
+				pos.colModule++;		
+				RotatedImageSampler.checkForColumnEnd(pos);
+				rgbColor = new Color(sampledModuleVal);
+				redChannelValue = rgbColor.getRed() ;
+				currModule = (byte) (redChannelValue / GREY_SCALE_DELTA); //assuming only single channel encoded i.e one byte. also assuming ENCODING_COLOR_LEVELS<255
+				mask = BIT_GROUP_MASK_OF_ONES;
+				ones_in_mask = ENCODING_BIT_GROUP_SIZE;
+			}
+			
+			if(bitsLeftToByte == 0) {
 				//maskedBits = maskDataBits(currentData);
 				maskedData = currentData;
 				decodedData[currByteInd] = maskedData;
-				pos.colModule++;		
-				RotatedImageSampler.checkForColumnEnd(pos);
-				mask = BIT_GROUP_MASK_OF_ONES;
-				ones_in_mask = ENCODING_BIT_GROUP_SIZE;
-				currentData = 0;
-				currByte = (byte) sampleModule(imageSampler, pos); //assuming only single channel encoded i.e one byte
-			}
-			
-			if(bitsLeftInByte == 0) {
 				if(currByteInd+1<lengthInBytes) {
 					currByteInd++;
-					bitsLeftInByte = BITS_IN_BYTE;
+					bitsLeftToByte = BITS_IN_BYTE;
+					currentData = 0;
 				}
 				else 
-					return;
+					return decodedData;
 			}
 		}
-		
-		
-		
-		
-		
-		
-		
-		
-		return decodedData;	
 	}
 
 	private static int sampleModule(RotatedImageSampler imageSampler, Position pos) {
