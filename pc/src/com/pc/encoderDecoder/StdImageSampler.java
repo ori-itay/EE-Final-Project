@@ -1,6 +1,7 @@
 package com.pc.encoderDecoder;
 
 import java.awt.image.BufferedImage;
+import static com.pc.configuration.Constants.*;
 
 public class StdImageSampler implements ImageSamplerInf{
 	
