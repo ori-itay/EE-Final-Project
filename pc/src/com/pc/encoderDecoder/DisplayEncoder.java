@@ -38,22 +38,22 @@ public class DisplayEncoder {
 
 	private static void encodeData(BufferedImage image, Graphics2D g, byte[] binaryData, Position pos) {
 		
-		int currentData = 0, maskedData = 0, bitsLeftInByte = BITS_IN_BYTE, currByteInd = 0, mask = BIT_GROUP_MASK_OF_ONES,
+		int maskedData = 0, bitsLeftInByte = BITS_IN_BYTE, currByteInd = 0, mask = BIT_GROUP_MASK_OF_ONES,
 				ones_in_mask = ENCODING_BIT_GROUP_SIZE, level;
-		byte currByte;
+		byte currByte, currentData = 0;
 		Color color;
 		
 		currByte = binaryData[currByteInd];
 		
 		while (true){
 			if(ones_in_mask < bitsLeftInByte) { //mask doesn't cover all bits left in current byte
-				currentData += mask & currByte;
+				currentData |= mask & currByte;
 				currByte = (byte) (currByte >>> ones_in_mask);
 				bitsLeftInByte-= ones_in_mask;
 				mask = 0;
 			}
 			else {  //mask covers all bits left in current byte
-				currentData += (mask & currByte) << (ones_in_mask - bitsLeftInByte);
+				currentData |= (mask & currByte) << (ones_in_mask - bitsLeftInByte);
 				mask = mask >>> bitsLeftInByte; //assuming ENCODING_COLOR_LEVELS is a power of 2!
 				ones_in_mask-= bitsLeftInByte;
 				bitsLeftInByte = 0;
@@ -61,8 +61,8 @@ public class DisplayEncoder {
 			
 			if(mask == 0) { // encode block
 				//maskedData = maskDataBits(currentData);
-				maskedData = currentData;
-				level = maskedData*GREY_SCALE_DELTA;
+				maskedData = (int) (currentData & 0x000000FF);
+				level = (int) ((maskedData*GREY_SCALE_DELTA) & 0x000000FF);
 				color = new Color(level, level, level);
 				g.setColor(color);
 				g.fillRect(pos.colModule * PIXELS_IN_MODULE, pos.rowModule * PIXELS_IN_MODULE, PIXELS_IN_MODULE, PIXELS_IN_MODULE);
@@ -81,8 +81,8 @@ public class DisplayEncoder {
 				}
 				else {
 					//maskedData = maskDataBits(currentData);
-					maskedData = currentData & 0xFF;
-					level = maskedData*GREY_SCALE_DELTA;
+					maskedData = (int) (currentData & 0x000000FF);
+					level = (int) ((maskedData*GREY_SCALE_DELTA) & 0x000000FF);
 					color = new Color(level, level, level);
 					g.setColor(color);
 					g.fillRect(pos.colModule * PIXELS_IN_MODULE, pos.rowModule * PIXELS_IN_MODULE, PIXELS_IN_MODULE, PIXELS_IN_MODULE);

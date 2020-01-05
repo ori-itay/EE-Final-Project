@@ -3,7 +3,7 @@ package com.pc.configuration;
 public class Constants {
 	public static final int ivLength = 12;
 	public static final int maxImageSizeBytes = 100*100*64*8; //width * height * levels * bytes
-	public static final int ENCODING_COLOR_LEVELS = 32;
+	public static final int ENCODING_COLOR_LEVELS = 64;
 	public static final int GREY_SCALE_DELTA = Math.floorDiv(255 , (ENCODING_COLOR_LEVELS-1));
 	public static final int PIXELS_IN_MODULE = 3;
 	
