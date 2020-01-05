@@ -1,7 +1,11 @@
-package test.encryptor;
+package test.encryptorDecryptor.encryptor;
 
 
 import org.junit.jupiter.api.Test;
+
+import com.pc.encryptorDecryptor.EncryptorDecryptor;
+import com.pc.encryptorDecryptor.encryptor.Encryptor;
+
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 
@@ -14,8 +18,7 @@ import java.util.Arrays;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
-
-import  com.pc.encryptor.Encryptor;
+import javax.crypto.spec.SecretKeySpec;
 
 @DisplayName("Encryptor Tests")
 public class EncryptorTest {
@@ -50,21 +53,34 @@ public class EncryptorTest {
 	
 	@Test
 	public void testGenerateXorBytes() throws Exception {
-		IvParameterSpec ivB = Encryptor.generateIv(ivLength);
-		byte[] generatedXorBytesA = Encryptor.generateXorBytes(skeyA, ivA);
+		//byte[] ivBytes = new byte[] {1,1,1,1,1,1,1,1,1,1,1,1};
+		//IvParameterSpec permIv = new IvParameterSpec(ivBytes);
+		
+		//SecretKeySpec permKeySpec = new SecretKeySpec("abcdefghijklmnop".getBytes(), "AES");
+		
+		SecretKeySpec skeySpec = new SecretKeySpec(skeyA.getEncoded(), "AES");
+		
+		
+		byte[] generatedXorBytesA = EncryptorDecryptor.generateXorBytes(skeySpec, ivA);
 		assertTrue(generatedXorBytesA.length == maxImageSizeBytes);
 		
-		byte[] generatedXorBytesB = Encryptor.generateXorBytes(skeyA, ivB);
-		assertFalse(Arrays.equals(generatedXorBytesA, generatedXorBytesB));
+		byte[] generatedXorBytesC = EncryptorDecryptor.generateXorBytes(skeySpec, ivA);
+		assertTrue(Arrays.equals(generatedXorBytesA, generatedXorBytesC));
+		
+		
+		IvParameterSpec ivB = Encryptor.generateIv(ivLength);
+		byte[] generatedXorBytesB = EncryptorDecryptor.generateXorBytes(skeySpec, ivB); 
+		assertFalse(Arrays.equals(generatedXorBytesA, generatedXorBytesB)); 
+		 
 	}
 	
 	@Test
 	public void testXorPaddedImage() throws Exception {
-		SecretKey skeyB = Encryptor.generateSymmetricKey();
+		SecretKeySpec skeyB = new SecretKeySpec(Encryptor.generateSymmetricKey().getEncoded(), "AES");
 		IvParameterSpec ivB = Encryptor.generateIv(ivLength);
-		byte[] generatedXorBytes = Encryptor.generateXorBytes(skeyB, ivB);
+		byte[] generatedXorBytes = EncryptorDecryptor.generateXorBytes(skeyB, ivB);
 		byte[] imageBytes = new byte[maxImageSizeBytes];
-		byte[] xoredImage = Encryptor.xorPaddedImage(generatedXorBytes, imageBytes);
+		byte[] xoredImage = EncryptorDecryptor.xorPaddedImage(generatedXorBytes, imageBytes);
 		
 		assertTrue(Arrays.equals(xoredImage, generatedXorBytes)); // a XOR 0 = a
 	}
