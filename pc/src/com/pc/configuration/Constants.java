@@ -8,8 +8,8 @@ public class Constants {
 	public static final int PIXELS_IN_MODULE = 3;
 	
 	
-	public final static int DATA_LEN_ENCODING_LENGTH_BITS = 20;
-	public final static int DATA_LEN_ENCODING_LENGTH_MODULES = (int) Math.ceil(Math.log(DATA_LEN_ENCODING_LENGTH_BITS)/ Math.log(2));
+	public final static int DATA_LEN_ENCODING_LENGTH_BYTES = 4;
+	public final static int DATA_LEN_ENCODING_LENGTH_MODULES = (int) Math.ceil(Math.log(DATA_LEN_ENCODING_LENGTH_BYTES)/ Math.log(2));
 	public final static int MODULES_IN_ENCODED_IMAGE_DIM = 500;
 	public final static int MODULES_IN_POS_DET_DIM = 7; //maybe change to 8 due to white margins from inside of position detector and draw them in position detector creation
 	public final static int MODULES_IN_MARGIN = 2;

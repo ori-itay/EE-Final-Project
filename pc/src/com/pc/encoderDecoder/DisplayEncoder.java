@@ -28,7 +28,7 @@ public class DisplayEncoder {
 		createPositionDetectors(image, g);
 		//encode data length - 20 bits - masked
 		Position pos = new Position();
-		encodeDataLen(image, g, binaryData.length() * BITS_IN_BYTE, pos);
+		encodeDataLen(image, g, binaryData.length(), pos); //in bytes
 		//encode data - masked
 		encodeData(image, g, binaryData, pos);
 		
@@ -89,6 +89,7 @@ public class DisplayEncoder {
 
 	private static void encodeDataLen(BufferedImage image, Graphics2D g, int length, Position pos) throws Exception {
 		//LSB is encoded as the first (leftmost) module - little endian
+		//data length is encoded in bytes
 		int i;
 		int currentData, maskedData;
 		Color color;
