@@ -14,6 +14,8 @@ import java.util.Random;
 import javax.imageio.ImageIO;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import com.pc.encoderDecoder.DisplayDecoder;
 import com.pc.encoderDecoder.DisplayEncoder;
@@ -28,11 +30,9 @@ public class EncoderDecoderTest {
 	}
 	
 	@Test
-	public void testEncodeDecodeEncodeIdempotent() throws Exception {
+	public void testEncodeDecodeEncodeIdempotentLongest() throws Exception {
 		
-		//String testData = "BLABLABLABLABLA";
 		int length = MAX_ENCODED_LENGTH;
-		//int length = 1229310 + 1;
 		byte[] byteArr = new byte [length/8];
 		Random rand = new Random(); 
 		for(int i = 0; i < byteArr.length; i++) { byteArr[i] = (byte) rand.nextInt(127);}
@@ -43,9 +43,7 @@ public class EncoderDecoderTest {
 		String path = "C:\\Users\\user\\Downloads\\qrcode.png";
 		File encodedFile = new File(path);
 		ImageIO.write(encodedImage, "png", encodedFile);
-		String decodedString = new String(DisplayDecoder.decodeFilePC(encodedFile).getDecodedData());
-		System.out.println(decodedString);
-		
+		String decodedString = new String(DisplayDecoder.decodeFilePC(encodedFile).getDecodedData());		
 		assertEquals(testData.length(), decodedString.length());
 		assertEquals(testData, decodedString);
 		
@@ -109,6 +107,33 @@ public class EncoderDecoderTest {
 	    			assertEquals (newEncodedImage.getRGB(col,  row) , encodedImage.getRGB(col,  row));
 	    		}
 	    	}
+	}
+	
+	
+	@ParameterizedTest
+	@ValueSource(strings = {"BLABLA","This is a short sentence for testing encoding and decoding and encoding again idempotent!"})
+	public void testEncodeDecodeEncodeIdempotentSimple(String argument) throws Exception {
+		
+		BufferedImage encodedImage = DisplayEncoder.encodeBytes(argument.getBytes());
+		//save encoded image
+		String path = "C:\\Users\\user\\Downloads\\qrcode.png";
+		File encodedFile = new File(path);
+		ImageIO.write(encodedImage, "png", encodedFile);
+		String decodedString = new String(DisplayDecoder.decodeFilePC(encodedFile).getDecodedData());
+		System.out.println(decodedString);
+		
+		assertEquals(argument.length(), decodedString.length());
+		assertEquals(argument, decodedString);
+		
+		BufferedImage newEncodedImage = DisplayEncoder.encodeBytes(decodedString.getBytes());
+
+		assertEquals(newEncodedImage.getWidth(), encodedImage.getWidth());
+		assertEquals(newEncodedImage.getHeight(), encodedImage.getHeight());
+    	for (int row=0 ; row < newEncodedImage.getHeight() ; row++) {
+    		for (int col=0; col < newEncodedImage.getWidth(); col++) {
+    			assertEquals (newEncodedImage.getRGB(col,  row) , encodedImage.getRGB(col,  row));
+    		}
+    	}
 	}
 	
 	@Test
