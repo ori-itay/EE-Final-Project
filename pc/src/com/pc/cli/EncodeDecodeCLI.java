@@ -1,4 +1,5 @@
 package com.pc.cli;
+import java.awt.image.DataBufferInt;
 
 import static com.pc.configuration.Constants.MODULES_IN_ENCODED_IMAGE_DIM;
 import static com.pc.configuration.Constants.PIXELS_IN_MODULE;
@@ -22,7 +23,6 @@ public class EncodeDecodeCLI {
 		
 		boolean continueProgram = true;
 	    Scanner scanner = new Scanner(System.in);  // Create a Scanner object
-	    String fileContent;
 	    File inputFile;
 	    BufferedImage encodedImage;
 	    byte[] decodedImageData;
@@ -50,8 +50,10 @@ public class EncodeDecodeCLI {
         				System.out.println("Entered input filepath doesn't exist.\n");
         				continue;
         			}
-    				fileContent = new String(Files.readAllBytes(inputFile.toPath()));
-    				encodedImage = DisplayEncoder.encodeBytes(fileContent.getBytes());
+    				//fileContent = new String(Files.readAllBytes(inputFile.toPath()));
+        			BufferedImage image = ImageIO.read(inputFile);
+        			byte[] pixelRGB_Array = convertToBytesUsingGetRGB(image) ;
+    				encodedImage = DisplayEncoder.encodeBytes(pixelRGB_Array);
     				ImageIO.write(encodedImage, "png", new File(splitedCommand[2]));	
     				System.out.println("Encoded image was written to "+ splitedCommand[2]);
     				break;
@@ -66,19 +68,9 @@ public class EncodeDecodeCLI {
         				System.out.println("Entered input filepath doesn't exist.\n");
         				continue;
         			}
-        			decodedImageData = DisplayDecoder.decodeFilePC(inputFile).getDecodedData();
-    				System.out.println("Decoded string is: "+ new String(decodedImageData)+"\n");
-    				/*BufferedImage decodedImage = new BufferedImage(MODULES_IN_ENCODED_IMAGE_DIM*PIXELS_IN_MODULE,
-    						MODULES_IN_ENCODED_IMAGE_DIM*PIXELS_IN_MODULE, BufferedImage.TYPE_INT_ARGB);
-    		        for (int row=0; row < imageSampler.getPixelMatrix()[0].length ; row++) {
-    		        	 for (int col=0; col < imageSampler.getPixelMatrix().length ; col++) {
-    		        		 decodedImage.setRGB(col, row, imageSampler.getPixelMatrix()[row][col]);
-    		        	 }
-    		         }
-    				ImageIO.write(decodedImage, "png", new File(splitedCommand[2]));*/
-    			    BufferedWriter writer = new BufferedWriter(new FileWriter(splitedCommand[2]));
-    			    writer.write(new String(decodedImageData));
-    			    writer.close();
+        			RotatedImageSampler sampler = DisplayDecoder.decodeFilePC(inputFile);
+        			BufferedImage decodedImage = convertToImageUsingGetRGB(sampler.getDecodedData());
+    				ImageIO.write(decodedImage, "png", new File(splitedCommand[2]));
     				System.out.println("Decoded image was written to "+ splitedCommand[2]);
     				break;
     			case "decodestring":
@@ -105,5 +97,56 @@ public class EncodeDecodeCLI {
 	    }	    
 	    scanner.close();
 	}
+	
+    private static byte[] convertToBytesUsingGetRGB(BufferedImage image) {
+
+        assert(image.getWidth() < Short.MAX_VALUE && image.getHeight() < Short.MAX_VALUE);
+        
+        short width = (short) image.getWidth();
+        short height = (short) image.getHeight();
+        
+        int channels = 1;
+        int dimensionsByteLen = 4;
+        byte[] imageData = new byte[dimensionsByteLen + height*width*channels];
+        
+        
+        imageData[0] = (byte) width; imageData[1] = (byte) (width >> 8);
+        imageData[2] = (byte) height; imageData[3] = (byte) (height >> 8);
+
+        for (int row = 0; row < height; row++) {
+           for (int col = 0; col < width; col++) {
+        	   for(int channel = 0; channel<channels; channel++) {
+        		   imageData[dimensionsByteLen + row*width + col + channel] = (byte) (0xFF & (image.getRGB(col, row) >> (8*channel) ) );
+        	   }
+           }
+        }
+
+        return imageData;
+     }
+    
+    private static BufferedImage convertToImageUsingGetRGB(byte[] imageData) {
+    	
+        int width = (0xFFFF&imageData[0]) | (0xFFFF&(imageData[1]<<8)) ;
+        int height = (0xFFFF&imageData[2]) | (0xFFFF&(imageData[3]<<8)) ;
+        
+    	
+    	BufferedImage image = new BufferedImage(height, width, BufferedImage.TYPE_INT_ARGB);
+    	int dimensionsByteLen = 4;
+        int channels = 1;
+        int ARGB;          
+
+        for (int row = 0; row < height; row++) {
+           for (int col = 0; col < width; col++) {
+        	   ARGB = 0;
+        	   for(int channel = 0; channel<channels; channel++) {
+        		   ARGB |= (byte) (0xFF & (imageData[dimensionsByteLen + row*width + col + channel] >> (8*channel) ) );
+        	   }
+        	   //image.setRGB(col, row, ARGB);
+        	   image.setRGB(row, col, ARGB);
+           }
+        }
+
+        return image;
+     }
 
 }

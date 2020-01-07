@@ -2,6 +2,8 @@ package com.pc.encoderDecoder;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
+import java.util.Arrays;
+
 import static com.pc.configuration.Constants.*;
 
 
@@ -14,7 +16,7 @@ enum ROW {
 public class DisplayEncoder {
 	
 
-	public static BufferedImage encodeBytes(byte[] binaryData) throws Exception {
+	public static BufferedImage encodeBytes(byte[] binaryData, int height, int width, byte[] IV) throws Exception {
 		
 		//allocate space including white margins
 		BufferedImage image = new BufferedImage(MODULES_IN_ENCODED_IMAGE_DIM*PIXELS_IN_MODULE,
@@ -26,22 +28,24 @@ public class DisplayEncoder {
 		g.setColor(Color.BLACK);
 		//create position detector
 		createPositionDetectors(image, g);
-		//encode data length - 20 bits - masked
-		Position pos = new Position();
-		encodeDataLen(image, g, binaryData.length, pos); //in bytes
-		//encode data - masked
-		encodeData(image, g, binaryData, pos);
+		Position pos = new Position(MODULES_IN_MARGIN, MODULES_IN_MARGIN + MODULES_IN_POS_DET_DIM);
+		encodeData(image,g, IV, pos); //encode IV
+		encodeData(image, g, binaryData, pos); 	//encode actual picture data
 		
 		return image;
+	}
+	
+	public static BufferedImage encodeBytes(byte[] binaryData) throws Exception {
+		byte[] IV = new byte[ivLength];
+		Arrays.fill(IV, 0, ivLength -1, (byte) 0);
+		return encodeBytes(binaryData, 1, binaryData.length/RGB_PIXEL_DATA_SIZE, IV);
 	}
 
 
 	private static void encodeData(BufferedImage image, Graphics2D g, byte[] binaryData, Position pos) {
 		
-		int maskedData = 0, bitsLeftInByte = BITS_IN_BYTE, currByteInd = 0, mask = BIT_GROUP_MASK_OF_ONES,
-				ones_in_mask = ENCODING_BIT_GROUP_SIZE, level;
+		int bitsLeftInByte = BITS_IN_BYTE, currByteInd = 0, mask = BIT_GROUP_MASK_OF_ONES, ones_in_mask = ENCODING_BIT_GROUP_SIZE;
 		byte currByte, currentData = 0;
-		Color color;
 		
 		currByte = binaryData[currByteInd];
 		
@@ -60,14 +64,7 @@ public class DisplayEncoder {
 			}
 			
 			if(mask == 0) { // encode block
-				//maskedData = maskDataBits(currentData);
-				maskedData = (int) (currentData & 0x000000FF);
-				level = (int) ((maskedData*GREY_SCALE_DELTA) & 0x000000FF);
-				color = new Color(level, level, level);
-				g.setColor(color);
-				g.fillRect(pos.colModule * PIXELS_IN_MODULE, pos.rowModule * PIXELS_IN_MODULE, PIXELS_IN_MODULE, PIXELS_IN_MODULE);
-				pos.colModule++;		
-				RotatedImageSampler.checkForColumnEnd(pos);
+				encodeBlock(currentData, g, pos);
 				mask = BIT_GROUP_MASK_OF_ONES;
 				ones_in_mask = ENCODING_BIT_GROUP_SIZE;
 				currentData = 0;
@@ -80,36 +77,45 @@ public class DisplayEncoder {
 					bitsLeftInByte = BITS_IN_BYTE;
 				}
 				else {
-					//maskedData = maskDataBits(currentData);
-					maskedData = (int) (currentData & 0x000000FF);
-					level = (int) ((maskedData*GREY_SCALE_DELTA) & 0x000000FF);
-					color = new Color(level, level, level);
-					g.setColor(color);
-					g.fillRect(pos.colModule * PIXELS_IN_MODULE, pos.rowModule * PIXELS_IN_MODULE, PIXELS_IN_MODULE, PIXELS_IN_MODULE);
-					pos.colModule++;		
-					RotatedImageSampler.checkForColumnEnd(pos);
+					encodeBlock(currentData, g, pos);
 					return;
 				}
 			}
 		}
 
 	}
+private static void encodeBlock(byte currentData, Graphics2D g, Position pos) {
+	int maskedData = 0, level;
+	Color color;
+	
+	//maskedData = maskDataBits(currentData);
+	maskedData = (int) (currentData & 0x000000FF);
+	level = (int) ((maskedData*GREY_SCALE_DELTA) & 0x000000FF);
+	color = new Color(level, level, level);
+	g.setColor(color);
+	g.fillRect(pos.colModule * PIXELS_IN_MODULE, pos.rowModule * PIXELS_IN_MODULE, PIXELS_IN_MODULE, PIXELS_IN_MODULE);
+	pos.colModule++;		
+	RotatedImageSampler.checkForColumnEnd(pos);		
+}
 
-	private static void encodeDataLen(BufferedImage image, Graphics2D g, int length, Position pos) throws Exception {
+/*
+	private static void encodeImageDims(BufferedImage image, Graphics2D g, int height, int width, Position pos) throws Exception {
 		//LSB is encoded as the first (leftmost) module - little endian
-		//data length is encoded in bytes
 		
 		pos.rowModule = MODULES_IN_MARGIN;		
 		pos.colModule = MODULES_IN_MARGIN + MODULES_IN_POS_DET_DIM;
 		
-		if(length * 8 > MAX_ENCODED_LENGTH) {
-			throw new Exception("Data len is: "+length+". file is too large to be encoded! Max legal len is: "+MAX_ENCODED_LENGTH);
+		int encodedDataLengthInBits = height * width * RGB_PIXEL_DATA_SIZE;
+		if(encodedDataLengthInBits > MAX_ENCODED_LENGTH) {
+			throw new Exception("Data len is: "+encodedDataLengthInBits+". file is too large to be encoded! Max legal len is: "+MAX_ENCODED_LENGTH);
 		}
-		byte[] lengthAsBytes = new byte[] {(byte)length,  (byte)(length >>> 8), (byte)(length >>> 16), (byte)(length >>> 24)};
-		encodeData(image, g, lengthAsBytes, pos);
+		byte[] heightAsBytes = new byte[] {(byte)height,  (byte)(height >>> 8)};
+		byte[] widthAsBytes = new byte[] {(byte)width,  (byte)(width >>> 8)};
+		encodeData(image, g, heightAsBytes, pos);
+		encodeData(image, g, widthAsBytes, pos);
 	}
 
-
+*/
 	private static void createPositionDetectors(BufferedImage image, Graphics2D g) {
 		
 		final int MID_LAYER_OFFSET_1 = 1; final int MID_LAYER_OFFSET_2 = 5;

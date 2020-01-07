@@ -24,13 +24,27 @@ public class StdImageSampler implements ImageSamplerInf{
 	public byte[] getDecodedData() {
 		return decodedData;
 	}
+	
+	public int getImageHeight() {
+		return imageHeight;
+	}
 
+	public int getImageWidth() {
+		return imageWidth;
+	}
+
+	public byte[] getIV() {
+		return IV;
+	}
 
 	BufferedImage proccesedImage;
 	int[][] pixelMatrix;
 	int moduleSize = 0;
+	int imageHeight;
+	int imageWidth;
 	int dataLength;	
 	byte[] decodedData;
+	byte[] IV;
 	
 	static void checkForColumnEnd(Position pos) {
 		

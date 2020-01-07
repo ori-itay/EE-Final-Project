@@ -34,8 +34,10 @@ public class DisplayDecoder {
 		configureModuleSizeAndRotation(imageSampler);
 		assert( imageSampler.moduleSize != 0);	
 		//configureCrop(imageSampler);
-		byte[] dataLengthBytes = decodeData(imageSampler, DATA_LEN_ENCODING_LENGTH_BYTES, pos);
-		imageSampler.dataLength = byteArrayToInt(dataLengthBytes);
+		imageSampler.IV = decodeData(imageSampler, ivLength, pos);
+		//byte[] dataLengthBytes = decodeData(imageSampler, DATA_LEN_ENCODING_LENGTH_BYTES, pos);
+		//imageSampler.dataLength = byteArrayToInt(dataLengthBytes);
+		imageSampler.dataLength = MAX_ENCODED_LENGTH/BITS_IN_BYTE;
 		
 		return imageSampler;
 	}
@@ -43,15 +45,11 @@ public class DisplayDecoder {
 	
 	private static byte[] decodeData(RotatedImageSampler imageSampler, int lengthInBytes, Position pos) {
 		
-		//int modulesToDecode = (int) Math.ceil(imageSampler.dataLength * BITS_IN_BYTE / ENCODING_BIT_GROUP_SIZE);
 		byte[] decodedData = new byte[lengthInBytes];
-		
 		
 		int bitsLeftToByte = BITS_IN_BYTE, currByteInd = 0, mask = BIT_GROUP_MASK_OF_ONES,	ones_in_mask = ENCODING_BIT_GROUP_SIZE;
 	
-		int sampledModuleVal = sampleModule(imageSampler, pos);// << BITS_IN_BYTE; // shift to ignore alpha
-		pos.colModule++;		
-		RotatedImageSampler.checkForColumnEnd(pos);
+		int sampledModuleVal = sampleModule(imageSampler, pos);// << BITS_IN_BYTE; // shift to ignore alpha	
 		Color rgbColor = new Color(sampledModuleVal);
 		int redChannelValue = rgbColor.getRed() ;
 		byte currModule = (byte) (redChannelValue / GREY_SCALE_DELTA); //assuming only single channel encoded i.e one byte. also assuming ENCODING_COLOR_LEVELS<255
@@ -71,9 +69,7 @@ public class DisplayDecoder {
 			}
 			
 			if(mask == 0) { // get next block
-				sampledModuleVal = sampleModule(imageSampler, pos);// << BITS_IN_BYTE; // shift to ignore alpha
-				pos.colModule++;		
-				RotatedImageSampler.checkForColumnEnd(pos);
+				sampledModuleVal = sampleModule(imageSampler, pos);// << BITS_IN_BYTE; // shift to ignore alpha	
 				rgbColor = new Color(sampledModuleVal);
 				redChannelValue = rgbColor.getRed() ;
 				currModule = (byte) (redChannelValue / GREY_SCALE_DELTA); //assuming only single channel encoded i.e one byte. also assuming ENCODING_COLOR_LEVELS<255
@@ -101,8 +97,10 @@ public class DisplayDecoder {
 		int rowPixel = pos.rowModule * imageSampler.moduleSize;
 		int colPixel = pos.colModule * imageSampler.moduleSize; 
 		
+		pos.colModule++;
+		RotatedImageSampler.checkForColumnEnd(pos);
+		
 		return imageSampler.getPixel(rowPixel, colPixel);
-
 	}
 	
 	 // packing an array of bytes to an int - Little Endian
