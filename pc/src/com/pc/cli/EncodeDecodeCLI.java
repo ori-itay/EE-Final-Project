@@ -1,6 +1,7 @@
 package com.pc.cli;
 import static com.pc.configuration.Constants.*;
 
+import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.nio.ByteBuffer;
@@ -98,7 +99,7 @@ public class EncodeDecodeCLI {
         short width = (short) image.getWidth();
         short height = (short) image.getHeight();
         
-        int channels = 4, ARGB, currChannel;
+        int channels = 4, ARGB, currChannel, index;
         ByteBuffer wrapper;
 
         if(DIMENSIONS_ENCODING_BYTE_LEN + height*width*channels > MAX_ENCODED_LENGTH/8) {
@@ -111,16 +112,35 @@ public class EncodeDecodeCLI {
         
         imageData[0] = (byte) (width >>> 8); imageData[1] = (byte) width;
         imageData[2] = (byte) (height >>> 8); imageData[3] = (byte) height;
+        
 
         for (int row = 0; row < height; row++) {
            for (int col = 0; col < width; col++) {
         	   ARGB = image.getRGB(col, row);
-        	   /*for(int channel = 0; channel<channels; channel++) {
-        		   currChannel = ARGB >>> (BITS_IN_BYTE*(3-channel));
-        		   imageData[DIMENSIONS_ENCODING_BYTE_LEN + row*width + col + channel] = (byte) currChannel;
-        	   }*/
-        	   wrapper = ByteBuffer.wrap(imageData, DIMENSIONS_ENCODING_BYTE_LEN + row*width + col, channels);
-        	   wrapper.putInt(ARGB);
+        	   
+        	   Color c = new Color(ARGB, true);
+        	   
+        	   byte alpha = (byte) c.getAlpha();
+        	   byte red = (byte) c.getRed();
+        	   byte green = (byte) c.getGreen();
+        	   byte blue = (byte) c.getBlue();
+        	   
+        	   index = (row*width + col)*channels;
+        	   
+        	   imageData[DIMENSIONS_ENCODING_BYTE_LEN + index] = (byte) c.getAlpha();
+        	   imageData[DIMENSIONS_ENCODING_BYTE_LEN + index + 1] = (byte) c.getRed();
+        	   imageData[DIMENSIONS_ENCODING_BYTE_LEN + index + 2] = (byte) c.getGreen();
+        	   imageData[DIMENSIONS_ENCODING_BYTE_LEN + index + 3] = (byte) c.getBlue();
+        	   
+ //       	   for(int channel = 0; channel<channels; channel++) {
+//        		   currChannel = ARGB >>> (BITS_IN_BYTE*(3-channel));
+//        		   imageData[DIMENSIONS_ENCODING_BYTE_LEN + row*width + col + channel] = (byte) currChannel;
+        		   
+        		   
+ //       	   }
+        
+//        	   wrapper = ByteBuffer.wrap(imageData, DIMENSIONS_ENCODING_BYTE_LEN + row*width + col, channels);
+//        	   wrapper.putInt(ARGB);
         	   //imageData[DIMENSIONS_ENCODING_BYTE_LEN + row*width + col] = (byte) (image.getRGB(col, row));
            }
         }
@@ -128,7 +148,7 @@ public class EncodeDecodeCLI {
         for(int i = DIMENSIONS_ENCODING_BYTE_LEN + height*width*channels; i < MAX_ENCODED_LENGTH/8; i++) {
         	imageData[i] = (byte) 0;
         }
-
+                
         return imageData;
      }
     
@@ -136,6 +156,7 @@ public class EncodeDecodeCLI {
 
 		int width = signedShortToUnsignedInt(imageData, 0, 2);
 		int height = signedShortToUnsignedInt(imageData, 2, 2);
+		int index;
     	
 		BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
         int channels = 4;
@@ -144,8 +165,9 @@ public class EncodeDecodeCLI {
         
         for (int row = 0; row < height; row++) {
            for (int col = 0; col < width; col++) {
+        	  index = (row*width + col)*channels;
         	  //ARGB = signedShortToUnsignedInt(imageData, DIMENSIONS_ENCODING_BYTE_LEN + row*width + col, channels); 
-        	  wrapped = ByteBuffer.wrap(imageData, DIMENSIONS_ENCODING_BYTE_LEN + row*width + col, channels);
+        	  wrapped = ByteBuffer.wrap(imageData, DIMENSIONS_ENCODING_BYTE_LEN + index, channels);
         	  ARGB = wrapped.getInt();
         	  image.setRGB(col, row, ARGB);
            }
