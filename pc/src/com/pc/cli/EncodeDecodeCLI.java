@@ -99,6 +99,7 @@ public class EncodeDecodeCLI {
         short height = (short) image.getHeight();
         
         int channels = 4, ARGB, currChannel;
+        ByteBuffer wrapper;
 
         if(DIMENSIONS_ENCODING_BYTE_LEN + height*width*channels > MAX_ENCODED_LENGTH/8) {
         	System.out.println("file too large\n");
@@ -114,10 +115,12 @@ public class EncodeDecodeCLI {
         for (int row = 0; row < height; row++) {
            for (int col = 0; col < width; col++) {
         	   ARGB = image.getRGB(col, row);
-        	   for(int channel = 0; channel<channels; channel++) {
+        	   /*for(int channel = 0; channel<channels; channel++) {
         		   currChannel = ARGB >>> (BITS_IN_BYTE*(3-channel));
         		   imageData[DIMENSIONS_ENCODING_BYTE_LEN + row*width + col + channel] = (byte) currChannel;
-        	   }
+        	   }*/
+        	   wrapper = ByteBuffer.wrap(imageData, DIMENSIONS_ENCODING_BYTE_LEN + row*width + col, channels);
+        	   wrapper.putInt(ARGB);
         	   //imageData[DIMENSIONS_ENCODING_BYTE_LEN + row*width + col] = (byte) (image.getRGB(col, row));
            }
         }
@@ -136,12 +139,14 @@ public class EncodeDecodeCLI {
     	
 		BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
         int channels = 4;
-        int ARGB;          
+        int ARGB; 
+        ByteBuffer wrapped;
         
         for (int row = 0; row < height; row++) {
            for (int col = 0; col < width; col++) {
-        	   ARGB = signedShortToUnsignedInt(imageData, DIMENSIONS_ENCODING_BYTE_LEN + row*width + col, channels); 
-        	  //ARGB = Short.toUnsignedInt(imageData[DIMENSIONS_ENCODING_BYTE_LEN + row*width + col]) | 0xFF000000;
+        	  //ARGB = signedShortToUnsignedInt(imageData, DIMENSIONS_ENCODING_BYTE_LEN + row*width + col, channels); 
+        	  wrapped = ByteBuffer.wrap(imageData, DIMENSIONS_ENCODING_BYTE_LEN + row*width + col, channels);
+        	  ARGB = wrapped.getInt();
         	  image.setRGB(col, row, ARGB);
            }
         }
