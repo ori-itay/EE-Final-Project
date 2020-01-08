@@ -1,16 +1,9 @@
 package com.pc.cli;
-import java.awt.image.DataBufferInt;
 import static com.pc.configuration.Constants.*;
 
-import static com.pc.configuration.Constants.MODULES_IN_ENCODED_IMAGE_DIM;
-import static com.pc.configuration.Constants.PIXELS_IN_MODULE;
-
 import java.awt.image.BufferedImage;
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
 import java.nio.ByteBuffer;
-import java.nio.file.Files;
 import java.util.Scanner;
 import javax.imageio.ImageIO;
 
@@ -140,7 +133,6 @@ public class EncodeDecodeCLI {
 		int width = signedShortToUnsignedInt(imageData, 0, 2);
 		int height = signedShortToUnsignedInt(imageData, 2, 2);
     	
-    	//BufferedImage image = new BufferedImage(height, width, BufferedImage.TYPE_INT_ARGB);
 		BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
         int channels = 4;
         int ARGB;          

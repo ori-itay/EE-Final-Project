@@ -6,9 +6,7 @@ import static com.pc.configuration.Constants.*;
 import java.awt.geom.AffineTransform;
 import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.util.Arrays;
 import java.util.Random;
 
 import javax.imageio.ImageIO;
