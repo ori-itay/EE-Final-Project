@@ -1,9 +1,10 @@
 package com.pc.encoderDecoder;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.nio.ByteBuffer;
+
 import javax.imageio.ImageIO;
 import static com.pc.configuration.Constants.*;
-import java.awt.Color;
 
 public class DisplayDecoder {
 	
@@ -20,10 +21,11 @@ public class DisplayDecoder {
 					
 		Position pos = new Position(MODULES_IN_MARGIN, MODULES_IN_MARGIN + MODULES_IN_POS_DET_DIM);
 		//extract image configuration and return cropped rotated image
-		
 		RotatedImageSampler imageSampler = configureImage(pixelMatrix, pos);
 		//decode image data to byte array
 		imageSampler.decodedData = decodeData(imageSampler, imageSampler.dataLength, pos);
+		imageSampler.imageWidth = signedShortToUnsignedInt(imageSampler.decodedData, 0, 2);
+		imageSampler.imageHeight = signedShortToUnsignedInt(imageSampler.decodedData, 2, 2);
 
 		return imageSampler;
 	}
@@ -49,9 +51,8 @@ public class DisplayDecoder {
 		
 		int bitsLeftToByte = BITS_IN_BYTE, currByteInd = 0, mask = BIT_GROUP_MASK_OF_ONES,	ones_in_mask = ENCODING_BIT_GROUP_SIZE;
 	
-		int sampledModuleVal = sampleModule(imageSampler, pos);// << BITS_IN_BYTE; // shift to ignore alpha	
-		Color rgbColor = new Color(sampledModuleVal);
-		int redChannelValue = rgbColor.getRed() ;
+		byte[] ARGB = sampleModule(imageSampler, pos);// << BITS_IN_BYTE; // shift to ignore alpha	
+		int redChannelValue = ARGB[1];
 		byte currModule = (byte) (redChannelValue / GREY_SCALE_DELTA); //assuming only single channel encoded i.e one byte. also assuming ENCODING_COLOR_LEVELS<255
 		byte maskedData, currentData = 0;
 
@@ -69,9 +70,8 @@ public class DisplayDecoder {
 			}
 			
 			if(mask == 0) { // get next block
-				sampledModuleVal = sampleModule(imageSampler, pos);// << BITS_IN_BYTE; // shift to ignore alpha	
-				rgbColor = new Color(sampledModuleVal);
-				redChannelValue = rgbColor.getRed() ;
+				ARGB = sampleModule(imageSampler, pos);// << BITS_IN_BYTE; // shift to ignore alpha	
+				redChannelValue = ARGB[1];
 				currModule = (byte) (redChannelValue / GREY_SCALE_DELTA); //assuming only single channel encoded i.e one byte. also assuming ENCODING_COLOR_LEVELS<255
 				mask = BIT_GROUP_MASK_OF_ONES;
 				ones_in_mask = ENCODING_BIT_GROUP_SIZE;
@@ -92,15 +92,22 @@ public class DisplayDecoder {
 		}
 	}
 
-	private static int sampleModule(RotatedImageSampler imageSampler, Position pos) {
+	private static byte[] sampleModule(RotatedImageSampler imageSampler, Position pos) {
 		
 		int rowPixel = pos.rowModule * imageSampler.moduleSize;
 		int colPixel = pos.colModule * imageSampler.moduleSize; 
+		int currPixelSample = imageSampler.getPixel(rowPixel, colPixel);
+		byte[] ARGB = new byte[4];
+		
+		ARGB[0] = (byte) (currPixelSample >>> 24); //alpha
+		ARGB[1] = (byte) (currPixelSample >>> 16); //red
+		ARGB[2] = (byte) (currPixelSample >>> 8); //green
+		ARGB[3] = (byte) (currPixelSample); //blue
 		
 		pos.colModule++;
 		RotatedImageSampler.checkForColumnEnd(pos);
 		
-		return imageSampler.getPixel(rowPixel, colPixel);
+		return ARGB;
 	}
 	
 	 // packing an array of bytes to an int - Little Endian
@@ -256,5 +263,10 @@ public class DisplayDecoder {
 
         return result;
      }
+    
+	private static int signedShortToUnsignedInt(byte[] bytes, int start, int length) {
+		short signedShort = ByteBuffer.wrap(bytes, start, length).getShort();
+		return Short.toUnsignedInt(signedShort);
+	}
 
 }

@@ -11,6 +11,9 @@ import javax.imageio.ImageIO;
 import com.pc.encoderDecoder.DisplayDecoder;
 import com.pc.encoderDecoder.DisplayEncoder;
 import com.pc.encoderDecoder.RotatedImageSampler;
+import com.pc.encoderDecoder.StdImageSampler;
+import com.pc.Flow;
+
 
 
 public class EncodeDecodeCLI {
@@ -63,7 +66,7 @@ public class EncodeDecodeCLI {
         				continue;
         			}
         			RotatedImageSampler sampler = DisplayDecoder.decodeFilePC(inputFile);
-        			BufferedImage decodedImage = convertToImageUsingGetRGB(sampler.getDecodedData());
+        			BufferedImage decodedImage = Flow.convertToImageUsingGetRGB(sampler.getDecodedData(), sampler.getImageWidth(), sampler.getImageHeight());
     				ImageIO.write(decodedImage, "png", new File(splitedCommand[2]));
     				System.out.println("Decoded image was written to "+ splitedCommand[2]);
     				break;
@@ -99,8 +102,7 @@ public class EncodeDecodeCLI {
         short width = (short) image.getWidth();
         short height = (short) image.getHeight();
         
-        int channels = 4, ARGB, currChannel, index;
-        ByteBuffer wrapper;
+        int channels = 4, ARGB, index;
 
         if(DIMENSIONS_ENCODING_BYTE_LEN + height*width*channels > MAX_ENCODED_LENGTH/8) {
         	System.out.println("file too large\n");
@@ -117,31 +119,12 @@ public class EncodeDecodeCLI {
         for (int row = 0; row < height; row++) {
            for (int col = 0; col < width; col++) {
         	   ARGB = image.getRGB(col, row);
-        	   
-        	   Color c = new Color(ARGB, true);
-        	   
-        	   byte alpha = (byte) c.getAlpha();
-        	   byte red = (byte) c.getRed();
-        	   byte green = (byte) c.getGreen();
-        	   byte blue = (byte) c.getBlue();
-        	   
         	   index = (row*width + col)*channels;
         	   
-        	   imageData[DIMENSIONS_ENCODING_BYTE_LEN + index] = (byte) c.getAlpha();
-        	   imageData[DIMENSIONS_ENCODING_BYTE_LEN + index + 1] = (byte) c.getRed();
-        	   imageData[DIMENSIONS_ENCODING_BYTE_LEN + index + 2] = (byte) c.getGreen();
-        	   imageData[DIMENSIONS_ENCODING_BYTE_LEN + index + 3] = (byte) c.getBlue();
-        	   
- //       	   for(int channel = 0; channel<channels; channel++) {
-//        		   currChannel = ARGB >>> (BITS_IN_BYTE*(3-channel));
-//        		   imageData[DIMENSIONS_ENCODING_BYTE_LEN + row*width + col + channel] = (byte) currChannel;
-        		   
-        		   
- //       	   }
-        
-//        	   wrapper = ByteBuffer.wrap(imageData, DIMENSIONS_ENCODING_BYTE_LEN + row*width + col, channels);
-//        	   wrapper.putInt(ARGB);
-        	   //imageData[DIMENSIONS_ENCODING_BYTE_LEN + row*width + col] = (byte) (image.getRGB(col, row));
+        	   imageData[DIMENSIONS_ENCODING_BYTE_LEN + index] = (byte) (ARGB >>> 24); //alpha
+        	   imageData[DIMENSIONS_ENCODING_BYTE_LEN + index + 1] = (byte) (ARGB >>> 16);//red
+        	   imageData[DIMENSIONS_ENCODING_BYTE_LEN + index + 2] = (byte) (ARGB >>> 8);//green
+        	   imageData[DIMENSIONS_ENCODING_BYTE_LEN + index + 3] = (byte) ARGB;//blue
            }
         }
         //pad with '0'
@@ -151,34 +134,5 @@ public class EncodeDecodeCLI {
                 
         return imageData;
      }
-    
-    private static BufferedImage convertToImageUsingGetRGB(byte[] imageData) {
-
-		int width = signedShortToUnsignedInt(imageData, 0, 2);
-		int height = signedShortToUnsignedInt(imageData, 2, 2);
-		int index;
-    	
-		BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-        int channels = 4;
-        int ARGB; 
-        ByteBuffer wrapped;
-        
-        for (int row = 0; row < height; row++) {
-           for (int col = 0; col < width; col++) {
-        	  index = (row*width + col)*channels;
-        	  //ARGB = signedShortToUnsignedInt(imageData, DIMENSIONS_ENCODING_BYTE_LEN + row*width + col, channels); 
-        	  wrapped = ByteBuffer.wrap(imageData, DIMENSIONS_ENCODING_BYTE_LEN + index, channels);
-        	  ARGB = wrapped.getInt();
-        	  image.setRGB(col, row, ARGB);
-           }
-        }
-
-        return image;
-     }
-    
-	private static int signedShortToUnsignedInt(byte[] bytes, int start, int length) {
-		short signedShort = ByteBuffer.wrap(bytes, start, length).getShort();
-		return Short.toUnsignedInt(signedShort);
-	}
 
 }
