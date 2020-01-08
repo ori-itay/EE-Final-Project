@@ -98,7 +98,7 @@ public class EncodeDecodeCLI {
         short width = (short) image.getWidth();
         short height = (short) image.getHeight();
         
-        int channels = 1;
+        int channels = 4, ARGB, currChannel;
 
         if(DIMENSIONS_ENCODING_BYTE_LEN + height*width*channels > MAX_ENCODED_LENGTH/8) {
         	System.out.println("file too large\n");
@@ -113,11 +113,12 @@ public class EncodeDecodeCLI {
 
         for (int row = 0; row < height; row++) {
            for (int col = 0; col < width; col++) {
-        	   /*
+        	   ARGB = image.getRGB(col, row);
         	   for(int channel = 0; channel<channels; channel++) {
-        		   imageData[DIMENSIONS_ENCODING_BYTE_LEN + row*width + col + channel] = (byte) (0xFF & (image.getRGB(col, row) >> (8*channel) ) );
-        	   }*/
-        	   imageData[DIMENSIONS_ENCODING_BYTE_LEN + row*width + col] = (byte) (image.getRGB(col, row));
+        		   currChannel = ARGB >>> (BITS_IN_BYTE*(3-channel));
+        		   imageData[DIMENSIONS_ENCODING_BYTE_LEN + row*width + col + channel] = (byte) currChannel;
+        	   }
+        	   //imageData[DIMENSIONS_ENCODING_BYTE_LEN + row*width + col] = (byte) (image.getRGB(col, row));
            }
         }
         //pad with '0'
@@ -139,13 +140,8 @@ public class EncodeDecodeCLI {
         
         for (int row = 0; row < height; row++) {
            for (int col = 0; col < width; col++) {
-        	   ARGB = 0;
-        	   /*
-        	   for(int channel = 0; channel<channels; channel++) {
-        		   ARGB |= (byte) (0xFF & (imageData[DIMENSIONS_ENCODING_BYTE_LEN + row*width + col + channel] >>> (BITS_IN_BYTE*channel) ) );
-        	   }*/
-        	   //image.setRGB(col, row, ARGB);
-        	   ARGB = Short.toUnsignedInt(imageData[DIMENSIONS_ENCODING_BYTE_LEN + row*width + col]) | 0xFF000000;
+        	   ARGB = signedShortToUnsignedInt(imageData, DIMENSIONS_ENCODING_BYTE_LEN + row*width + col, channels); 
+        	  //ARGB = Short.toUnsignedInt(imageData[DIMENSIONS_ENCODING_BYTE_LEN + row*width + col]) | 0xFF000000;
         	  image.setRGB(col, row, ARGB);
            }
         }
