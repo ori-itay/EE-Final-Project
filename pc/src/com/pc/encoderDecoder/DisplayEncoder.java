@@ -3,7 +3,6 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.util.Arrays;
-
 import static com.pc.configuration.Constants.*;
 
 
@@ -98,24 +97,7 @@ private static void encodeBlock(byte currentData, Graphics2D g, Position pos) {
 	RotatedImageSampler.checkForColumnEnd(pos);		
 }
 
-/*
-	private static void encodeImageDims(BufferedImage image, Graphics2D g, int height, int width, Position pos) throws Exception {
-		//LSB is encoded as the first (leftmost) module - little endian
-		
-		pos.rowModule = MODULES_IN_MARGIN;		
-		pos.colModule = MODULES_IN_MARGIN + MODULES_IN_POS_DET_DIM;
-		
-		int encodedDataLengthInBits = height * width * RGB_PIXEL_DATA_SIZE;
-		if(encodedDataLengthInBits > MAX_ENCODED_LENGTH) {
-			throw new Exception("Data len is: "+encodedDataLengthInBits+". file is too large to be encoded! Max legal len is: "+MAX_ENCODED_LENGTH);
-		}
-		byte[] heightAsBytes = new byte[] {(byte)height,  (byte)(height >>> 8)};
-		byte[] widthAsBytes = new byte[] {(byte)width,  (byte)(width >>> 8)};
-		encodeData(image, g, heightAsBytes, pos);
-		encodeData(image, g, widthAsBytes, pos);
-	}
 
-*/
 	private static void createPositionDetectors(BufferedImage image, Graphics2D g) {
 		
 		final int MID_LAYER_OFFSET_1 = 1; final int MID_LAYER_OFFSET_2 = 5;

@@ -1,5 +1,6 @@
 package com.pc.cli;
 import java.awt.image.DataBufferInt;
+import static com.pc.configuration.Constants.*;
 
 import static com.pc.configuration.Constants.MODULES_IN_ENCODED_IMAGE_DIM;
 import static com.pc.configuration.Constants.PIXELS_IN_MODULE;
@@ -8,6 +9,7 @@ import java.awt.image.BufferedImage;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
+import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.util.Scanner;
 import javax.imageio.ImageIO;
@@ -25,7 +27,6 @@ public class EncodeDecodeCLI {
 	    Scanner scanner = new Scanner(System.in);  // Create a Scanner object
 	    File inputFile;
 	    BufferedImage encodedImage;
-	    byte[] decodedImageData;
 	    
 	    System.out.println("Enter Decode/Encode command:");
 	    
@@ -106,47 +107,63 @@ public class EncodeDecodeCLI {
         short height = (short) image.getHeight();
         
         int channels = 1;
-        int dimensionsByteLen = 4;
-        byte[] imageData = new byte[dimensionsByteLen + height*width*channels];
+
+        if(DIMENSIONS_ENCODING_BYTE_LEN + height*width*channels > MAX_ENCODED_LENGTH/8) {
+        	System.out.println("file too large\n");
+        	System.exit(1); 
+        }
+        
+        byte[] imageData = new byte[MAX_ENCODED_LENGTH/8];
         
         
-        imageData[0] = (byte) width; imageData[1] = (byte) (width >> 8);
-        imageData[2] = (byte) height; imageData[3] = (byte) (height >> 8);
+        imageData[0] = (byte) (width >>> 8); imageData[1] = (byte) width;
+        imageData[2] = (byte) (height >>> 8); imageData[3] = (byte) height;
 
         for (int row = 0; row < height; row++) {
            for (int col = 0; col < width; col++) {
+        	   /*
         	   for(int channel = 0; channel<channels; channel++) {
-        		   imageData[dimensionsByteLen + row*width + col + channel] = (byte) (0xFF & (image.getRGB(col, row) >> (8*channel) ) );
-        	   }
+        		   imageData[DIMENSIONS_ENCODING_BYTE_LEN + row*width + col + channel] = (byte) (0xFF & (image.getRGB(col, row) >> (8*channel) ) );
+        	   }*/
+        	   imageData[DIMENSIONS_ENCODING_BYTE_LEN + row*width + col] = (byte) (image.getRGB(col, row) );
            }
+        }
+        //pad with '0'
+        for(int i = DIMENSIONS_ENCODING_BYTE_LEN + height*width*channels; i < MAX_ENCODED_LENGTH/8; i++) {
+        	imageData[i] = (byte) 0;
         }
 
         return imageData;
      }
     
     private static BufferedImage convertToImageUsingGetRGB(byte[] imageData) {
-    	
-        int width = (0xFFFF&imageData[0]) | (0xFFFF&(imageData[1]<<8)) ;
-        int height = (0xFFFF&imageData[2]) | (0xFFFF&(imageData[3]<<8)) ;
-        
+
+		int width = signedShortToUnsignedInt(imageData, 0, 2);
+		int height = signedShortToUnsignedInt(imageData, 2, 2);
     	
     	BufferedImage image = new BufferedImage(height, width, BufferedImage.TYPE_INT_ARGB);
-    	int dimensionsByteLen = 4;
-        int channels = 1;
+        int channels = 4;
         int ARGB;          
-
+        
         for (int row = 0; row < height; row++) {
            for (int col = 0; col < width; col++) {
         	   ARGB = 0;
+        	   /*
         	   for(int channel = 0; channel<channels; channel++) {
-        		   ARGB |= (byte) (0xFF & (imageData[dimensionsByteLen + row*width + col + channel] >> (8*channel) ) );
-        	   }
+        		   ARGB |= (byte) (0xFF & (imageData[DIMENSIONS_ENCODING_BYTE_LEN + row*width + col + channel] >>> (BITS_IN_BYTE*channel) ) );
+        	   }*/
         	   //image.setRGB(col, row, ARGB);
+        	   ARGB = Short.toUnsignedInt(imageData[DIMENSIONS_ENCODING_BYTE_LEN + row*width + col]);
         	   image.setRGB(row, col, ARGB);
            }
         }
 
         return image;
      }
+    
+	private static int signedShortToUnsignedInt(byte[] bytes, int start, int length) {
+		short signedShort = ByteBuffer.wrap(bytes, start, length).getShort();
+		return Short.toUnsignedInt(signedShort);
+	}
 
 }
