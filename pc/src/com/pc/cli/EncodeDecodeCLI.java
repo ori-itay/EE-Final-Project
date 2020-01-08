@@ -34,8 +34,7 @@ public class EncodeDecodeCLI {
 	    	String userCommand = scanner.nextLine().toLowerCase();  // Read user input
 
     		String[] splitedCommand = userCommand.split("\\s+");
-    		if(splitedCommand.length > 3 || splitedCommand.length < 2 ||
-    				(splitedCommand.length == 2 && (splitedCommand[0].equals("encode") || splitedCommand[0].equals("decode")) ) ) {
+    		if(splitedCommand.length < 2 && !splitedCommand[0].equals("exit")) {
 	    		System.out.println("Usage: 'Encode [filepath] [target encoded filepath]'\n"
 	    				+ "Usage: 'EncodeString [String] [target encoded filepath]'\n"
 	    				+ "Usage: 'Decode [encoded filepath]'\n"
@@ -125,7 +124,7 @@ public class EncodeDecodeCLI {
         	   for(int channel = 0; channel<channels; channel++) {
         		   imageData[DIMENSIONS_ENCODING_BYTE_LEN + row*width + col + channel] = (byte) (0xFF & (image.getRGB(col, row) >> (8*channel) ) );
         	   }*/
-        	   imageData[DIMENSIONS_ENCODING_BYTE_LEN + row*width + col] = (byte) (image.getRGB(col, row) );
+        	   imageData[DIMENSIONS_ENCODING_BYTE_LEN + row*width + col] = (byte) (image.getRGB(col, row));
            }
         }
         //pad with '0'
@@ -141,7 +140,8 @@ public class EncodeDecodeCLI {
 		int width = signedShortToUnsignedInt(imageData, 0, 2);
 		int height = signedShortToUnsignedInt(imageData, 2, 2);
     	
-    	BufferedImage image = new BufferedImage(height, width, BufferedImage.TYPE_INT_ARGB);
+    	//BufferedImage image = new BufferedImage(height, width, BufferedImage.TYPE_INT_ARGB);
+		BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
         int channels = 4;
         int ARGB;          
         
@@ -153,8 +153,8 @@ public class EncodeDecodeCLI {
         		   ARGB |= (byte) (0xFF & (imageData[DIMENSIONS_ENCODING_BYTE_LEN + row*width + col + channel] >>> (BITS_IN_BYTE*channel) ) );
         	   }*/
         	   //image.setRGB(col, row, ARGB);
-        	   ARGB = Short.toUnsignedInt(imageData[DIMENSIONS_ENCODING_BYTE_LEN + row*width + col]);
-        	   image.setRGB(row, col, ARGB);
+        	   ARGB = Short.toUnsignedInt(imageData[DIMENSIONS_ENCODING_BYTE_LEN + row*width + col]) | 0xFF000000;
+        	  image.setRGB(col, row, ARGB);
            }
         }
 
