@@ -3,6 +3,7 @@ package test.encryptorDecryptor.encryptor;
 
 import org.junit.jupiter.api.Test;
 
+import com.pc.configuration.Constants;
 import com.pc.encryptorDecryptor.EncryptorDecryptor;
 import com.pc.encryptorDecryptor.encryptor.Encryptor;
 
@@ -11,7 +12,6 @@ import org.junit.jupiter.api.DisplayName;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static com.pc.configuration.Constants.ivLength; 
-import static com.pc.configuration.Constants.maxImageSizeBytes;
 
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
@@ -62,7 +62,7 @@ public class EncryptorTests {
 		
 		
 		byte[] generatedXorBytesA = EncryptorDecryptor.generateXorBytes(skeySpec, ivA);
-		assertTrue(generatedXorBytesA.length == maxImageSizeBytes);
+		assertTrue(generatedXorBytesA.length == Constants.MAX_ENCODED_LENGTH_BYTES);
 		
 		byte[] generatedXorBytesC = EncryptorDecryptor.generateXorBytes(skeySpec, ivA);
 		assertTrue(Arrays.equals(generatedXorBytesA, generatedXorBytesC));
@@ -79,7 +79,7 @@ public class EncryptorTests {
 		SecretKeySpec skeyB = new SecretKeySpec(Encryptor.generateSymmetricKey().getEncoded(), "AES");
 		IvParameterSpec ivB = Encryptor.generateIv(ivLength);
 		byte[] generatedXorBytes = EncryptorDecryptor.generateXorBytes(skeyB, ivB);
-		byte[] imageBytes = new byte[maxImageSizeBytes];
+		byte[] imageBytes = new byte[Constants.MAX_ENCODED_LENGTH_BYTES];
 		byte[] xoredImage = Encryptor.encryptImage(generatedXorBytes, imageBytes);
 		
 		assertTrue(Arrays.equals(xoredImage, generatedXorBytes)); // a XOR 0 = a

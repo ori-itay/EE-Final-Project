@@ -1,6 +1,5 @@
 package test.shuffleDeshuffle.shuffle;
 
-import static com.pc.configuration.Constants.maxImageSizeBytes;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.security.SecureRandom;
@@ -22,7 +21,7 @@ public class ShuffleTests {
 	public void testShuffleImgBytes() {
 		IvParameterSpec iv = Encryptor.generateIv(Constants.ivLength);
 		
-		byte[] imgBytes = new byte[maxImageSizeBytes];
+		byte[] imgBytes = new byte[Constants.MAX_ENCODED_LENGTH_BYTES];
 		new SecureRandom().nextBytes(imgBytes);
 		
 		byte[] shuffledBytes = Shuffle.shuffleImgBytes(imgBytes, iv);

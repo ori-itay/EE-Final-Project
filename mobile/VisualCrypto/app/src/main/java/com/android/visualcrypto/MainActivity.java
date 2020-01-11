@@ -23,12 +23,18 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import com.pc.configuration.Constants;
 import com.pc.encoderDecoder.DisplayDecoder;
 import com.pc.encoderDecoder.RotatedImageSampler;
+import com.pc.encryptorDecryptor.decryptor.Decryptor;
+import com.pc.shuffleDeshuffle.deshuffle.Deshuffle;
 
 import java.io.File;
-import java.nio.Buffer;
 import java.nio.ByteBuffer;
+import java.lang.Short;
+
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -86,24 +92,42 @@ public class MainActivity extends AppCompatActivity {
             int[][] pixelArr;
             /* Display decoded image */
             if (view.getId() == R.id.decodeImgBtn) {
-                imgFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "encoded100.png");
+                imgFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "encodedImage.png");
                 if (!imgFile.exists()) {
-                    showAlert("Couldnt find 'encoded100.png' in Downloads");
+                    showAlert("Couldn't find 'encodedImage.png' in Downloads");
                     return;
                 }
 
                 pixelArr = get2DPixelArray(imgFile);
                 rotatedImageSampler = DisplayDecoder.decodePixelMatrix(pixelArr);
-                /* get decoded image byte array */
-                byte[] imageBytes = rotatedImageSampler.getDecodedData();
-                Log.d("imgDecodeInfo", String.format("Total image bits in array: %d | Total bits width: %d | Total bits height: %d",
-                        imageBytes.length*8,rotatedImageSampler.getWidth(), rotatedImageSampler.getHeight()));
-                /* convert it to Bitmap */
-                Bitmap bmp = Bitmap.createBitmap(rotatedImageSampler.getWidth(), rotatedImageSampler.getHeight(), Bitmap.Config.ARGB_8888);
-                Buffer buff = ByteBuffer.wrap(imageBytes);
-                bmp.copyPixelsFromBuffer(buff);
+                // decode
+                byte[] decodedBytes = rotatedImageSampler.getDecodedData();
+                byte[] iv = rotatedImageSampler.getIV();
+                IvParameterSpec ivSpec = new IvParameterSpec(iv);
+                /* Using constant secret key! */
+                byte[] const_key = new byte[] {100, 101, 102, 103, 104, 105, 106 ,107, 108, 109, 110, 111, 112, 113, 114, 115};
+                SecretKeySpec secretKeySpec = new SecretKeySpec(const_key, "AES");
+                /* ************************** */
+
+                // deshuffle
+                byte[] deshuffledBytes = Deshuffle.getDeshuffledBytes(decodedBytes, ivSpec);
+
+                // decrypt
+                byte[] imageBytes = Decryptor.decryptImage(deshuffledBytes, secretKeySpec, ivSpec);
+                int width = getWidth(imageBytes);
+                int height = getHeight(imageBytes);
+
+                if (width > Constants.MAX_IMAGE_DIMENSION_SIZE || height > Constants.MAX_IMAGE_DIMENSION_SIZE){
+                    showAlert("Error: image dimension larger than " + Constants.MAX_IMAGE_DIMENSION_SIZE);
+                    return;
+                }
+
+                /* convert to Bitmap */
+                Bitmap bmp = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+                setBitmapPixels(bmp, imageBytes, width, height);
 
                 ImageView iView = (ImageView) findViewById(R.id.decodedImgId);
+                Log.d("iviewparameters", String.format("width: %d, height: %d", iView.getWidth(), iView.getHeight()));
                 iView.setImageBitmap(Bitmap.createScaledBitmap(bmp, iView.getWidth(), iView.getHeight(), false));
             } /* Display decoded text */
             else if (view.getId() == R.id.decodeTxtBtn) {
@@ -145,12 +169,30 @@ public class MainActivity extends AppCompatActivity {
             moduleSizeCfgText.setText(moduleSizeTxt.append(String.valueOf(rotatedImageSampler.getModuleSize())));
 
         } catch (Exception e) {
-            showAlert("decodeFile threw exception");
+            showAlert("Exception occurred: " + e.getMessage());
             Log.d("decodeFile exception:", e.getMessage());
         }
 
 
     }
+
+    private int getWidth(byte[] imageBytes) {
+        int width = getIntByteBuffer(imageBytes,0, 2);
+        return width;
+
+    }
+
+    private int getIntByteBuffer(byte[] bytes, int startIndex, int length) {
+        short bytesShort = ByteBuffer.wrap(bytes, startIndex, length).getShort();
+        return Short.toUnsignedInt(bytesShort);
+    }
+
+    private int getHeight(byte[] imageBytes) {
+        int height = getIntByteBuffer(imageBytes, 2,2);
+        return height;
+    }
+
+
 
     private void showAlert(String msg) {
         AlertDialog alertDialog = new AlertDialog.Builder(MainActivity.this).create();
@@ -170,6 +212,7 @@ public class MainActivity extends AppCompatActivity {
         int[][] twoDimPixels;
         Bitmap bMap = BitmapFactory.decodeFile(imgFile.getAbsolutePath());
         int width = bMap.getWidth(); int height = bMap.getHeight();
+        Log.d("parameters: ",  "Width,Height: " + width+ ", " + height);
         int[] pixels = new int[width*height];
         twoDimPixels = new int[width][height];
         bMap.getPixels(pixels, 0, width, 0, 0, width, height);
@@ -180,6 +223,19 @@ public class MainActivity extends AppCompatActivity {
             }
         }
         return twoDimPixels;
+    }
+
+    private void setBitmapPixels(Bitmap bmp, byte[] imageBytes, int width, int height){
+        int index, ARGB;
+        ByteBuffer wrapped;
+        for (int row = 0; row < height; row++) {
+            for (int col = 0; col < width; col++) {
+                index = (row*width + col)*4;
+                wrapped = ByteBuffer.wrap(imageBytes, 4 + index, 4);
+                ARGB = wrapped.getInt();
+                bmp.setPixel(col, row, ARGB);
+            }
+        }
     }
 
     private void getPermissions() {
@@ -194,6 +250,5 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
-
 }
 

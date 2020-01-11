@@ -4,53 +4,59 @@ import static com.pc.configuration.Constants.DIMENSIONS_ENCODING_BYTE_LEN;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 
-import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import javax.imageio.ImageIO;
 
 import com.pc.configuration.Constants;
-import com.pc.encoderDecoder.DisplayDecoder;
 import com.pc.encoderDecoder.DisplayEncoder;
-import com.pc.encoderDecoder.RotatedImageSampler;
 import com.pc.encryptorDecryptor.EncryptorDecryptor;
 import com.pc.encryptorDecryptor.encryptor.Encryptor;
-import com.pc.encryptorDecryptor.decryptor.Decryptor;
 import com.pc.shuffleDeshuffle.shuffle.Shuffle;
-import com.pc.shuffleDeshuffle.deshuffle.Deshuffle;
 
 public class Flow {
 	
-	private static final String encodedFilePath = "encodedImage.jpeg";
-	private static final String decodedFilePath = "decodedImage.jpeg";
+	private static final String encodedFilePath = "encodedImage.png";
 	
-	public static void main(String[] args) {
-		byte[] imageBytes = null; // TODO: load image bytes..
+	public static void main(String[] args) throws IOException {
+		
 		//load image
-		File encodedImageFile;
+		File inputFile = new File("itay.jpeg");
+		
+		BufferedImage image = ImageIO.read(inputFile);
+		byte[] imageBytes = FlowUtils.convertToBytesUsingGetRGB(image);
 		
 		IvParameterSpec iv = Encryptor.generateIv(Constants.ivLength); //maybe change to private static for CLI use?
-		SecretKey skey; //maybe change to private static for CLI use?
+		//SecretKey skey; 
 		BufferedImage encodedImage;
-		RotatedImageSampler imageSampler;
+		//RotatedImageSampler imageSampler;
 		try {
-			skey = Encryptor.generateSymmetricKey();
-			SecretKeySpec skeySpec = new SecretKeySpec(skey.getEncoded(), Constants.ENCRYPTION_ALGORITHM);
+			//skey = Encryptor.generateSymmetricKey();
+			/* constant key */
+			byte[] const_key = new byte[] {100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115};
+			SecretKeySpec skeySpec = new SecretKeySpec(const_key, Constants.ENCRYPTION_ALGORITHM);
+			/****************/
+			//SecretKeySpec skeySpec = new SecretKeySpec(skey.getEncoded(), Constants.ENCRYPTION_ALGORITHM);
 			byte[] generatedXorBytes = EncryptorDecryptor.generateXorBytes(skeySpec, iv);
 			
 			byte[] encryptedImg = Encryptor.encryptImage(imageBytes, generatedXorBytes); //width+height need to be inside or would be unencrypted
 			byte[] shuffledEncryptedImg = Shuffle.shuffleImgBytes(encryptedImg, iv);
 			encodedImage = DisplayEncoder.encodeBytes(shuffledEncryptedImg, iv.getIV());
-			ImageIO.write(encodedImage, "jpeg", encodedImageFile= new File(encodedFilePath));
-			imageSampler = DisplayDecoder.decodeFilePC(encodedImageFile);
-			byte[] unShuffledEncryptedImg = Deshuffle.getDeshuffledBytes(imageSampler.getDecodedData(), iv);
-			byte[] decryptedBytes = Decryptor.decryptImage(unShuffledEncryptedImg, skeySpec, iv);
-			BufferedImage decodedImage = convertToImageUsingGetRGB(decryptedBytes, imageSampler.getImageWidth(), imageSampler.getImageWidth()); //correct dimensions assignments according to decision
-			ImageIO.write(decodedImage, "jpeg", new File(decodedFilePath));
+			ImageIO.write(encodedImage, "png", new File(encodedFilePath));
+			/*
+			 * imageSampler = DisplayDecoder.decodeFilePC(encodedImageFile); byte[]
+			 * unShuffledEncryptedImg =
+			 * Deshuffle.getDeshuffledBytes(imageSampler.getDecodedData(), iv); byte[]
+			 * decryptedBytes = Decryptor.decryptImage(unShuffledEncryptedImg, skeySpec,
+			 * iv); BufferedImage decodedImage = convertToImageUsingGetRGB(decryptedBytes,
+			 * imageSampler.getImageWidth(), imageSampler.getImageWidth()); //correct
+			 * dimensions assignments according to decision ImageIO.write(decodedImage,
+			 * "jpeg", new File(decodedFilePath));
+			 */
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}

@@ -1,7 +1,7 @@
 package com.pc.encryptorDecryptor;
 
 import static com.pc.configuration.Constants.ivLength;
-import static com.pc.configuration.Constants.maxImageSizeBytes;
+import static com.pc.configuration.Constants.MAX_ENCODED_LENGTH_BYTES;
 
 import java.nio.ByteBuffer;
 //import java.util.concurrent.ExecutorService;
@@ -19,8 +19,8 @@ public class EncryptorDecryptor {
 	private static final String encryptionMethod = encryptionAlgorithm + "/CBC/NoPadding";
 	
 	public static byte[] xorPaddedImage(byte[] imageBytes, byte[] generatedXorBytes) {
-		final byte[] xoredImage = new byte[maxImageSizeBytes];
-		for (int i = 0; i < maxImageSizeBytes; i++) {
+		final byte[] xoredImage = new byte[MAX_ENCODED_LENGTH_BYTES];
+		for (int i = 0; i < MAX_ENCODED_LENGTH_BYTES; i++) {
 			xoredImage[i] = (byte) (imageBytes[i] ^ generatedXorBytes[i]);
 		}
 
@@ -33,7 +33,7 @@ public class EncryptorDecryptor {
 		System.arraycopy(iv.getIV(), 0, cipherIV, 0, ivLength);
 		
 		final byte[] ourIV = iv.getIV();
-		final byte[] randomBytes = new byte[maxImageSizeBytes];
+		final byte[] randomBytes = new byte[MAX_ENCODED_LENGTH_BYTES];
 		final int ivAndCounterLen = ourIV.length + intSize;
 		final byte[] ivAndCounter = new byte[ivAndCounterLen];
 		
@@ -41,7 +41,7 @@ public class EncryptorDecryptor {
 		
 		//ExecutorService executor = Executors.newCachedThreadPool();
 		
-		for (int i = 0; i < maxImageSizeBytes/ivAndCounterLen ; i++) {
+		for (int i = 0; i < MAX_ENCODED_LENGTH_BYTES/ivAndCounterLen ; i++) {
 			final byte[] counterBytes = ByteBuffer.allocate(intSize).putInt(i).array(); // convert i to byte[4]
 			System.arraycopy(ourIV, 0, ivAndCounter, 0, ourIV.length);
 			System.arraycopy(counterBytes, 0, ivAndCounter, ourIV.length, counterBytes.length); // concatenate iv||counter

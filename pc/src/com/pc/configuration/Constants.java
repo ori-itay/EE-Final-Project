@@ -3,7 +3,6 @@ package com.pc.configuration;
 public class Constants {
 	public static final int ivLength = 12;
 	public static final String ENCRYPTION_ALGORITHM = "AES";
-	public static final int maxImageSizeBytes = 100*100*64*8; //width * height * levels * bytes
 	public static final int ENCODING_COLOR_LEVELS = 64;
 	public static final int GREY_SCALE_DELTA = Math.floorDiv(255 , (ENCODING_COLOR_LEVELS-1));
 	public static final int PIXELS_IN_MODULE = 3;
@@ -25,6 +24,9 @@ public class Constants {
 	public static final int MAX_ENCODED_LENGTH = ENCODING_BIT_GROUP_SIZE*(MODULES_IN_ENCODED_IMAGE_DIM*MODULES_IN_ENCODED_IMAGE_DIM 
 			- 4*MODULES_IN_MARGIN*MODULES_IN_ENCODED_IMAGE_DIM + 4*MODULES_IN_MARGIN*MODULES_IN_MARGIN
 			- MODULES_IN_POS_DET_DIM*MODULES_IN_POS_DET_DIM*NUM_OF_POSITION_DETECTORS) - ivLength*BITS_IN_BYTE -8;
+	public static final int MAX_ENCODED_LENGTH_BYTES = MAX_ENCODED_LENGTH / BITS_IN_BYTE;
 	
 	public final static int DIMENSIONS_ENCODING_BYTE_LEN = 4;
+	
+	public static final int MAX_IMAGE_DIMENSION_SIZE = 1000;
 }

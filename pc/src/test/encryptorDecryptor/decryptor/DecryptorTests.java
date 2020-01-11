@@ -7,8 +7,6 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
-import static com.pc.configuration.Constants.maxImageSizeBytes;
-
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
@@ -24,7 +22,7 @@ public class DecryptorTests {
 
 	@Test
 	public void testDecryptImage() throws Exception {
-		byte[] imgBytes = new byte[maxImageSizeBytes];
+		byte[] imgBytes = new byte[Constants.MAX_ENCODED_LENGTH_BYTES];
 		new SecureRandom().nextBytes(imgBytes);
 		
 		SecretKey skey = Encryptor.generateSymmetricKey();

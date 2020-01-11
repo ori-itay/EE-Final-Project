@@ -13,6 +13,7 @@ import com.pc.encoderDecoder.DisplayEncoder;
 import com.pc.encoderDecoder.RotatedImageSampler;
 import com.pc.encoderDecoder.StdImageSampler;
 import com.pc.Flow;
+import com.pc.FlowUtils;
 
 
 
@@ -49,7 +50,7 @@ public class EncodeDecodeCLI {
         			}
     				//fileContent = new String(Files.readAllBytes(inputFile.toPath()));
         			BufferedImage image = ImageIO.read(inputFile);
-        			byte[] pixelRGB_Array = convertToBytesUsingGetRGB(image) ;
+        			byte[] pixelRGB_Array = FlowUtils.convertToBytesUsingGetRGB(image) ;
     				encodedImage = DisplayEncoder.encodeBytes(pixelRGB_Array);
     				ImageIO.write(encodedImage, "png", new File(splitedCommand[2]));	
     				System.out.println("Encoded image was written to "+ splitedCommand[2]);
@@ -94,45 +95,4 @@ public class EncodeDecodeCLI {
 	    }	    
 	    scanner.close();
 	}
-	
-    private static byte[] convertToBytesUsingGetRGB(BufferedImage image) {
-
-        assert(image.getWidth() < Short.MAX_VALUE && image.getHeight() < Short.MAX_VALUE);
-        
-        short width = (short) image.getWidth();
-        short height = (short) image.getHeight();
-        
-        int channels = 4, ARGB, index;
-
-        if(DIMENSIONS_ENCODING_BYTE_LEN + height*width*channels > MAX_ENCODED_LENGTH/8) {
-        	System.out.println("file too large\n");
-        	System.exit(1); 
-        }
-        
-        byte[] imageData = new byte[MAX_ENCODED_LENGTH/8];
-        
-        
-        imageData[0] = (byte) (width >>> 8); imageData[1] = (byte) width;
-        imageData[2] = (byte) (height >>> 8); imageData[3] = (byte) height;
-        
-
-        for (int row = 0; row < height; row++) {
-           for (int col = 0; col < width; col++) {
-        	   ARGB = image.getRGB(col, row);
-        	   index = (row*width + col)*channels;
-        	   
-        	   imageData[DIMENSIONS_ENCODING_BYTE_LEN + index] = (byte) (ARGB >>> 24); //alpha
-        	   imageData[DIMENSIONS_ENCODING_BYTE_LEN + index + 1] = (byte) (ARGB >>> 16);//red
-        	   imageData[DIMENSIONS_ENCODING_BYTE_LEN + index + 2] = (byte) (ARGB >>> 8);//green
-        	   imageData[DIMENSIONS_ENCODING_BYTE_LEN + index + 3] = (byte) ARGB;//blue
-           }
-        }
-        //pad with '0'
-        for(int i = DIMENSIONS_ENCODING_BYTE_LEN + height*width*channels; i < MAX_ENCODED_LENGTH/8; i++) {
-        	imageData[i] = (byte) 0;
-        }
-                
-        return imageData;
-     }
-
 }
