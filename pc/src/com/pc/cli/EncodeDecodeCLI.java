@@ -1,19 +1,17 @@
 package com.pc.cli;
-import static com.pc.configuration.Constants.*;
+import static com.pc.configuration.Constants.DIMENSIONS_ENCODING_BYTE_LEN;
 
-import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.nio.ByteBuffer;
 import java.util.Scanner;
+
 import javax.imageio.ImageIO;
 
+import com.pc.FlowUtils;
 import com.pc.encoderDecoder.DisplayDecoder;
 import com.pc.encoderDecoder.DisplayEncoder;
 import com.pc.encoderDecoder.RotatedImageSampler;
-import com.pc.encoderDecoder.StdImageSampler;
-import com.pc.Flow;
-import com.pc.FlowUtils;
 
 
 
@@ -67,7 +65,7 @@ public class EncodeDecodeCLI {
         				continue;
         			}
         			RotatedImageSampler sampler = DisplayDecoder.decodeFilePC(inputFile);
-        			BufferedImage decodedImage = Flow.convertToImageUsingGetRGB(sampler.getDecodedData(), sampler.getImageWidth(), sampler.getImageHeight());
+        			BufferedImage decodedImage = convertToImageUsingGetRGB(sampler.getDecodedData(), sampler.getImageWidth(), sampler.getImageHeight());
     				ImageIO.write(decodedImage, "png", new File(splitedCommand[2]));
     				System.out.println("Decoded image was written to "+ splitedCommand[2]);
     				break;
@@ -95,4 +93,25 @@ public class EncodeDecodeCLI {
 	    }	    
 	    scanner.close();
 	}
+	
+    private static BufferedImage convertToImageUsingGetRGB(byte[] imageData, int width, int height) {
+
+		int index;
+    	
+		BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        int channels = 4;
+        int ARGB; 
+        ByteBuffer wrapped;
+        
+        for (int row = 0; row < height; row++) {
+           for (int col = 0; col < width; col++) {
+        	  index = (row*width + col)*channels;
+        	  wrapped = ByteBuffer.wrap(imageData, DIMENSIONS_ENCODING_BYTE_LEN + index, channels);
+        	  ARGB = wrapped.getInt();
+        	  image.setRGB(col, row, ARGB);
+           }
+        }
+
+        return image;
+     }
 }

@@ -1,11 +1,8 @@
 package com.pc;
 
-import static com.pc.configuration.Constants.DIMENSIONS_ENCODING_BYTE_LEN;
-
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
@@ -29,10 +26,10 @@ public class Flow {
 		BufferedImage image = ImageIO.read(inputFile);
 		byte[] imageBytes = FlowUtils.convertToBytesUsingGetRGB(image);
 		
-		IvParameterSpec iv = Encryptor.generateIv(Constants.ivLength); //maybe change to private static for CLI use?
+		IvParameterSpec iv = Encryptor.generateIv(Constants.ivLength); 
+		/* int chksumIV = getChecksum(iv); */
 		//SecretKey skey; 
 		BufferedImage encodedImage;
-		//RotatedImageSampler imageSampler;
 		try {
 			//skey = Encryptor.generateSymmetricKey();
 			/* constant key */
@@ -42,52 +39,12 @@ public class Flow {
 			//SecretKeySpec skeySpec = new SecretKeySpec(skey.getEncoded(), Constants.ENCRYPTION_ALGORITHM);
 			byte[] generatedXorBytes = EncryptorDecryptor.generateXorBytes(skeySpec, iv);
 			
-			byte[] encryptedImg = Encryptor.encryptImage(imageBytes, generatedXorBytes); //width+height need to be inside or would be unencrypted
+			byte[] encryptedImg = Encryptor.encryptImage(imageBytes, generatedXorBytes);
 			byte[] shuffledEncryptedImg = Shuffle.shuffleImgBytes(encryptedImg, iv);
-			encodedImage = DisplayEncoder.encodeBytes(shuffledEncryptedImg, iv.getIV());
+			encodedImage = DisplayEncoder.encodeBytes(shuffledEncryptedImg, iv.getIV()/*,  ivchecksum*/);
 			ImageIO.write(encodedImage, "png", new File(encodedFilePath));
-			/*
-			 * imageSampler = DisplayDecoder.decodeFilePC(encodedImageFile); byte[]
-			 * unShuffledEncryptedImg =
-			 * Deshuffle.getDeshuffledBytes(imageSampler.getDecodedData(), iv); byte[]
-			 * decryptedBytes = Decryptor.decryptImage(unShuffledEncryptedImg, skeySpec,
-			 * iv); BufferedImage decodedImage = convertToImageUsingGetRGB(decryptedBytes,
-			 * imageSampler.getImageWidth(), imageSampler.getImageWidth()); //correct
-			 * dimensions assignments according to decision ImageIO.write(decodedImage,
-			 * "jpeg", new File(decodedFilePath));
-			 */
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
-	
-	public static void encryptImageBytes(byte[] imageBytes, String inputPath, String outputPath) {
-		
-	}
-	
-	public static void decryptImageBytes(byte[] encrytedBytes, String inputPath, String outputPath) {
-		
-	}
-	
-	
-    public static BufferedImage convertToImageUsingGetRGB(byte[] imageData, int width, int height) {
-
-		int index;
-    	
-		BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-        int channels = 4;
-        int ARGB; 
-        ByteBuffer wrapped;
-        
-        for (int row = 0; row < height; row++) {
-           for (int col = 0; col < width; col++) {
-        	  index = (row*width + col)*channels;
-        	  wrapped = ByteBuffer.wrap(imageData, DIMENSIONS_ENCODING_BYTE_LEN + index, channels);
-        	  ARGB = wrapped.getInt();
-        	  image.setRGB(col, row, ARGB);
-           }
-        }
-
-        return image;
-     }
 }
