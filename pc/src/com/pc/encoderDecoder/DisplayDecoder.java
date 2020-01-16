@@ -8,7 +8,7 @@ import static com.pc.configuration.Constants.*;
 
 public class DisplayDecoder {
 	
-	public static RotatedImageSampler decodeFilePC(File inputFile) throws Exception { //change here to receive pixelMatrix
+	public static RotatedImageSampler decodeFilePC(File inputFile) throws Exception {
 		
 		BufferedImage encodedImage = ImageIO.read(inputFile);
 		int[][] pixelMatrix = convertTo2DUsingGetRGB(encodedImage);
@@ -17,16 +17,13 @@ public class DisplayDecoder {
 		return imageSampler;
 	}
 	
-	public static RotatedImageSampler decodePixelMatrix(int[][] pixelMatrix) throws Exception { //change here to receive pixelMatrix
+	public static RotatedImageSampler decodePixelMatrix(int[][] pixelMatrix) throws Exception {
 					
 		Position pos = new Position(MODULES_IN_MARGIN, MODULES_IN_MARGIN + MODULES_IN_POS_DET_DIM);
 		//extract image configuration and return cropped rotated image
 		RotatedImageSampler imageSampler = configureImage(pixelMatrix, pos);
 		//decode image data to byte array
-		imageSampler.decodedData = decodeData(imageSampler, imageSampler.dataLength, pos);
-		imageSampler.imageWidth = signedShortToUnsignedInt(imageSampler.decodedData, 0, 2);
-		imageSampler.imageHeight = signedShortToUnsignedInt(imageSampler.decodedData, 2, 2);
-
+		imageSampler.decodedData = decodeData(imageSampler, MAX_ENCODED_LENGTH_BYTES, pos);
 		return imageSampler;
 	}
 
@@ -37,10 +34,7 @@ public class DisplayDecoder {
 		assert( imageSampler.moduleSize != 0);	
 		//configureCrop(imageSampler);
 		imageSampler.IV = decodeData(imageSampler, ivLength, pos);
-		//byte[] dataLengthBytes = decodeData(imageSampler, DATA_LEN_ENCODING_LENGTH_BYTES, pos);
-		//imageSampler.dataLength = byteArrayToInt(dataLengthBytes);
-		imageSampler.dataLength = MAX_ENCODED_LENGTH/BITS_IN_BYTE;
-		
+		imageSampler.IV_checksum = decodeData(imageSampler, CHECKSUM_LENGTH, pos);	
 		return imageSampler;
 	}
 	

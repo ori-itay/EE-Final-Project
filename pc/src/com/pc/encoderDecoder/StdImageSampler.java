@@ -17,35 +17,27 @@ public class StdImageSampler implements ImageSamplerInf{
 		return moduleSize;
 	}
 
-	public int getDataLength() {
-		return dataLength;
-	}
-
 	public byte[] getDecodedData() {
 		return decodedData;
 	}
 	
-	public int getImageHeight() {
-		return imageHeight;
-	}
-
-	public int getImageWidth() {
-		return imageWidth;
-	}
 
 	public byte[] getIV() {
 		return IV;
+	}
+	
+	public byte[] getIV_checksum() {
+		return IV_checksum;
 	}
 
 	BufferedImage proccesedImage;
 	int[][] pixelMatrix;
 	int moduleSize = 0;
-	int imageHeight;
-	int imageWidth;
-	int dataLength;	
 	byte[] decodedData;
 	byte[] IV;
+	byte[] IV_checksum;
 	
+
 	static void checkForColumnEnd(Position pos) {
 		
 		if(pos.colModule == (MODULES_IN_ENCODED_IMAGE_DIM - MODULES_IN_MARGIN - MODULES_IN_POS_DET_DIM) ) {

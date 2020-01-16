@@ -27,7 +27,7 @@ public class Flow {
 		byte[] imageBytes = FlowUtils.convertToBytesUsingGetRGB(image);
 		
 		IvParameterSpec iv = Encryptor.generateIv(Constants.ivLength); 
-		/* int chksumIV = getChecksum(iv); */
+		byte[] chksumIV = getChecksum(iv); 
 		//SecretKey skey; 
 		BufferedImage encodedImage;
 		try {
@@ -41,7 +41,7 @@ public class Flow {
 			
 			byte[] encryptedImg = Encryptor.encryptImage(imageBytes, generatedXorBytes);
 			byte[] shuffledEncryptedImg = Shuffle.shuffleImgBytes(encryptedImg, iv);
-			encodedImage = DisplayEncoder.encodeBytes(shuffledEncryptedImg, iv.getIV()/*,  ivchecksum*/);
+			encodedImage = DisplayEncoder.encodeBytes(shuffledEncryptedImg, iv.getIV(),  chksumIV);
 			ImageIO.write(encodedImage, "png", new File(encodedFilePath));
 		} catch (Exception e) {
 			e.printStackTrace();

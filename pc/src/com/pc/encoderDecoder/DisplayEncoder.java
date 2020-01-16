@@ -15,7 +15,7 @@ enum ROW {
 public class DisplayEncoder {
 	
 
-	public static BufferedImage encodeBytes(byte[] binaryData, byte[] IV) throws Exception {
+	public static BufferedImage encodeBytes(byte[] binaryData, byte[] IV, byte[] ivchecksum) throws Exception {
 		
 		//allocate space including white margins
 		BufferedImage image = new BufferedImage(MODULES_IN_ENCODED_IMAGE_DIM*PIXELS_IN_MODULE,
@@ -29,6 +29,7 @@ public class DisplayEncoder {
 		createPositionDetectors(image, g);
 		Position pos = new Position(MODULES_IN_MARGIN, MODULES_IN_MARGIN + MODULES_IN_POS_DET_DIM);
 		encodeData(image,g, IV, pos); //encode IV
+		encodeData(image,g, ivchecksum, pos); //encode IV
 		encodeData(image, g, binaryData, pos); 	//encode actual picture data
 		
 		return image;
@@ -37,7 +38,7 @@ public class DisplayEncoder {
 	public static BufferedImage encodeBytes(byte[] binaryData) throws Exception {
 		byte[] IV = new byte[ivLength];
 		Arrays.fill(IV, 0, ivLength -1, (byte) 0);
-		return encodeBytes(binaryData, IV);
+		return encodeBytes(binaryData, IV, new byte[] {0});
 	}
 
 
