@@ -10,6 +10,7 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import javax.imageio.ImageIO;
 
+import com.checksum.Checksum;
 import com.pc.FlowUtils;
 import com.pc.configuration.Constants;
 import com.pc.encoderDecoder.DisplayDecoder;
@@ -69,7 +70,7 @@ public class EncodeDecodeCLI {
     				 
 
         			iv = Encryptor.generateIv(Constants.ivLength);
-        			byte[] chksumIV = getChecksum(iv); 
+        			byte[] chksumIV = Checksum.computeChecksum(iv.getIV()); 
         			byte[] generatedXorBytes = EncryptorDecryptor.generateXorBytes(skeySpec, iv);
         			byte[] encryptedImg = Encryptor.encryptImage(rawData, generatedXorBytes);
         			byte[] shuffledEncryptedImg = Shuffle.shuffleImgBytes(encryptedImg, iv);

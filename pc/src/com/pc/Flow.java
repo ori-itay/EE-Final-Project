@@ -8,6 +8,7 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import javax.imageio.ImageIO;
 
+import com.checksum.Checksum;
 import com.pc.configuration.Constants;
 import com.pc.encoderDecoder.DisplayEncoder;
 import com.pc.encryptorDecryptor.EncryptorDecryptor;
@@ -27,7 +28,7 @@ public class Flow {
 		byte[] imageBytes = FlowUtils.convertToBytesUsingGetRGB(image);
 		
 		IvParameterSpec iv = Encryptor.generateIv(Constants.ivLength); 
-		byte[] chksumIV = getChecksum(iv); 
+		byte[] chksumIV = Checksum.computeChecksum(iv.getIV()); 
 		//SecretKey skey; 
 		BufferedImage encodedImage;
 		try {

@@ -5,6 +5,7 @@ import static com.pc.configuration.Constants.*;
 import java.awt.image.BufferedImage;
 import java.lang.reflect.Array;
 
+import com.checksum.Checksum;
 import com.pc.configuration.Constants;
 
 public class FlowUtils {
@@ -31,7 +32,7 @@ public class FlowUtils {
         dimsArr[0] = (byte) (width >>> 8); dimsArr[1] = (byte) width;
         dimsArr[2] = (byte) (height >>> 8); dimsArr[3] = (byte) height;
         
-        dimsChecksum = getChecksum(new byte[] {dimsArr[0],dimsArr[1],dimsArr[2],dimsArr[3]});
+        dimsChecksum = Checksum.computeChecksum(new byte[] {dimsArr[0],dimsArr[1],dimsArr[2],dimsArr[3]});
         dimsArr[5] = dimsChecksum[0];
         
 
