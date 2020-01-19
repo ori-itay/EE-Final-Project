@@ -131,13 +131,13 @@ public class EncodeDecodeCLI {
     private static BufferedImage convertToImageUsingGetRGB(byte[] imageData) {
 
 		int index;
-		//TODO add treatment for wrong dimensions checksum
 		byte[] dims = Arrays.copyOfRange(imageData, 0, 5);
 		int width = signedShortToUnsignedInt(dims, 0, 2);
 		int height = signedShortToUnsignedInt(dims, 2, 2);	
 		byte[] chksumDims = Checksum.computeChecksum(dims); 
 		if(chksumDims[0] != imageData[5]) {
-			dims = Arrays.copyOfRange(imageData, MAX_ENCODED_LENGTH_BYTES + CHECKSUM_LENGTH, MAX_ENCODED_LENGTH_BYTES+5);
+			dims = Arrays.copyOfRange(imageData, MAX_ENCODED_LENGTH_BYTES + CHECKSUM_LENGTH+IMAGE_DIMS_ENCODING_LENGTH,
+					MAX_ENCODED_LENGTH_BYTES + 2*(CHECKSUM_LENGTH+IMAGE_DIMS_ENCODING_LENGTH));
 			width = signedShortToUnsignedInt(dims, 0, 2);
 			height = signedShortToUnsignedInt(dims, 2, 2);
 			if(chksumDims[0] != imageData[5]) {
