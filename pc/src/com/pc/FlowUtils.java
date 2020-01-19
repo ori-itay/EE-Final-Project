@@ -1,12 +1,12 @@
 package com.pc;
 
-import static com.pc.configuration.Constants.*;
+import static com.pc.configuration.Constants.CHECKSUM_LENGTH;
+import static com.pc.configuration.Constants.IMAGE_DIMS_ENCODING_LENGTH;
+import static com.pc.configuration.Constants.MAX_ENCODED_LENGTH_BYTES;
 
 import java.awt.image.BufferedImage;
-import java.lang.reflect.Array;
 
 import com.checksum.Checksum;
-import com.pc.configuration.Constants;
 
 public class FlowUtils {
     public static byte[] convertToBytesUsingGetRGB(BufferedImage image) {
@@ -33,7 +33,7 @@ public class FlowUtils {
         dimsArr[2] = (byte) (height >>> 8); dimsArr[3] = (byte) height;
         
         dimsChecksum = Checksum.computeChecksum(new byte[] {dimsArr[0],dimsArr[1],dimsArr[2],dimsArr[3]});
-        dimsArr[5] = dimsChecksum[0];
+        dimsArr[4] = dimsChecksum[0];
         
 
         for (int row = 0; row < height; row++) {

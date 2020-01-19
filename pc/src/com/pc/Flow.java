@@ -3,6 +3,7 @@ package com.pc;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
@@ -22,12 +23,13 @@ public class Flow {
 	public static void main(String[] args) throws IOException {
 		
 		//load image
-		File inputFile = new File("itay.jpeg");
+		File inputFile = new File("input.jpg");
 		
 		BufferedImage image = ImageIO.read(inputFile);
 		byte[] imageBytes = FlowUtils.convertToBytesUsingGetRGB(image);
 		
 		IvParameterSpec iv = Encryptor.generateIv(Constants.ivLength); 
+		System.out.println("IV:" + Arrays.toString(iv.getIV()));
 		byte[] chksumIV = Checksum.computeChecksum(iv.getIV()); 
 		//SecretKey skey; 
 		BufferedImage encodedImage;
