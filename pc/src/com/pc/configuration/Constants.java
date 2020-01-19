@@ -1,9 +1,16 @@
 package com.pc.configuration;
 
 public class Constants {
+	/* IV */
 	public static final int ivLength = 12;
+	
+	/* Checksum */
 	public static final int CHECKSUM_LENGTH = 1;
-	public static final int IMAGE_DIMS_ENCODING_LENGTH = 4;
+	
+	/* Dimensions */
+	public static final int IMAGE_DIMENSION_ENCODING_LENGTH = 2;
+	public static final int IMAGE_DIMS_ENCODING_LENGTH = 2 * IMAGE_DIMENSION_ENCODING_LENGTH;
+	
 	public static final String ENCRYPTION_ALGORITHM = "AES";
 	public static final int ENCODING_COLOR_LEVELS = 64;
 	public static final int GREY_SCALE_DELTA = Math.floorDiv(255 , (ENCODING_COLOR_LEVELS-1));

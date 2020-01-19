@@ -5,7 +5,7 @@ android {
     buildToolsVersion "29.0.2"
     defaultConfig {
         applicationId "com.android.visualcrypto"
-        minSdkVersion 23
+        minSdkVersion 26
         targetSdkVersion 28
         versionCode 1
         versionName "1.0"
@@ -32,5 +32,5 @@ dependencies {
     implementation files('libs/encodeDecode.jar')
     implementation files('libs/encryptorDecryptor.jar')
     implementation files('libs/shuffleDeshuffle.jar')
-    implementation files('libs/constants.jar')
+    implementation files('libs/configuration.jar')
 }
