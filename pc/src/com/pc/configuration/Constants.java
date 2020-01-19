@@ -31,4 +31,7 @@ public class Constants {
 	public static final int MAX_ENCODED_LENGTH_BYTES = MAX_ENCODED_LENGTH / BITS_IN_BYTE;
 	
 	public static final int MAX_IMAGE_DIMENSION_SIZE = 1000;
+	
+	public static final int DATA_IV_CHECKSUM_OFFSET_1 = 12;
+	public static final int DATA_IV_CHECKSUM_OFFSET_2 = MAX_ENCODED_LENGTH_BYTES - IMAGE_DIMS_ENCODING_LENGTH - CHECKSUM_LENGTH;
 }

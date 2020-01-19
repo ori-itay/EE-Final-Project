@@ -4,6 +4,7 @@ import static com.pc.configuration.Constants.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.Scanner;
 
 import javax.crypto.spec.IvParameterSpec;
@@ -32,6 +33,7 @@ public class EncodeDecodeCLI {
 	    Scanner scanner = new Scanner(System.in);  // Create a Scanner object
 	    File inputFile;
 	    IvParameterSpec iv;
+	    byte[] chksumIV;
 	    
 	    System.out.println("Enter Decode/Encode command:");
 	    
@@ -70,7 +72,7 @@ public class EncodeDecodeCLI {
     				 
 
         			iv = Encryptor.generateIv(Constants.ivLength);
-        			byte[] chksumIV = Checksum.computeChecksum(iv.getIV()); 
+        			chksumIV = Checksum.computeChecksum(iv.getIV()); 
         			byte[] generatedXorBytes = EncryptorDecryptor.generateXorBytes(skeySpec, iv);
         			byte[] encryptedImg = Encryptor.encryptImage(rawData, generatedXorBytes);
         			byte[] shuffledEncryptedImg = Shuffle.shuffleImgBytes(encryptedImg, iv);
@@ -87,7 +89,15 @@ public class EncodeDecodeCLI {
         			}
         			
     				RotatedImageSampler sampler = DisplayDecoder.decodeFilePC(inputFile);
-    				iv = new IvParameterSpec(sampler.getIV());
+    				iv = new IvParameterSpec(sampler.getIV1());
+    				chksumIV = Checksum.computeChecksum(iv.getIV()); 
+    				if(chksumIV[0] != sampler.getIV1Checksum()[0]) {
+        				iv = new IvParameterSpec(sampler.getIV2());
+        				chksumIV = Checksum.computeChecksum(iv.getIV()); 
+        				if(chksumIV[0] != sampler.getIV2Checksum()[0]) {
+        					System.out.println("error! both iv checksum are wrong. exiting...");
+        				}
+    				}
     				byte[] unShuffledEncryptedImg = Deshuffle.getDeshuffledBytes(sampler.getDecodedData(), iv);
     				byte[] decryptedBytes = Decryptor.decryptImage(unShuffledEncryptedImg, skeySpec, iv);
     				
@@ -122,8 +132,20 @@ public class EncodeDecodeCLI {
 
 		int index;
 		//TODO add treatment for wrong dimensions checksum
-		int width = signedShortToUnsignedInt(imageData, 0, 2);
-		int height = signedShortToUnsignedInt(imageData, 2, 2);		
+		byte[] dims = Arrays.copyOfRange(imageData, 0, 5);
+		int width = signedShortToUnsignedInt(dims, 0, 2);
+		int height = signedShortToUnsignedInt(dims, 2, 2);	
+		byte[] chksumDims = Checksum.computeChecksum(dims); 
+		if(chksumDims[0] != imageData[5]) {
+			dims = Arrays.copyOfRange(imageData, MAX_ENCODED_LENGTH_BYTES + CHECKSUM_LENGTH, MAX_ENCODED_LENGTH_BYTES+5);
+			width = signedShortToUnsignedInt(dims, 0, 2);
+			height = signedShortToUnsignedInt(dims, 2, 2);
+			if(chksumDims[0] != imageData[5]) {
+				System.out.println("error! both dimensions checksum are wrong. exiting...");
+				System.exit(-1);
+			}
+		}
+		
 		
 		BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
         int channels = 4;

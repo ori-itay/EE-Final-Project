@@ -21,21 +21,48 @@ public class StdImageSampler implements ImageSamplerInf{
 		return decodedData;
 	}
 	
+	public byte[] getIV1() {
+		return IV1;
+	}
 
-	public byte[] getIV() {
-		return IV;
+	public void setIV1(byte[] iV1) {
+		IV1 = iV1;
+	}
+
+	public byte[] getIV1Checksum() {
+		return IV1Checksum;
+	}
+
+	public void setIV1Checksum(byte[] iV1Checksum) {
+		IV1Checksum = iV1Checksum;
+	}
+
+	public byte[] getIV2() {
+		return IV2;
+	}
+
+	public void setIV2(byte[] iV2) {
+		IV2 = iV2;
+	}
+
+	public byte[] getIV2Checksum() {
+		return IV2Checksum;
+	}
+
+	public void setIV2Checksum(byte[] iV2Checksum) {
+		IV2Checksum = iV2Checksum;
 	}
 	
-	public byte[] getIV_checksum() {
-		return IV_checksum;
-	}
+
 
 	BufferedImage proccesedImage;
 	int[][] pixelMatrix;
 	int moduleSize = 0;
 	byte[] decodedData;
-	byte[] IV;
-	byte[] IV_checksum;
+	private byte[] IV1;
+	private byte[] IV1Checksum;
+	private byte[] IV2;
+	private byte[] IV2Checksum;
 	
 
 	static void checkForColumnEnd(Position pos) {

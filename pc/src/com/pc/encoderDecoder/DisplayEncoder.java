@@ -28,9 +28,11 @@ public class DisplayEncoder {
 		//create position detector
 		createPositionDetectors(image, g);
 		Position pos = new Position(MODULES_IN_MARGIN, MODULES_IN_MARGIN + MODULES_IN_POS_DET_DIM);
-		encodeData(image,g, IV, pos); //encode IV
-		encodeData(image,g, ivchecksum, pos); //encode IV
+		encodeData(image,g, IV, pos); //encode IV first time
+		encodeData(image,g, ivchecksum, pos); //encode IV checksum first time
 		encodeData(image, g, binaryData, pos); 	//encode actual picture data
+		encodeData(image,g, IV, pos); //encode IV second time
+		encodeData(image,g, ivchecksum, pos); //encode IV checksum second time
 		
 		return image;
 	}

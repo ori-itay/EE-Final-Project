@@ -1,7 +1,6 @@
 package com.pc.encoderDecoder;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.nio.ByteBuffer;
 
 import javax.imageio.ImageIO;
 import static com.pc.configuration.Constants.*;
@@ -22,8 +21,11 @@ public class DisplayDecoder {
 		Position pos = new Position(MODULES_IN_MARGIN, MODULES_IN_MARGIN + MODULES_IN_POS_DET_DIM);
 		//extract image configuration and return cropped rotated image
 		RotatedImageSampler imageSampler = configureImage(pixelMatrix, pos);
-		//decode image data to byte array
+		imageSampler.setIV1(decodeData(imageSampler, ivLength, pos));
+		imageSampler.setIV1Checksum(decodeData(imageSampler, CHECKSUM_LENGTH, pos));	
 		imageSampler.decodedData = decodeData(imageSampler, MAX_ENCODED_LENGTH_BYTES, pos);
+		imageSampler.setIV2(decodeData(imageSampler, ivLength, pos));
+		imageSampler.setIV2Checksum(decodeData(imageSampler, CHECKSUM_LENGTH, pos));
 		return imageSampler;
 	}
 
@@ -33,8 +35,6 @@ public class DisplayDecoder {
 		configureModuleSizeAndRotation(imageSampler);
 		assert( imageSampler.moduleSize != 0);	
 		//configureCrop(imageSampler);
-		imageSampler.IV = decodeData(imageSampler, ivLength, pos);
-		imageSampler.IV_checksum = decodeData(imageSampler, CHECKSUM_LENGTH, pos);	
 		return imageSampler;
 	}
 	
@@ -257,10 +257,5 @@ public class DisplayDecoder {
 
         return result;
      }
-    
-	private static int signedShortToUnsignedInt(byte[] bytes, int start, int length) {
-		short signedShort = ByteBuffer.wrap(bytes, start, length).getShort();
-		return Short.toUnsignedInt(signedShort);
-	}
 
 }
