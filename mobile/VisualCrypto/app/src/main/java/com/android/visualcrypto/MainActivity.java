@@ -23,6 +23,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import com.android.visualcrypto.configurationFetcher.DimensionsFetcher;
+import com.android.visualcrypto.configurationFetcher.IvFetcher;
 import com.pc.configuration.Constants;
 import com.pc.encoderDecoder.DisplayDecoder;
 import com.pc.encoderDecoder.RotatedImageSampler;
@@ -45,44 +47,6 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
     }
 
-//    public void getImageFromFile(View view){
-//        boolean phone = true;
-//
-//        if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE) !=
-//                PackageManager.PERMISSION_GRANTED){
-//
-//            if (ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this,
-//                    Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
-//
-//            } else {
-//                ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},1);
-//            }
-//        }
-//
-//
-//        if (phone){
-//            File imgFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "qrcode.png");
-//            if (imgFile.exists()){
-//                Bitmap bMap = BitmapFactory.decodeFile(imgFile.getAbsolutePath());
-//                int width = bMap.getWidth();
-//                int height = bMap.getHeight();
-//                int pixelMax = 0x00FFFFFF;
-//                int[] pixels = new int[width*height];
-//                bMap.getPixels(pixels, 0, width, 0, 0, width, height);
-//
-//                for (int i = 0; i < width*height ; i++){
-//                    pixels[i] ^= pixelMax;
-//                }
-//                bMap = bMap.copy(Bitmap.Config.ARGB_8888, true);
-//                bMap.setPixels(pixels, 0, width, 0, 0, width, height);
-//
-//                ImageView iView = (ImageView) findViewById(R.id.imgDisplay);
-//                iView.setImageBitmap(bMap);
-//            }
-//        }
-//    }
-
-
     public void decodeImage(View view) {
         getPermissions();
 
@@ -100,24 +64,37 @@ public class MainActivity extends AppCompatActivity {
 
                 pixelArr = get2DPixelArray(imgFile);
                 rotatedImageSampler = DisplayDecoder.decodePixelMatrix(pixelArr);
-                // decode
+                /* decode */
                 byte[] decodedBytes = rotatedImageSampler.getDecodedData();
-                byte[] iv = rotatedImageSampler.getIV();
+
+                /* get iv */
+                byte[] iv = IvFetcher.getIV(rotatedImageSampler);
+                if (iv == null) {
+                    showAlert("Cannot decode the image: IV checksums are wrong!");
+                    return;
+                }
                 IvParameterSpec ivSpec = new IvParameterSpec(iv);
+                // get secret key
                 /* Using constant secret key! */
                 byte[] const_key = new byte[] {100, 101, 102, 103, 104, 105, 106 ,107, 108, 109, 110, 111, 112, 113, 114, 115};
-                SecretKeySpec secretKeySpec = new SecretKeySpec(const_key, "AES");
+                SecretKeySpec secretKeySpec = new SecretKeySpec(const_key, Constants.ENCRYPTION_ALGORITHM);
                 /* ************************** */
 
                 // deshuffle
                 byte[] deshuffledBytes = Deshuffle.getDeshuffledBytes(decodedBytes, ivSpec);
 
-                // decrypt
+                /* decrypt */
                 byte[] imageBytes = Decryptor.decryptImage(deshuffledBytes, secretKeySpec, ivSpec);
-                int width = getWidth(imageBytes);
-                int height = getHeight(imageBytes);
 
-                if (width > Constants.MAX_IMAGE_DIMENSION_SIZE || height > Constants.MAX_IMAGE_DIMENSION_SIZE){
+                /* fetch the image dimensions */
+                DimensionsFetcher dimensionsFetcher = new DimensionsFetcher(imageBytes);
+                int width = dimensionsFetcher.getWidth();
+                int height = dimensionsFetcher.getHeight();
+
+                if (width == 0 || height == 0){
+                    showAlert("Cannot decode the image: Dimensions checksum are wrong!");
+                    return;
+                } else if (width > Constants.MAX_IMAGE_DIMENSION_SIZE || height > Constants.MAX_IMAGE_DIMENSION_SIZE){
                     showAlert("Error: image dimension larger than " + Constants.MAX_IMAGE_DIMENSION_SIZE);
                     return;
                 }
@@ -126,11 +103,12 @@ public class MainActivity extends AppCompatActivity {
                 Bitmap bmp = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
                 setBitmapPixels(bmp, imageBytes, width, height);
 
+                /* display the image */
                 ImageView iView = (ImageView) findViewById(R.id.decodedImgId);
                 Log.d("iviewparameters", String.format("width: %d, height: %d", iView.getWidth(), iView.getHeight()));
                 iView.setImageBitmap(Bitmap.createScaledBitmap(bmp, iView.getWidth(), iView.getHeight(), false));
             } /* Display decoded text */
-            else if (view.getId() == R.id.decodeTxtBtn) {
+            /*else if (view.getId() == R.id.decodeTxtBtn) {
                 imgFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "out.png");
                 if (!imgFile.exists()) {
                     showAlert("Couldn't find 'out.png' in Downloads");
@@ -166,7 +144,7 @@ public class MainActivity extends AppCompatActivity {
             moduleSizeTxt.setSpan(new ForegroundColorSpan(Color.BLACK), 0, moduleSizeTxt.length(), 0);
 
             dataLengthCfgText.setText(dataLengthTxt.append(String.valueOf(rotatedImageSampler.getDataLength())));
-            moduleSizeCfgText.setText(moduleSizeTxt.append(String.valueOf(rotatedImageSampler.getModuleSize())));
+            moduleSizeCfgText.setText(moduleSizeTxt.append(String.valueOf(rotatedImageSampler.getModuleSize())));*/
 
         } catch (Exception e) {
             showAlert("Exception occurred: " + e.getMessage());
@@ -175,24 +153,6 @@ public class MainActivity extends AppCompatActivity {
 
 
     }
-
-    private int getWidth(byte[] imageBytes) {
-        int width = getIntByteBuffer(imageBytes,0, 2);
-        return width;
-
-    }
-
-    private int getIntByteBuffer(byte[] bytes, int startIndex, int length) {
-        short bytesShort = ByteBuffer.wrap(bytes, startIndex, length).getShort();
-        return Short.toUnsignedInt(bytesShort);
-    }
-
-    private int getHeight(byte[] imageBytes) {
-        int height = getIntByteBuffer(imageBytes, 2,2);
-        return height;
-    }
-
-
 
     private void showAlert(String msg) {
         AlertDialog alertDialog = new AlertDialog.Builder(MainActivity.this).create();
@@ -226,12 +186,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setBitmapPixels(Bitmap bmp, byte[] imageBytes, int width, int height){
+        final int METADATA_LENGTH = 5;
         int index, ARGB;
         ByteBuffer wrapped;
         for (int row = 0; row < height; row++) {
             for (int col = 0; col < width; col++) {
                 index = (row*width + col)*4;
-                wrapped = ByteBuffer.wrap(imageBytes, 4 + index, 4);
+                wrapped = ByteBuffer.wrap(imageBytes, METADATA_LENGTH + index, 4);
                 ARGB = wrapped.getInt();
                 bmp.setPixel(col, row, ARGB);
             }
