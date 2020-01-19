@@ -131,16 +131,16 @@ public class EncodeDecodeCLI {
     private static BufferedImage convertToImageUsingGetRGB(byte[] imageData) {
 
 		int index;
-		byte[] dims = Arrays.copyOfRange(imageData, 0, 5);
+		byte[] dims = Arrays.copyOfRange(imageData, 0, 4);
 		int width = signedShortToUnsignedInt(dims, 0, 2);
 		int height = signedShortToUnsignedInt(dims, 2, 2);	
 		byte[] chksumDims = Checksum.computeChecksum(dims); 
-		if(chksumDims[0] != imageData[5]) {
+		if(chksumDims[0] != imageData[IMAGE_DIMS_ENCODING_LENGTH]) {
 			dims = Arrays.copyOfRange(imageData, MAX_ENCODED_LENGTH_BYTES + CHECKSUM_LENGTH+IMAGE_DIMS_ENCODING_LENGTH,
-					MAX_ENCODED_LENGTH_BYTES + 2*(CHECKSUM_LENGTH+IMAGE_DIMS_ENCODING_LENGTH));
+					MAX_ENCODED_LENGTH_BYTES + 2*(CHECKSUM_LENGTH+IMAGE_DIMS_ENCODING_LENGTH) - CHECKSUM_LENGTH);
 			width = signedShortToUnsignedInt(dims, 0, 2);
 			height = signedShortToUnsignedInt(dims, 2, 2);
-			if(chksumDims[0] != imageData[5]) {
+			if(chksumDims[0] != imageData[CHECKSUM_LENGTH]) {
 				System.out.println("error! both dimensions checksum are wrong. exiting...");
 				System.exit(-1);
 			}
@@ -151,11 +151,13 @@ public class EncodeDecodeCLI {
         int channels = 4;
         int ARGB; 
         ByteBuffer wrapped;
+        byte[] pixelData = Arrays.copyOfRange(imageData, CHECKSUM_LENGTH+IMAGE_DIMS_ENCODING_LENGTH,
+        		MAX_ENCODED_LENGTH_BYTES+CHECKSUM_LENGTH+IMAGE_DIMS_ENCODING_LENGTH);
         
         for (int row = 0; row < height; row++) {
            for (int col = 0; col < width; col++) {
         	  index = (row*width + col)*channels;
-        	  wrapped = ByteBuffer.wrap(imageData, IMAGE_DIMS_ENCODING_LENGTH + index, channels);
+        	  wrapped = ByteBuffer.wrap(pixelData, index, channels);
         	  ARGB = wrapped.getInt();
         	  image.setRGB(col, row, ARGB);
            }
