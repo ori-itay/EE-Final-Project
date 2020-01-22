@@ -1,8 +1,6 @@
 package com.pc;
 
-import static com.pc.configuration.Constants.CHECKSUM_LENGTH;
-import static com.pc.configuration.Constants.IMAGE_DIMS_ENCODING_LENGTH;
-import static com.pc.configuration.Constants.MAX_ENCODED_LENGTH_BYTES;
+import static com.pc.configuration.Parameters.*;
 
 import java.awt.image.BufferedImage;
 
@@ -19,13 +17,13 @@ public class FlowUtils {
         
         int channels = 4, ARGB, index;
 
-        if(height*width*channels > MAX_ENCODED_LENGTH_BYTES) {
+        if(height > MAX_IMAGE_DIMENSION_SIZE || width > MAX_IMAGE_DIMENSION_SIZE) {
         	System.out.println("file too large\n");
-        	System.out.println("max input image size is:" + MAX_ENCODED_LENGTH_BYTES+"\n");
+        	System.out.println("max input image dimension is:" + MAX_IMAGE_DIMENSION_SIZE+"\n");
         	System.exit(1); 
         }
         
-        byte[] imageData = new byte[MAX_ENCODED_LENGTH_BYTES];
+        byte[] imageData = new byte[width+height*channels];
         byte[] dimsArr = new byte[IMAGE_DIMS_ENCODING_LENGTH + CHECKSUM_LENGTH];
         
         //create image dims+checksum byte array
@@ -47,25 +45,31 @@ public class FlowUtils {
         	   imageData[index + 3] = (byte) ARGB;//blue
            }
         }
-        //pad with '0'
-        for(int i = height*width*channels; i < MAX_ENCODED_LENGTH_BYTES; i++) {
-        	imageData[i] = (byte) 0;
-        }
         
-        return concatenateByteArrays(dimsArr, imageData, dimsArr);
+        //pad to natural number of modules  
+        int padBytesNum = 0;
+        int totalDataBits = BITS_IN_BYTE*(imageData.length + 2*dimsArr.length);
+        while ((totalDataBits + padBytesNum*BITS_IN_BYTE)%ENCODING_BIT_GROUP_SIZE != 0) {
+        	padBytesNum++;
+        }
+        byte[] pad = new byte[padBytesNum];
+        
+        return concatenateByteArrays(dimsArr, imageData, pad, dimsArr);
      }
     
-    private static byte[] concatenateByteArrays(byte[] dimsArr, byte[] imageData, byte[] dimsArr2) {
+    private static byte[] concatenateByteArrays(byte[] dimsArr, byte[] imageData, byte[] pad, byte[] dimsArr2) {
         int aLen = dimsArr.length;
         int bLen = imageData.length;
-        int cLen = dimsArr2.length;
+        int cLen = pad.length;
+        int dLen = dimsArr2.length;
 
-        byte[] d = new byte[aLen + bLen + cLen];
-        System.arraycopy(dimsArr, 0, d, 0, aLen);
-        System.arraycopy(imageData, 0, d, aLen, bLen);
-        System.arraycopy(dimsArr2, 0, d, aLen+bLen, cLen);
+        byte[] res = new byte[aLen + bLen + cLen + dLen];
+        System.arraycopy(dimsArr, 0, res, 0, aLen);
+        System.arraycopy(imageData, 0, res, aLen, bLen);
+        System.arraycopy(dimsArr2, 0, res, aLen+bLen, cLen);
+        System.arraycopy(dimsArr2, 0, res, aLen+bLen+cLen, dLen);
 
-        return d;
+        return res;
     }
     
 }

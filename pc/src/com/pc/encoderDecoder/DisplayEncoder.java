@@ -2,8 +2,7 @@ package com.pc.encoderDecoder;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
-import java.util.Arrays;
-import static com.pc.configuration.Constants.*;
+import static com.pc.configuration.Parameters.*;
 
 
 enum ROW {
@@ -14,9 +13,11 @@ enum ROW {
 
 public class DisplayEncoder {
 	
+	static int MODULES_IN_ENCODED_IMAGE_DIM;
+	
 
 	public static BufferedImage encodeBytes(byte[] binaryData, byte[] IV, byte[] ivchecksum) throws Exception {
-		
+		MODULES_IN_ENCODED_IMAGE_DIM = computeMinDimension(binaryData.length);
 		//allocate space including white margins
 		BufferedImage image = new BufferedImage(MODULES_IN_ENCODED_IMAGE_DIM*PIXELS_IN_MODULE,
 				MODULES_IN_ENCODED_IMAGE_DIM*PIXELS_IN_MODULE, BufferedImage.TYPE_INT_ARGB);		 
@@ -37,12 +38,27 @@ public class DisplayEncoder {
 		return image;
 	}
 	
-	public static BufferedImage encodeBytes(byte[] binaryData) throws Exception {
-		byte[] IV = new byte[ivLength];
-		Arrays.fill(IV, 0, ivLength -1, (byte) 0);
-		return encodeBytes(binaryData, IV, new byte[] {0});
+	private static int computeMinDimension(int dataLength) {
+		int modulesForEncoding = (int) Math.ceil((float)(dataLength*BITS_IN_BYTE + 2*(ivLength + CHECKSUM_LENGTH)) /
+				ENCODING_BIT_GROUP_SIZE);
+		int dim = (int) Math.ceil(Math.sqrt(modulesForEncoding)) + 2*(MODULES_IN_POS_DET_DIM+MODULES_IN_MARGIN); // initial guess
+		
+		while(computeMaxEncodedLength(dim) < dataLength) 
+			dim++;
+		
+		while(computeMaxEncodedLength(dim-1) >= dataLength) 
+			dim--;
+		
+		
+		return dim;
 	}
 
+	private static int computeMaxEncodedLength(int dim) {
+		return (ENCODING_BIT_GROUP_SIZE*((dim*dim 
+				- 4*MODULES_IN_MARGIN*(dim -MODULES_IN_MARGIN)
+				- MODULES_IN_POS_DET_DIM*MODULES_IN_POS_DET_DIM*NUM_OF_POSITION_DETECTORS)
+				- 2*BITS_IN_BYTE*(ivLength+CHECKSUM_LENGTH+IMAGE_DIMS_ENCODING_LENGTH+CHECKSUM_LENGTH)));
+	}
 
 	private static void encodeData(BufferedImage image, Graphics2D g, byte[] binaryData, Position pos) {
 		
@@ -97,7 +113,7 @@ private static void encodeBlock(byte currentData, Graphics2D g, Position pos) {
 	g.setColor(color);
 	g.fillRect(pos.colModule * PIXELS_IN_MODULE, pos.rowModule * PIXELS_IN_MODULE, PIXELS_IN_MODULE, PIXELS_IN_MODULE);
 	pos.colModule++;		
-	RotatedImageSampler.checkForColumnEnd(pos);		
+	RotatedImageSampler.imageCheckForColumnEnd(pos, MODULES_IN_ENCODED_IMAGE_DIM);		
 }
 
 

@@ -3,7 +3,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 
 import javax.imageio.ImageIO;
-import static com.pc.configuration.Constants.*;
+import static com.pc.configuration.Parameters.*;
 
 public class DisplayDecoder {
 	
@@ -23,17 +23,31 @@ public class DisplayDecoder {
 		RotatedImageSampler imageSampler = configureImage(pixelMatrix, pos);
 		imageSampler.setIV1(decodeData(imageSampler, ivLength, pos));
 		imageSampler.setIV1Checksum(decodeData(imageSampler, CHECKSUM_LENGTH, pos));	
-		imageSampler.decodedData = decodeData(imageSampler, MAX_ENCODED_LENGTH_BYTES, pos);
+		int imageDataLength = computeDataLength(imageSampler);
+		imageSampler.setDecodedData(decodeData(imageSampler, imageDataLength, pos));
 		imageSampler.setIV2(decodeData(imageSampler, ivLength, pos));
 		imageSampler.setIV2Checksum(decodeData(imageSampler, CHECKSUM_LENGTH, pos));
 		return imageSampler;
 	}
 
+	private static int computeDataLength(RotatedImageSampler imageSampler) {
+		//assuming data is padded to natural number of modules!
+		int modulesInDim = imageSampler.getModulesInDim();
+		int dataByteLength = ENCODING_BIT_GROUP_SIZE*((modulesInDim*modulesInDim 
+				- 4*MODULES_IN_MARGIN*(modulesInDim - MODULES_IN_MARGIN)
+				- MODULES_IN_POS_DET_DIM*MODULES_IN_POS_DET_DIM*NUM_OF_POSITION_DETECTORS)
+				- 2*BITS_IN_BYTE*(ivLength+CHECKSUM_LENGTH+IMAGE_DIMS_ENCODING_LENGTH+CHECKSUM_LENGTH)) / 
+				BITS_IN_BYTE;
+		
+		return dataByteLength;
+	}
+
 	private static RotatedImageSampler configureImage(int[][] pixelMatrix, Position pos) {
 		RotatedImageSampler imageSampler = new RotatedImageSampler();
-		imageSampler.pixelMatrix = pixelMatrix;
+		imageSampler.setReceivedImageDim(pixelMatrix.length);
+		imageSampler.setPixelMatrix(pixelMatrix);
 		configureModuleSizeAndRotation(imageSampler);
-		assert( imageSampler.moduleSize != 0);	
+		assert( imageSampler.getModuleSize() != 0);	
 		//configureCrop(imageSampler);
 		return imageSampler;
 	}
@@ -88,8 +102,8 @@ public class DisplayDecoder {
 
 	private static byte[] sampleModule(RotatedImageSampler imageSampler, Position pos) {
 		
-		int rowPixel = pos.rowModule * imageSampler.moduleSize;
-		int colPixel = pos.colModule * imageSampler.moduleSize; 
+		int rowPixel = pos.rowModule * imageSampler.getModuleSize();
+		int colPixel = pos.colModule * imageSampler.getModuleSize(); 
 		int currPixelSample = imageSampler.getPixel(rowPixel, colPixel);
 		byte[] ARGB = new byte[4];
 		
@@ -99,7 +113,7 @@ public class DisplayDecoder {
 		ARGB[3] = (byte) (currPixelSample); //blue
 		
 		pos.colModule++;
-		RotatedImageSampler.checkForColumnEnd(pos);
+		imageSampler.checkForColumnEnd(pos);
 		
 		return ARGB;
 	}
@@ -118,28 +132,30 @@ public class DisplayDecoder {
 
 	private static void configureModuleSizeAndRotation(RotatedImageSampler imageSampler) {
 		int moduleSize;
+		int receivedDim = imageSampler.getPixelMatrix().length;
     		
-		moduleSize = scanFromTopLeft(imageSampler.pixelMatrix);
+		moduleSize = scanFromTopLeft(imageSampler.getPixelMatrix());
 		if(moduleSize == 0) { //pattern not found from top left
-			moduleSize = scanFromBottomRight(imageSampler.pixelMatrix);
+			moduleSize = scanFromBottomRight(imageSampler.getPixelMatrix());
 			imageSampler.rotationCounterClockwise = 180;
 		}
 		else {
 			//seek pattern from top right
-			if(!foundPattern(imageSampler.pixelMatrix, moduleSize, moduleSize * MODULES_IN_MARGIN,
-					moduleSize * (MODULES_IN_ENCODED_IMAGE_DIM - 
+			if(!foundPattern(imageSampler.getPixelMatrix(), moduleSize, moduleSize * MODULES_IN_MARGIN,
+					moduleSize * (receivedDim - 
 							MODULES_IN_MARGIN - MODULES_IN_POS_DET_DIM) )) {
 				imageSampler.rotationCounterClockwise = 270;
 			}
 			//seek pattern from top bottom left
-			else if(!foundPattern(imageSampler.pixelMatrix, moduleSize, moduleSize *
-					(MODULES_IN_ENCODED_IMAGE_DIM - 
+			else if(!foundPattern(imageSampler.getPixelMatrix(), moduleSize, moduleSize *
+					(receivedDim - 
 							MODULES_IN_MARGIN - MODULES_IN_POS_DET_DIM) ,moduleSize * MODULES_IN_MARGIN) ) {
 				imageSampler.rotationCounterClockwise = 90;
 			}
 			// else: pattern not found from bottom right - no need to rotate
 		}
-		imageSampler.moduleSize = moduleSize;
+		imageSampler.setModuleSize(moduleSize);
+		imageSampler.setModulesInDim(imageSampler.getReceivedImageDim()/moduleSize);
 		return;
 	}
 

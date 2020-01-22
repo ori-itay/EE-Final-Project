@@ -6,12 +6,12 @@ public class RotatedImageSampler extends StdImageSampler {
 	
 	public int getPixel(int rowPixel, int colPixel) {
 		if (rotationCounterClockwise == 0)
-			return pixelMatrix[rowPixel][colPixel];
+			return getPixelMatrix()[rowPixel][colPixel];
 		if (rotationCounterClockwise == 90)
-			return pixelMatrix[colPixel][pixelMatrix.length-1-rowPixel];
+			return getPixelMatrix()[colPixel][getPixelMatrix().length-1-rowPixel];
 		if (rotationCounterClockwise == 180)
-			return pixelMatrix[pixelMatrix.length-1-rowPixel][pixelMatrix.length-1-colPixel];
-		return pixelMatrix[pixelMatrix.length-1-colPixel][rowPixel]; //270 rotation
+			return getPixelMatrix()[getReceivedImageDim()-1-rowPixel][getReceivedImageDim()-1-colPixel];
+		return getPixelMatrix()[getReceivedImageDim()-1-colPixel][rowPixel]; //270 rotation
 		
 	}
 	

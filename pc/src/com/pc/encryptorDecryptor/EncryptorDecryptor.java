@@ -1,7 +1,7 @@
 package com.pc.encryptorDecryptor;
 
-import static com.pc.configuration.Constants.ivLength;
-import static com.pc.configuration.Constants.MAX_ENCODED_LENGTH_BYTES;
+import static com.pc.configuration.Parameters.ivLength;
+import static com.pc.configuration.Parameters.MAX_ENCODED_LENGTH_BYTES;
 
 import java.nio.ByteBuffer;
 //import java.util.concurrent.ExecutorService;
@@ -19,8 +19,8 @@ public class EncryptorDecryptor {
 	private static final String encryptionMethod = encryptionAlgorithm + "/CBC/NoPadding";
 	
 	public static byte[] xorPaddedImage(byte[] imageBytes, byte[] generatedXorBytes) {
-		final byte[] xoredImage = new byte[MAX_ENCODED_LENGTH_BYTES];
-		for (int i = 0; i < MAX_ENCODED_LENGTH_BYTES; i++) {
+		final byte[] xoredImage = new byte[imageBytes.length];
+		for (int i = 0; i < imageBytes.length; i++) {
 			xoredImage[i] = (byte) (imageBytes[i] ^ generatedXorBytes[i]);
 		}
 
