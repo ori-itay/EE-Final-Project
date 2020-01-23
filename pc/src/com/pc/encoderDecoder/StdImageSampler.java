@@ -104,7 +104,7 @@ public class StdImageSampler implements ImageSamplerInf{
 	
 
 	public void checkForColumnEnd(Position pos) {
-		imageCheckForColumnEnd(pos, receivedImageDim);
+		imageCheckForColumnEnd(pos, modulesInDim);
 	}
 	
 	static void imageCheckForColumnEnd(Position pos, int imageDim) {
