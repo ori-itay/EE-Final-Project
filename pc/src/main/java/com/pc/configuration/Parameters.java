@@ -3,7 +3,12 @@ package com.pc.configuration;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.file.Paths;
 import java.util.Properties;
+
+import static jdk.xml.internal.SecuritySupport.getClassLoader;
 
 public class Parameters {
 	private static final String ENCRYPTION_ALGORITHM = "encryptionAlgorithm";
@@ -13,7 +18,7 @@ public class Parameters {
 	private static final String PIXELS_IN_MODULE = "pixelsInModule";
 	private static final String MODULES_IN_MARGIN = "modulesInMargin";
 	
-	private static final String PATH_TO_CONFIG_FILE = "src/main/resources/config.properties";
+	private static final String CONFIG_FILE_NAME = "config.properties";
 	
 	
 	private Parameters() {}
@@ -30,7 +35,9 @@ public class Parameters {
 		Properties prop;
 		
 		try {
-			inputStream = new FileInputStream(PATH_TO_CONFIG_FILE);
+			URL res = Parameters.class.getClassLoader().getResource(CONFIG_FILE_NAME);
+			System.out.println(Paths.get(res.toURI()).toFile());
+			inputStream = new FileInputStream(Paths.get(res.toURI()).toFile());
 			prop = new Properties();
 			prop.load(inputStream);
 			
@@ -43,7 +50,7 @@ public class Parameters {
 			
 			inputStream.close();
 			
-		} catch (IOException e) {
+		} catch (IOException | URISyntaxException e) {
 			System.out.print(e.getMessage());
 			ivLength = 0;
 			encryptionAlgorithm = null;

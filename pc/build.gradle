@@ -36,9 +36,9 @@ task cliJar(type: Jar) {
     with jar
 }
 
-task makeCLIJar(dependsOn: cliJar, type: Copy){
+task cli(dependsOn: cliJar, type: Copy){
     from "build/libs/"
-    into "/"
+    into "/jars"
     include '*.jar'
 }
 
