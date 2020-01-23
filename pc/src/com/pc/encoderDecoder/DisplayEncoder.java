@@ -2,7 +2,10 @@ package com.pc.encoderDecoder;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
-import static com.pc.configuration.Parameters.*;
+
+import com.pc.configuration.Parameters;
+
+import static com.pc.configuration.Constants.*;
 
 
 enum ROW {
@@ -15,16 +18,16 @@ public class DisplayEncoder {
 
 	public static BufferedImage encodeBytes(byte[] binaryData, byte[] IV, byte[] ivchecksum) throws Exception {
 		//allocate space including white margins
-		BufferedImage image = new BufferedImage(MODULES_IN_ENCODED_IMAGE_DIM*PIXELS_IN_MODULE,
-				MODULES_IN_ENCODED_IMAGE_DIM*PIXELS_IN_MODULE, BufferedImage.TYPE_INT_ARGB);		 
+		BufferedImage image = new BufferedImage(MODULES_IN_ENCODED_IMAGE_DIM*Parameters.pixelsInModule,
+				MODULES_IN_ENCODED_IMAGE_DIM*Parameters.pixelsInModule, BufferedImage.TYPE_INT_ARGB);		 
 		// Clear the background with white
 		Graphics2D g = (Graphics2D) image.getGraphics();
 		g.setBackground(Color.WHITE);
-		g.clearRect(0, 0, MODULES_IN_ENCODED_IMAGE_DIM*PIXELS_IN_MODULE, MODULES_IN_ENCODED_IMAGE_DIM*PIXELS_IN_MODULE);
+		g.clearRect(0, 0, MODULES_IN_ENCODED_IMAGE_DIM*Parameters.pixelsInModule, MODULES_IN_ENCODED_IMAGE_DIM*Parameters.pixelsInModule);
 		g.setColor(Color.BLACK);
 		//create position detector
 		createPositionDetectors(image, g);
-		Position pos = new Position(MODULES_IN_MARGIN, MODULES_IN_MARGIN + MODULES_IN_POS_DET_DIM);
+		Position pos = new Position(Parameters.modulesInMargin, Parameters.modulesInMargin + MODULES_IN_POS_DET_DIM);
 		encodeData(image,g, IV, pos); //encode IV first time
 		encodeData(image,g, ivchecksum, pos); //encode IV checksum first time
 		encodeData(image, g, binaryData, pos); 	//encode actual picture data
@@ -86,7 +89,7 @@ private static void encodeBlock(byte currentData, Graphics2D g, Position pos) {
 	level = (int) ((maskedData*GREY_SCALE_DELTA) & 0x000000FF);
 	color = new Color(level, level, level);
 	g.setColor(color);
-	g.fillRect(pos.colModule * PIXELS_IN_MODULE, pos.rowModule * PIXELS_IN_MODULE, PIXELS_IN_MODULE, PIXELS_IN_MODULE);
+	g.fillRect(pos.colModule * Parameters.pixelsInModule, pos.rowModule * Parameters.pixelsInModule, Parameters.pixelsInModule, Parameters.pixelsInModule);
 	pos.colModule++;		
 	RotatedImageSampler.imageCheckForColumnEnd(pos, MODULES_IN_ENCODED_IMAGE_DIM);		
 }
@@ -96,14 +99,14 @@ private static void encodeBlock(byte currentData, Graphics2D g, Position pos) {
 		
 		final int MID_LAYER_OFFSET_1 = 1; final int MID_LAYER_OFFSET_2 = 5;
 		
-		int rowTopLeft = MODULES_IN_MARGIN * PIXELS_IN_MODULE;
-		int colTopLeft = MODULES_IN_MARGIN * PIXELS_IN_MODULE;
-		int rowTopRight = MODULES_IN_MARGIN * PIXELS_IN_MODULE;
+		int rowTopLeft = Parameters.modulesInMargin * Parameters.pixelsInModule;
+		int colTopLeft = Parameters.modulesInMargin * Parameters.pixelsInModule;
+		int rowTopRight = Parameters.modulesInMargin * Parameters.pixelsInModule;
 		int colTopRight = (MODULES_IN_ENCODED_IMAGE_DIM-
-				MODULES_IN_MARGIN-MODULES_IN_POS_DET_DIM) * PIXELS_IN_MODULE;
+				Parameters.modulesInMargin-MODULES_IN_POS_DET_DIM) * Parameters.pixelsInModule;
 		int rowBottomLeft = (MODULES_IN_ENCODED_IMAGE_DIM-
-				MODULES_IN_MARGIN-MODULES_IN_POS_DET_DIM) * PIXELS_IN_MODULE;
-		int colBottomLeft = MODULES_IN_MARGIN * PIXELS_IN_MODULE;
+				Parameters.modulesInMargin-MODULES_IN_POS_DET_DIM) * Parameters.pixelsInModule;
+		int colBottomLeft = Parameters.modulesInMargin * Parameters.pixelsInModule;
 		int rowModuleOffset, colModuleOffset;
 		
 		for(rowModuleOffset = 0; rowModuleOffset< MODULES_IN_POS_DET_DIM; rowModuleOffset++) {
@@ -113,12 +116,12 @@ private static void encodeBlock(byte currentData, Graphics2D g, Position pos) {
 						(colModuleOffset >= MID_LAYER_OFFSET_1 && colModuleOffset <= MID_LAYER_OFFSET_2)) &&
 						!((rowModuleOffset > MID_LAYER_OFFSET_1 && rowModuleOffset < MID_LAYER_OFFSET_2) &&
 								(colModuleOffset == MID_LAYER_OFFSET_1 || colModuleOffset == MID_LAYER_OFFSET_2))) {
-					g.fillRect(colTopLeft + colModuleOffset * PIXELS_IN_MODULE,
-							rowTopLeft + rowModuleOffset * PIXELS_IN_MODULE, PIXELS_IN_MODULE, PIXELS_IN_MODULE);
-					g.fillRect(colTopRight + colModuleOffset * PIXELS_IN_MODULE,
-							 rowTopRight + rowModuleOffset * PIXELS_IN_MODULE, PIXELS_IN_MODULE, PIXELS_IN_MODULE);
-					g.fillRect(colBottomLeft + colModuleOffset * PIXELS_IN_MODULE,
-							rowBottomLeft + rowModuleOffset * PIXELS_IN_MODULE, PIXELS_IN_MODULE, PIXELS_IN_MODULE);
+					g.fillRect(colTopLeft + colModuleOffset * Parameters.pixelsInModule,
+							rowTopLeft + rowModuleOffset * Parameters.pixelsInModule, Parameters.pixelsInModule, Parameters.pixelsInModule);
+					g.fillRect(colTopRight + colModuleOffset * Parameters.pixelsInModule,
+							 rowTopRight + rowModuleOffset * Parameters.pixelsInModule, Parameters.pixelsInModule, Parameters.pixelsInModule);
+					g.fillRect(colBottomLeft + colModuleOffset * Parameters.pixelsInModule,
+							rowBottomLeft + rowModuleOffset * Parameters.pixelsInModule, Parameters.pixelsInModule, Parameters.pixelsInModule);
 				}
 			}
 		}		

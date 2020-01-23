@@ -1,7 +1,7 @@
 package com.pc.encryptorDecryptor;
 
 import static com.pc.configuration.Parameters.ivLength;
-import static com.pc.configuration.Parameters.MAX_ENCODED_LENGTH_BYTES;
+import static com.pc.configuration.Constants.MAX_ENCODED_LENGTH_BYTES;
 
 import java.nio.ByteBuffer;
 //import java.util.concurrent.ExecutorService;

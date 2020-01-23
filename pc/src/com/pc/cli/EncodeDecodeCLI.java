@@ -1,5 +1,6 @@
 package com.pc.cli;
-import static com.pc.configuration.Parameters.*;
+import static com.pc.configuration.Constants.*;
+import static com.pc.configuration.Parameters.encodingColorLevels;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -35,28 +36,28 @@ public class EncodeDecodeCLI {
 	    IvParameterSpec iv;
 	    byte[] chksumIV;
 	    
-	    while(ENCODING_COLOR_LEVELS!=2 && ENCODING_COLOR_LEVELS!=4
-	    		&& ENCODING_COLOR_LEVELS!=8 && ENCODING_COLOR_LEVELS!=16
-	    		&& ENCODING_COLOR_LEVELS!=32 && ENCODING_COLOR_LEVELS!=64){
+	    while(encodingColorLevels!=2 && encodingColorLevels!=4
+	    		&& encodingColorLevels!=8 && encodingColorLevels!=16
+	    		&& encodingColorLevels!=32 && encodingColorLevels!=64){
 		    System.out.println("Enter number of encoding color levels betwwen 2-64. \n"
 		    		+ "permitted number in powers of 2 only.");
 		    try{
-		    	ENCODING_COLOR_LEVELS = scanner.nextInt();  // Read user input
-			    if(ENCODING_COLOR_LEVELS!=2 && ENCODING_COLOR_LEVELS!=4
-			    		&& ENCODING_COLOR_LEVELS!=8 && ENCODING_COLOR_LEVELS!=16
-			    		&& ENCODING_COLOR_LEVELS!=32 && ENCODING_COLOR_LEVELS!=64) 
+		    	encodingColorLevels = scanner.nextInt();  // Read user input
+			    if(encodingColorLevels!=2 && encodingColorLevels!=4
+			    		&& encodingColorLevels!=8 && encodingColorLevels!=16
+			    		&& encodingColorLevels!=32 && encodingColorLevels!=64) 
 				    	System.out.println("Invalid number of color levels.");
 		    }
 		    catch (Exception InputMismatchException){
 			    System.out.println("Not a number.");
-			    ENCODING_COLOR_LEVELS = 0;
+			    encodingColorLevels = 0;
 			    scanner.nextLine();
 		    }
 	    }
 
 	    	
-		GREY_SCALE_DELTA = Math.floorDiv(255 , (ENCODING_COLOR_LEVELS-1));
-		ENCODING_BIT_GROUP_SIZE = (int) (Math.log(ENCODING_COLOR_LEVELS)/ Math.log(2) );
+		GREY_SCALE_DELTA = Math.floorDiv(255 , (encodingColorLevels-1));
+		ENCODING_BIT_GROUP_SIZE = (int) (Math.log(encodingColorLevels)/ Math.log(2) );
 		BIT_GROUP_MASK_OF_ONES = (1 << ENCODING_BIT_GROUP_SIZE) -1;	
 	    
 	    System.out.println("Enter Decode/Encode command:");
@@ -74,7 +75,7 @@ public class EncodeDecodeCLI {
     		else {  
     			/* constant key */
     			byte[] const_key = new byte[] {100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115};
-    			SecretKeySpec skeySpec = new SecretKeySpec(const_key, Parameters.ENCRYPTION_ALGORITHM);
+    			SecretKeySpec skeySpec = new SecretKeySpec(const_key, Parameters.encryptionAlgorithm);
     			/****************/
     			
     			if(splitedCommand[0].equals("encode")){

@@ -11,6 +11,7 @@ import javax.crypto.spec.SecretKeySpec;
 import javax.imageio.ImageIO;
 
 import com.checksum.Checksum;
+import com.pc.configuration.Constants;
 import com.pc.configuration.Parameters;
 import com.pc.encoderDecoder.DisplayEncoder;
 import com.pc.encryptorDecryptor.EncryptorDecryptor;
@@ -24,7 +25,7 @@ public class Flow {
 	public static void main(String[] args) throws IOException {
 		
 		//load image
-		File inputFile = new File("cat_200_185.jpg");
+		File inputFile = new File("200_200.jpg");		
 		
 		BufferedImage image = ImageIO.read(inputFile);
 		byte[] imageBytes = FlowUtils.convertToBytesUsingGetRGB(image);
@@ -37,7 +38,7 @@ public class Flow {
 			//skey = Encryptor.generateSymmetricKey();
 			/* constant key */
 			byte[] const_key = new byte[] {100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115};
-			SecretKeySpec skeySpec = new SecretKeySpec(const_key, Parameters.ENCRYPTION_ALGORITHM);
+			SecretKeySpec skeySpec = new SecretKeySpec(const_key, Parameters.encryptionAlgorithm);
 			/****************/
 			//SecretKeySpec skeySpec = new SecretKeySpec(skey.getEncoded(), Constants.ENCRYPTION_ALGORITHM);
 			byte[] generatedXorBytes = EncryptorDecryptor.generateXorBytes(skeySpec, iv);

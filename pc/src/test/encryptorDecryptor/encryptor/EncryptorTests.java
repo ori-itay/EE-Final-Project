@@ -4,6 +4,7 @@ package test.encryptorDecryptor.encryptor;
 import org.junit.jupiter.api.Test;
 
 import com.pc.configuration.Constants;
+import com.pc.configuration.Parameters;
 import com.pc.encryptorDecryptor.EncryptorDecryptor;
 import com.pc.encryptorDecryptor.encryptor.Encryptor;
 
@@ -11,7 +12,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static com.pc.configuration.Constants.ivLength; 
 
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
@@ -28,13 +28,13 @@ public class EncryptorTests {
 	
 	@BeforeAll
 	public static void initVars() throws NoSuchAlgorithmException {
-		ivA = Encryptor.generateIv(ivLength);
+		ivA = Encryptor.generateIv(Parameters.ivLength);
 		skeyA = Encryptor.generateSymmetricKey();
 	}
 	
 	@Test
 	public void testGenerateIv() {
-		IvParameterSpec specB = Encryptor.generateIv(ivLength);
+		IvParameterSpec specB = Encryptor.generateIv(Parameters.ivLength);
 		assertFalse(Arrays.equals(ivA.getIV(), specB.getIV()));
 		IvParameterSpec specC = Encryptor.generateIv(8);
 		IvParameterSpec specD = Encryptor.generateIv(24);
@@ -68,7 +68,7 @@ public class EncryptorTests {
 		assertTrue(Arrays.equals(generatedXorBytesA, generatedXorBytesC));
 		
 		
-		IvParameterSpec ivB = Encryptor.generateIv(ivLength);
+		IvParameterSpec ivB = Encryptor.generateIv(Parameters.ivLength);
 		byte[] generatedXorBytesB = EncryptorDecryptor.generateXorBytes(skeySpec, ivB); 
 		assertFalse(Arrays.equals(generatedXorBytesA, generatedXorBytesB)); 
 		 
@@ -77,7 +77,7 @@ public class EncryptorTests {
 	@Test
 	public void testXorPaddedImage() throws Exception {
 		SecretKeySpec skeyB = new SecretKeySpec(Encryptor.generateSymmetricKey().getEncoded(), "AES");
-		IvParameterSpec ivB = Encryptor.generateIv(ivLength);
+		IvParameterSpec ivB = Encryptor.generateIv(Parameters.ivLength);
 		byte[] generatedXorBytes = EncryptorDecryptor.generateXorBytes(skeyB, ivB);
 		byte[] imageBytes = new byte[Constants.MAX_ENCODED_LENGTH_BYTES];
 		byte[] xoredImage = Encryptor.encryptImage(generatedXorBytes, imageBytes);

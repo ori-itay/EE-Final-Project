@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.pc.configuration.Constants;
+import com.pc.configuration.Parameters;
 import com.pc.encryptorDecryptor.EncryptorDecryptor;
 import com.pc.encryptorDecryptor.decryptor.Decryptor;
 import com.pc.encryptorDecryptor.encryptor.Encryptor;
@@ -26,7 +27,7 @@ public class DecryptorTests {
 		new SecureRandom().nextBytes(imgBytes);
 		
 		SecretKey skey = Encryptor.generateSymmetricKey();
-		IvParameterSpec iv = Encryptor.generateIv(Constants.ivLength);
+		IvParameterSpec iv = Encryptor.generateIv(Parameters.ivLength);
 		SecretKeySpec skeySpec = new SecretKeySpec(skey.getEncoded(), "AES");
 		
 		byte[] xorBytes = EncryptorDecryptor.generateXorBytes(skeySpec, iv);

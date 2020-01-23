@@ -5,8 +5,9 @@ import java.io.File;
 import javax.imageio.ImageIO;
 
 import com.pc.FlowUtils;
+import com.pc.configuration.Parameters;
 
-import static com.pc.configuration.Parameters.*;
+import static com.pc.configuration.Constants.*;
 
 public class DisplayDecoder {
 	
@@ -21,14 +22,14 @@ public class DisplayDecoder {
 	
 	public static RotatedImageSampler decodePixelMatrix(int[][] pixelMatrix) throws Exception {
 					
-		Position pos = new Position(MODULES_IN_MARGIN, MODULES_IN_MARGIN + MODULES_IN_POS_DET_DIM);
+		Position pos = new Position(Parameters.modulesInMargin, Parameters.modulesInMargin + MODULES_IN_POS_DET_DIM);
 		//extract image configuration and return cropped rotated image
 		RotatedImageSampler imageSampler = configureImage(pixelMatrix, pos);
-		imageSampler.setIV1(decodeData(imageSampler, ivLength, pos));
+		imageSampler.setIV1(decodeData(imageSampler, Parameters.ivLength, pos));
 		imageSampler.setIV1Checksum(decodeData(imageSampler, CHECKSUM_LENGTH, pos));	
 		int imageDataLength = FlowUtils.computeMaxEncodedLength(imageSampler.getModulesInDim());
 		imageSampler.setDecodedData(decodeData(imageSampler, imageDataLength, pos));
-		imageSampler.setIV2(decodeData(imageSampler, ivLength, pos));
+		imageSampler.setIV2(decodeData(imageSampler, Parameters.ivLength, pos));
 		imageSampler.setIV2Checksum(decodeData(imageSampler, CHECKSUM_LENGTH, pos));
 		return imageSampler;
 	}
@@ -135,15 +136,15 @@ public class DisplayDecoder {
 		else {
 			modulesInDim = Math.floorDiv(receivedDim,moduleSize);
 			//seek pattern from top right
-			if(!foundPattern(imageSampler.getPixelMatrix(), moduleSize, moduleSize * MODULES_IN_MARGIN,
+			if(!foundPattern(imageSampler.getPixelMatrix(), moduleSize, moduleSize * Parameters.modulesInMargin,
 					moduleSize * (modulesInDim - 
-							MODULES_IN_MARGIN - MODULES_IN_POS_DET_DIM) )) {
+							Parameters.modulesInMargin - MODULES_IN_POS_DET_DIM) )) {
 				imageSampler.rotationCounterClockwise = 270;
 			}
 			//seek pattern from top bottom left
 			else if(!foundPattern(imageSampler.getPixelMatrix(), moduleSize, moduleSize *
 					(modulesInDim - 
-							MODULES_IN_MARGIN - MODULES_IN_POS_DET_DIM) ,moduleSize * MODULES_IN_MARGIN) ) {
+							Parameters.modulesInMargin - MODULES_IN_POS_DET_DIM) ,moduleSize * Parameters.modulesInMargin) ) {
 				imageSampler.rotationCounterClockwise = 90;
 			}
 			// else: pattern not found from bottom right - no need to rotate

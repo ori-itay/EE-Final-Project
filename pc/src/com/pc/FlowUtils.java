@@ -1,10 +1,11 @@
 package com.pc;
 
-import static com.pc.configuration.Parameters.*;
+import static com.pc.configuration.Constants.*;
 
 import java.awt.image.BufferedImage;
 
 import com.checksum.Checksum;
+import com.pc.configuration.Parameters;
 
 public class FlowUtils {
     public static byte[] convertToBytesUsingGetRGB(BufferedImage image) {
@@ -74,7 +75,7 @@ public class FlowUtils {
 	private static int computeMinDimensionAndReturnMaxEncodedLength(int dataLength) {
 		int totalNumOfBits = dataLength*BITS_IN_BYTE;
 		int modulesForEncoding = Math.floorDiv(totalNumOfBits, ENCODING_BIT_GROUP_SIZE);
-		int dim = (int) Math.ceil(Math.sqrt(modulesForEncoding)) + 2*(MODULES_IN_POS_DET_DIM+MODULES_IN_MARGIN); // initial guess
+		int dim = (int) Math.ceil(Math.sqrt(modulesForEncoding)) + 2*(MODULES_IN_POS_DET_DIM+Parameters.modulesInMargin); // initial guess
 		int maxEncodedLength;
 		
 		while((maxEncodedLength=computeMaxEncodedLength(dim)) > dataLength) 
@@ -88,9 +89,9 @@ public class FlowUtils {
 
 	public static int computeMaxEncodedLength(int dim) {
 		int maxBitsToEncode = ENCODING_BIT_GROUP_SIZE*(dim*dim 
-				- 4*MODULES_IN_MARGIN*(dim -MODULES_IN_MARGIN)
+				- 4*Parameters.modulesInMargin*(dim -Parameters.modulesInMargin)
 				- MODULES_IN_POS_DET_DIM*MODULES_IN_POS_DET_DIM*NUM_OF_POSITION_DETECTORS
-				-2*BITS_IN_BYTE*(ivLength+CHECKSUM_LENGTH));
+				-2*BITS_IN_BYTE*(Parameters.ivLength+CHECKSUM_LENGTH));
 		
 		return Math.floorDiv(maxBitsToEncode, BITS_IN_BYTE);
 	}
