@@ -3,6 +3,9 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 
 import javax.imageio.ImageIO;
+
+import com.pc.FlowUtils;
+
 import static com.pc.configuration.Parameters.*;
 
 public class DisplayDecoder {
@@ -23,23 +26,11 @@ public class DisplayDecoder {
 		RotatedImageSampler imageSampler = configureImage(pixelMatrix, pos);
 		imageSampler.setIV1(decodeData(imageSampler, ivLength, pos));
 		imageSampler.setIV1Checksum(decodeData(imageSampler, CHECKSUM_LENGTH, pos));	
-		int imageDataLength = computeDataLength(imageSampler);
+		int imageDataLength = FlowUtils.computeMaxEncodedLength(imageSampler.getModulesInDim());
 		imageSampler.setDecodedData(decodeData(imageSampler, imageDataLength, pos));
 		imageSampler.setIV2(decodeData(imageSampler, ivLength, pos));
 		imageSampler.setIV2Checksum(decodeData(imageSampler, CHECKSUM_LENGTH, pos));
 		return imageSampler;
-	}
-
-	private static int computeDataLength(RotatedImageSampler imageSampler) {
-		//assuming data is padded to natural number of modules!
-		int modulesInDim = imageSampler.getModulesInDim();
-		int dataByteLength = ENCODING_BIT_GROUP_SIZE*((modulesInDim*modulesInDim 
-				- 4*MODULES_IN_MARGIN*(modulesInDim - MODULES_IN_MARGIN)
-				- MODULES_IN_POS_DET_DIM*MODULES_IN_POS_DET_DIM*NUM_OF_POSITION_DETECTORS)
-				- 2*BITS_IN_BYTE*(ivLength+CHECKSUM_LENGTH+IMAGE_DIMS_ENCODING_LENGTH+CHECKSUM_LENGTH)) / 
-				BITS_IN_BYTE;
-		
-		return dataByteLength;
 	}
 
 	private static RotatedImageSampler configureImage(int[][] pixelMatrix, Position pos) {
@@ -132,30 +123,33 @@ public class DisplayDecoder {
 
 	private static void configureModuleSizeAndRotation(RotatedImageSampler imageSampler) {
 		int moduleSize;
-		int receivedDim = imageSampler.getPixelMatrix().length;
+		int receivedDim = imageSampler.getReceivedImageDim();
+		int modulesInDim;
     		
 		moduleSize = scanFromTopLeft(imageSampler.getPixelMatrix());
 		if(moduleSize == 0) { //pattern not found from top left
 			moduleSize = scanFromBottomRight(imageSampler.getPixelMatrix());
 			imageSampler.rotationCounterClockwise = 180;
+			modulesInDim = Math.floorDiv(receivedDim,moduleSize);
 		}
 		else {
+			modulesInDim = Math.floorDiv(receivedDim,moduleSize);
 			//seek pattern from top right
 			if(!foundPattern(imageSampler.getPixelMatrix(), moduleSize, moduleSize * MODULES_IN_MARGIN,
-					moduleSize * (receivedDim - 
+					moduleSize * (modulesInDim - 
 							MODULES_IN_MARGIN - MODULES_IN_POS_DET_DIM) )) {
 				imageSampler.rotationCounterClockwise = 270;
 			}
 			//seek pattern from top bottom left
 			else if(!foundPattern(imageSampler.getPixelMatrix(), moduleSize, moduleSize *
-					(receivedDim - 
+					(modulesInDim - 
 							MODULES_IN_MARGIN - MODULES_IN_POS_DET_DIM) ,moduleSize * MODULES_IN_MARGIN) ) {
 				imageSampler.rotationCounterClockwise = 90;
 			}
 			// else: pattern not found from bottom right - no need to rotate
 		}
 		imageSampler.setModuleSize(moduleSize);
-		imageSampler.setModulesInDim(imageSampler.getReceivedImageDim()/moduleSize);
+		imageSampler.setModulesInDim(modulesInDim);
 		return;
 	}
 

@@ -35,17 +35,26 @@ public class EncodeDecodeCLI {
 	    IvParameterSpec iv;
 	    byte[] chksumIV;
 	    
-	    System.out.println("Enter number of encoding color levels betwwen 2-64. \n"
-	    		+ "permitted number in powers of 2 only.");
-	    ENCODING_COLOR_LEVELS = scanner.nextInt();  // Read user input
 	    while(ENCODING_COLOR_LEVELS!=2 && ENCODING_COLOR_LEVELS!=4
 	    		&& ENCODING_COLOR_LEVELS!=8 && ENCODING_COLOR_LEVELS!=16
-	    		&& ENCODING_COLOR_LEVELS!=32 && ENCODING_COLOR_LEVELS!=64) {
-	    	System.out.println("Invalid number of color levels.");
+	    		&& ENCODING_COLOR_LEVELS!=32 && ENCODING_COLOR_LEVELS!=64){
 		    System.out.println("Enter number of encoding color levels betwwen 2-64. \n"
-		    		+ " permitted number in powers of 2 only.");
-		    ENCODING_COLOR_LEVELS = scanner.nextInt();  // Read user input
+		    		+ "permitted number in powers of 2 only.");
+		    try{
+		    	ENCODING_COLOR_LEVELS = scanner.nextInt();  // Read user input
+			    if(ENCODING_COLOR_LEVELS!=2 && ENCODING_COLOR_LEVELS!=4
+			    		&& ENCODING_COLOR_LEVELS!=8 && ENCODING_COLOR_LEVELS!=16
+			    		&& ENCODING_COLOR_LEVELS!=32 && ENCODING_COLOR_LEVELS!=64) 
+				    	System.out.println("Invalid number of color levels.");
+		    }
+		    catch (Exception InputMismatchException){
+			    System.out.println("Not a number.");
+			    ENCODING_COLOR_LEVELS = 0;
+			    scanner.nextLine();
+		    }
 	    }
+
+	    	
 		GREY_SCALE_DELTA = Math.floorDiv(255 , (ENCODING_COLOR_LEVELS-1));
 		ENCODING_BIT_GROUP_SIZE = (int) (Math.log(ENCODING_COLOR_LEVELS)/ Math.log(2) );
 		BIT_GROUP_MASK_OF_ONES = (1 << ENCODING_BIT_GROUP_SIZE) -1;	

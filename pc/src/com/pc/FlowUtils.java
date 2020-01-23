@@ -8,8 +8,6 @@ import com.checksum.Checksum;
 
 public class FlowUtils {
     public static byte[] convertToBytesUsingGetRGB(BufferedImage image) {
-
-        assert(image.getWidth() < Short.MAX_VALUE && image.getHeight() < Short.MAX_VALUE);
         
         short width = (short) image.getWidth();
         short height = (short) image.getHeight();
@@ -23,8 +21,11 @@ public class FlowUtils {
         	System.exit(1); 
         }
         
-        byte[] imageData = new byte[width+height*channels];
+        byte[] imageData = new byte[width*height*channels];
         byte[] dimsArr = new byte[IMAGE_DIMS_ENCODING_LENGTH + CHECKSUM_LENGTH];
+        
+
+        int totalLengthToEncode = computeMinDimensionAndReturnMaxEncodedLength(imageData.length + 2*dimsArr.length);
         
         //create image dims+checksum byte array
         dimsArr[0] = (byte) (width >>> 8); dimsArr[1] = (byte) width;
@@ -46,13 +47,9 @@ public class FlowUtils {
            }
         }
         
-        //pad to natural number of modules  
-        int padBytesNum = 0;
-        int totalDataBits = BITS_IN_BYTE*(imageData.length + 2*dimsArr.length);
-        while ((totalDataBits + padBytesNum*BITS_IN_BYTE)%ENCODING_BIT_GROUP_SIZE != 0) {
-        	padBytesNum++;
-        }
-        byte[] pad = new byte[padBytesNum];
+        //padding
+        int padLength = totalLengthToEncode - (imageData.length + 2*dimsArr.length);
+        byte[] pad = new byte[padLength];
         
         return concatenateByteArrays(dimsArr, imageData, pad, dimsArr);
      }
@@ -66,10 +63,36 @@ public class FlowUtils {
         byte[] res = new byte[aLen + bLen + cLen + dLen];
         System.arraycopy(dimsArr, 0, res, 0, aLen);
         System.arraycopy(imageData, 0, res, aLen, bLen);
-        System.arraycopy(dimsArr2, 0, res, aLen+bLen, cLen);
+        System.arraycopy(pad, 0, res, aLen+bLen, cLen);
         System.arraycopy(dimsArr2, 0, res, aLen+bLen+cLen, dLen);
 
         return res;
     }
+    
+    
+    
+	private static int computeMinDimensionAndReturnMaxEncodedLength(int dataLength) {
+		int totalNumOfBits = dataLength*BITS_IN_BYTE;
+		int modulesForEncoding = Math.floorDiv(totalNumOfBits, ENCODING_BIT_GROUP_SIZE);
+		int dim = (int) Math.ceil(Math.sqrt(modulesForEncoding)) + 2*(MODULES_IN_POS_DET_DIM+MODULES_IN_MARGIN); // initial guess
+		int maxEncodedLength;
+		
+		while((maxEncodedLength=computeMaxEncodedLength(dim)) > dataLength) 
+			dim--;
+		while((maxEncodedLength=computeMaxEncodedLength(dim)) < dataLength) 
+			dim++;
+		
+		MODULES_IN_ENCODED_IMAGE_DIM = dim;
+		return maxEncodedLength;
+	}
+
+	public static int computeMaxEncodedLength(int dim) {
+		int maxBitsToEncode = ENCODING_BIT_GROUP_SIZE*(dim*dim 
+				- 4*MODULES_IN_MARGIN*(dim -MODULES_IN_MARGIN)
+				- MODULES_IN_POS_DET_DIM*MODULES_IN_POS_DET_DIM*NUM_OF_POSITION_DETECTORS
+				-2*BITS_IN_BYTE*(ivLength+CHECKSUM_LENGTH));
+		
+		return Math.floorDiv(maxBitsToEncode, BITS_IN_BYTE);
+	}
     
 }
