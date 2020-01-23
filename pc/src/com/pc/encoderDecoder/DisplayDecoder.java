@@ -9,6 +9,7 @@ import com.pc.configuration.Parameters;
 
 import static com.pc.configuration.Constants.*;
 
+
 public class DisplayDecoder {
 	
 	public static RotatedImageSampler decodeFilePC(File inputFile) throws Exception {
@@ -136,6 +137,7 @@ public class DisplayDecoder {
 		else {
 			modulesInDim = Math.floorDiv(receivedDim,moduleSize);
 			//seek pattern from top right
+
 			if(!foundPattern(imageSampler.getPixelMatrix(), moduleSize, moduleSize * Parameters.modulesInMargin,
 					moduleSize * (modulesInDim - 
 							Parameters.modulesInMargin - MODULES_IN_POS_DET_DIM) )) {

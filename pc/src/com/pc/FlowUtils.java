@@ -92,7 +92,7 @@ public class FlowUtils {
 				- 4*Parameters.modulesInMargin*(dim -Parameters.modulesInMargin)
 				- MODULES_IN_POS_DET_DIM*MODULES_IN_POS_DET_DIM*NUM_OF_POSITION_DETECTORS
 				-2*BITS_IN_BYTE*(Parameters.ivLength+CHECKSUM_LENGTH));
-		
+
 		return Math.floorDiv(maxBitsToEncode, BITS_IN_BYTE);
 	}
     

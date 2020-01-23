@@ -56,6 +56,7 @@ public class EncodeDecodeCLI {
 	    }
 
 	    	
+
 		GREY_SCALE_DELTA = Math.floorDiv(255 , (encodingColorLevels-1));
 		ENCODING_BIT_GROUP_SIZE = (int) (Math.log(encodingColorLevels)/ Math.log(2) );
 		BIT_GROUP_MASK_OF_ONES = (1 << ENCODING_BIT_GROUP_SIZE) -1;	
