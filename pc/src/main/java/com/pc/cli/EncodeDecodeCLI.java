@@ -30,39 +30,13 @@ public class EncodeDecodeCLI {
 	
 	public static void main(String... args) throws Exception {
 		int test = Parameters.ivLength;
-		System.out.println(test);
 		
 		boolean continueProgram = true;
 	    Scanner scanner = new Scanner(System.in);  // Create a Scanner object
 	    File inputFile;
 	    IvParameterSpec iv;
 	    byte[] chksumIV;
-	    
-	    while(encodingColorLevels!=2 && encodingColorLevels!=4
-	    		&& encodingColorLevels!=8 && encodingColorLevels!=16
-	    		&& encodingColorLevels!=32 && encodingColorLevels!=64){
-		    System.out.println("Enter number of encoding color levels betwwen 2-64. \n"
-		    		+ "permitted number in powers of 2 only.");
-		    try{
-		    	encodingColorLevels = scanner.nextInt();  // Read user input
-			    if(encodingColorLevels!=2 && encodingColorLevels!=4
-			    		&& encodingColorLevels!=8 && encodingColorLevels!=16
-			    		&& encodingColorLevels!=32 && encodingColorLevels!=64) 
-				    	System.out.println("Invalid number of color levels.");
-		    }
-		    catch (Exception InputMismatchException){
-			    System.out.println("Not a number.");
-			    encodingColorLevels = 0;
-			    scanner.nextLine();
-		    }
-	    }
 
-	    	
-
-		GREY_SCALE_DELTA = Math.floorDiv(255 , (encodingColorLevels-1));
-		ENCODING_BIT_GROUP_SIZE = (int) (Math.log(encodingColorLevels)/ Math.log(2) );
-		BIT_GROUP_MASK_OF_ONES = (1 << ENCODING_BIT_GROUP_SIZE) -1;	
-	    
 	    System.out.println("Enter Decode/Encode command:");
 	    
 	    while(continueProgram) {
@@ -120,16 +94,11 @@ public class EncodeDecodeCLI {
     				}
     				byte[] unShuffledEncryptedImg = Deshuffle.getDeshuffledBytes(sampler.getDecodedData(), iv);
     				byte[] decryptedBytes = Decryptor.decryptImage(unShuffledEncryptedImg, skeySpec, iv);
-    				
-    				if(splitedCommand[0].equals("decode")){
-            			BufferedImage decodedImage = convertToImageUsingGetRGB(decryptedBytes);
-        				ImageIO.write(decodedImage, "png", new File(splitedCommand[2]));
-        				System.out.println("Decoded image was written to "+ splitedCommand[2]);
-    				}
-    				else {
-            			String decodedImageString = new String(decryptedBytes);
-        				System.out.println("Decoded string is: "+ decodedImageString+"\n");
-    				}
+
+					BufferedImage decodedImage = convertToImageUsingGetRGB(decryptedBytes);
+					ImageIO.write(decodedImage, "png", new File(splitedCommand[2]));
+					System.out.println("Decoded image was written to "+ splitedCommand[2]);
+
     			}
     			else if(splitedCommand[0].equals("exit")){
     				continueProgram = false;
