@@ -1,5 +1,8 @@
 package com.pc.configuration;
 
+import com.pc.cli.EncodeDecodeCLI;
+
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -17,7 +20,7 @@ public class Parameters {
 	private static final String PIXELS_IN_MODULE = "pixelsInModule";
 	private static final String MODULES_IN_MARGIN = "modulesInMargin";
 	
-	private static final String CONFIG_FILE_NAME = "config.properties";
+	private static final String CONFIG_FILE_NAME = "/resources/config.properties";
 	
 	
 	private Parameters() {}
@@ -34,9 +37,10 @@ public class Parameters {
 		Properties prop;
 		
 		try {
-			URL res = Parameters.class.getClassLoader().getResource(CONFIG_FILE_NAME);
-			//System.out.println(Paths.get(res.toURI()));
-			inputStream = new FileInputStream(Paths.get(res.toURI()).toFile());
+			File jarPath = new File(Parameters.class.getProtectionDomain().getCodeSource().getLocation().getPath());
+			String propertiesPath = jarPath.getParentFile().getParentFile().getAbsolutePath();
+			System.out.println(propertiesPath + CONFIG_FILE_NAME);
+			inputStream = new FileInputStream(propertiesPath + CONFIG_FILE_NAME);
 			prop = new Properties();
 			prop.load(inputStream);
 			
@@ -49,7 +53,7 @@ public class Parameters {
 			
 			inputStream.close();
 			
-		} catch (IOException | URISyntaxException e) {
+		} catch (IOException e) {
 			System.out.print(e.getMessage());
 			ivLength = 0;
 			encryptionAlgorithm = null;
