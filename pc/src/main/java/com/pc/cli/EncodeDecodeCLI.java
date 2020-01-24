@@ -30,48 +30,21 @@ public class EncodeDecodeCLI {
 	
 	public static void main(String... args) throws Exception {
 		int test = Parameters.ivLength;
-		System.out.println(test);
 		
 		boolean continueProgram = true;
 	    Scanner scanner = new Scanner(System.in);  // Create a Scanner object
 	    File inputFile;
 	    IvParameterSpec iv;
 	    byte[] chksumIV;
-	    
-	    while(encodingColorLevels!=2 && encodingColorLevels!=4
-	    		&& encodingColorLevels!=8 && encodingColorLevels!=16
-	    		&& encodingColorLevels!=32 && encodingColorLevels!=64){
-		    System.out.println("Enter number of encoding color levels betwwen 2-64. \n"
-		    		+ "permitted number in powers of 2 only.");
-		    try{
-		    	encodingColorLevels = scanner.nextInt();  // Read user input
-			    if(encodingColorLevels!=2 && encodingColorLevels!=4
-			    		&& encodingColorLevels!=8 && encodingColorLevels!=16
-			    		&& encodingColorLevels!=32 && encodingColorLevels!=64) 
-				    	System.out.println("Invalid number of color levels.");
-		    }
-		    catch (Exception InputMismatchException){
-			    System.out.println("Not a number.");
-			    encodingColorLevels = 0;
-			    scanner.nextLine();
-		    }
-	    }
 
-	    	
-
-		GREY_SCALE_DELTA = Math.floorDiv(255 , (encodingColorLevels-1));
-		ENCODING_BIT_GROUP_SIZE = (int) (Math.log(encodingColorLevels)/ Math.log(2) );
-		BIT_GROUP_MASK_OF_ONES = (1 << ENCODING_BIT_GROUP_SIZE) -1;	
-	    
-	    System.out.println("Enter Decode/Encode command:");
-	    
 	    while(continueProgram) {
+			System.out.println("Enter Decode/Encode command:");
 	    	String userCommand = scanner.nextLine().toLowerCase();  // Read user input
 
     		String[] splitedCommand = userCommand.split("\\s+");
     		if(splitedCommand.length < 2 && !splitedCommand[0].equals("exit")) {
-	    		System.out.println("Usage: 'Encode [filepath] [target encoded filepath]'\n"
-	    				+ "Usage: 'Decode [encoded filepath]'\n"
+	    		System.out.println("Usage: 'Encode [input image filepath] [output encoded image filepath]'\n"
+	    				+ "Usage: 'Decode [encoded input image filepath] [output decoded image filepath]'\n"
 	    				+ "Usage: 'Exit' to stop execution.");
     			continue;
     		}
@@ -79,7 +52,6 @@ public class EncodeDecodeCLI {
     			/* constant key */
     			byte[] const_key = new byte[] {100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115};
     			SecretKeySpec skeySpec = new SecretKeySpec(const_key, Parameters.encryptionAlgorithm);
-    			/****************/
     			
     			if(splitedCommand[0].equals("encode")){
     				byte[] rawData;
@@ -120,16 +92,11 @@ public class EncodeDecodeCLI {
     				}
     				byte[] unShuffledEncryptedImg = Deshuffle.getDeshuffledBytes(sampler.getDecodedData(), iv);
     				byte[] decryptedBytes = Decryptor.decryptImage(unShuffledEncryptedImg, skeySpec, iv);
-    				
-    				if(splitedCommand[0].equals("decode")){
-            			BufferedImage decodedImage = convertToImageUsingGetRGB(decryptedBytes);
-        				ImageIO.write(decodedImage, "png", new File(splitedCommand[2]));
-        				System.out.println("Decoded image was written to "+ splitedCommand[2]);
-    				}
-    				else {
-            			String decodedImageString = new String(decryptedBytes);
-        				System.out.println("Decoded string is: "+ decodedImageString+"\n");
-    				}
+
+					BufferedImage decodedImage = convertToImageUsingGetRGB(decryptedBytes);
+					ImageIO.write(decodedImage, "png", new File(splitedCommand[2]));
+					System.out.println("Decoded image was written to "+ splitedCommand[2]);
+
     			}
     			else if(splitedCommand[0].equals("exit")){
     				continueProgram = false;
@@ -137,9 +104,9 @@ public class EncodeDecodeCLI {
     				break;
     			}
     			else {
-    	    		System.out.println("Usage: 'Encode [filepath] [target encoded filepath]'\n"
-    	    				+ "Usage: 'Decode [encoded filepath]'\n"
-    	    				+ "Usage: 'Exit' to stop execution.");
+					System.out.println("Usage: 'Encode [input image filepath] [output encoded image filepath]'\n"
+							+ "Usage: 'Decode [encoded input image filepath] [output decoded image filepath]'\n"
+							+ "Usage: 'Exit' to stop execution.");
     			}
     		}
 	    }			    
@@ -154,14 +121,15 @@ public class EncodeDecodeCLI {
 		byte[] dims = Arrays.copyOfRange(imageData, 0, IMAGE_DIMS_ENCODING_LENGTH);
 		int width = signedShortToUnsignedInt(dims, 0, IMAGE_DIMENSION_ENCODING_LENGTH);
 		int height = signedShortToUnsignedInt(dims, IMAGE_DIMENSION_ENCODING_LENGTH, IMAGE_DIMENSION_ENCODING_LENGTH);	
-		byte[] chksumDims = Checksum.computeChecksum(dims); 
+		byte[] checksumDims = Checksum.computeChecksum(dims);
 		
-		if(chksumDims[0] != imageData[IMAGE_DIMS_ENCODING_LENGTH]) {
-			dims = Arrays.copyOfRange(imageData, imageData.length - (IMAGE_DIMS_ENCODING_LENGTH + CHECKSUM_LENGTH) - 1,
-					imageData.length);
+		if(checksumDims[0] != imageData[IMAGE_DIMS_ENCODING_LENGTH]) {
+			dims = Arrays.copyOfRange(imageData, imageData.length - (IMAGE_DIMS_ENCODING_LENGTH + CHECKSUM_LENGTH),
+					imageData.length - CHECKSUM_LENGTH);
 			width = signedShortToUnsignedInt(dims, 0, 2);
 			height = signedShortToUnsignedInt(dims, 2, 2);
-			if(chksumDims[0] != imageData[CHECKSUM_LENGTH]) {
+			checksumDims = Checksum.computeChecksum(dims);
+			if(checksumDims[0] != imageData[imageData.length - 1]) {
 				System.out.println("error! both dimensions checksum are wrong. exiting...");
 				System.exit(-1);
 			}
