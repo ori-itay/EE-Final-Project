@@ -37,9 +37,8 @@ public class EncodeDecodeCLI {
 	    IvParameterSpec iv;
 	    byte[] chksumIV;
 
-	    System.out.println("Enter Decode/Encode command:");
-	    
 	    while(continueProgram) {
+			System.out.println("Enter Decode/Encode command:");
 	    	String userCommand = scanner.nextLine().toLowerCase();  // Read user input
 
     		String[] splitedCommand = userCommand.split("\\s+");
@@ -123,14 +122,15 @@ public class EncodeDecodeCLI {
 		byte[] dims = Arrays.copyOfRange(imageData, 0, IMAGE_DIMS_ENCODING_LENGTH);
 		int width = signedShortToUnsignedInt(dims, 0, IMAGE_DIMENSION_ENCODING_LENGTH);
 		int height = signedShortToUnsignedInt(dims, IMAGE_DIMENSION_ENCODING_LENGTH, IMAGE_DIMENSION_ENCODING_LENGTH);	
-		byte[] chksumDims = Checksum.computeChecksum(dims); 
+		byte[] checksumDims = Checksum.computeChecksum(dims);
 		
-		if(chksumDims[0] != imageData[IMAGE_DIMS_ENCODING_LENGTH]) {
-			dims = Arrays.copyOfRange(imageData, imageData.length - (IMAGE_DIMS_ENCODING_LENGTH + CHECKSUM_LENGTH) - 1,
-					imageData.length);
+		if(checksumDims[0] != imageData[IMAGE_DIMS_ENCODING_LENGTH]) {
+			dims = Arrays.copyOfRange(imageData, imageData.length - (IMAGE_DIMS_ENCODING_LENGTH + CHECKSUM_LENGTH),
+					imageData.length - CHECKSUM_LENGTH);
 			width = signedShortToUnsignedInt(dims, 0, 2);
 			height = signedShortToUnsignedInt(dims, 2, 2);
-			if(chksumDims[0] != imageData[CHECKSUM_LENGTH]) {
+			checksumDims = Checksum.computeChecksum(dims);
+			if(checksumDims[0] != imageData[imageData.length - 1]) {
 				System.out.println("error! both dimensions checksum are wrong. exiting...");
 				System.exit(-1);
 			}
