@@ -10,6 +10,7 @@ import java.util.Scanner;
 
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+import javax.imageio.IIOException;
 import javax.imageio.ImageIO;
 
 import com.checksum.Checksum;
@@ -29,13 +30,12 @@ import com.pc.shuffleDeshuffle.shuffle.Shuffle;
 public class EncodeDecodeCLI {
 	
 	public static void main(String... args) throws Exception {
-		int test = Parameters.ivLength;
-		
 		boolean continueProgram = true;
 	    Scanner scanner = new Scanner(System.in);  // Create a Scanner object
 	    File inputFile;
 	    IvParameterSpec iv;
-	    byte[] chksumIV;
+	    byte[] checksumIV;
+		BufferedImage image;
 
 	    while(continueProgram) {
 			System.out.println("Enter Decode/Encode command:");
@@ -56,37 +56,41 @@ public class EncodeDecodeCLI {
     			if(splitedCommand[0].equals("encode")){
     				byte[] rawData;
     				
-	       			try {inputFile = new File(splitedCommand[1]);}	
-        			catch(Exception NullPointerException){
-        				System.out.println("Entered input filepath doesn't exist.\n");
+	       			try {
+	       				inputFile = new File(splitedCommand[1]);
+						image = ImageIO.read(inputFile);
+	       			}
+        			catch(Exception ex){
+        				System.out.println("Entered input filepath has error.\n");
         				continue;
         			}
-	       			BufferedImage image = ImageIO.read(inputFile);
 	       			rawData = FlowUtils.convertToBytesUsingGetRGB(image) ;
         			iv = Encryptor.generateIv(Parameters.ivLength);
-        			chksumIV = Checksum.computeChecksum(iv.getIV()); 
+					checksumIV = Checksum.computeChecksum(iv.getIV());
         			byte[] generatedXorBytes = EncryptorDecryptor.generateXorBytes(skeySpec, iv);
         			byte[] encryptedImg = Encryptor.encryptImage(rawData, generatedXorBytes);
         			byte[] shuffledEncryptedImg = Shuffle.shuffleImgBytes(encryptedImg, iv);
     				
-    				BufferedImage encodedImage = DisplayEncoder.encodeBytes( shuffledEncryptedImg, iv.getIV(),  chksumIV);
+    				BufferedImage encodedImage = DisplayEncoder.encodeBytes( shuffledEncryptedImg, iv.getIV(),  checksumIV);
     				ImageIO.write(encodedImage, "png", new File(splitedCommand[2]));	
     				System.out.println("Encoded data was written to "+ splitedCommand[2]);
     			}
     			else if(splitedCommand[0].equals("decode")) {
-        			try {inputFile = new File(splitedCommand[1]);}	
+					RotatedImageSampler sampler;
+        			try {
+        				inputFile = new File(splitedCommand[1]);
+						sampler = DisplayDecoder.decodeFilePC(inputFile);
+        			}
         			catch(Exception NullPointerException){
-        				System.out.println("Entered input filepath doesn't exist.\n");
+						System.out.println("Entered input filepath has error.\n");
         				continue;
         			}
-        			
-    				RotatedImageSampler sampler = DisplayDecoder.decodeFilePC(inputFile);
     				iv = new IvParameterSpec(sampler.getIV1());
-    				chksumIV = Checksum.computeChecksum(iv.getIV()); 
-    				if(chksumIV[0] != sampler.getIV1Checksum()[0]) {
+					checksumIV = Checksum.computeChecksum(iv.getIV());
+    				if(checksumIV[0] != sampler.getIV1Checksum()[0]) {
         				iv = new IvParameterSpec(sampler.getIV2());
-        				chksumIV = Checksum.computeChecksum(iv.getIV()); 
-        				if(chksumIV[0] != sampler.getIV2Checksum()[0]) {
+						checksumIV = Checksum.computeChecksum(iv.getIV());
+        				if(checksumIV[0] != sampler.getIV2Checksum()[0]) {
         					System.out.println("error! both iv checksum are wrong. exiting...");
         				}
     				}
