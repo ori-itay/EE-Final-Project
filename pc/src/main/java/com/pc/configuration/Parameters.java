@@ -39,7 +39,6 @@ public class Parameters {
 		try {
 			File jarPath = new File(Parameters.class.getProtectionDomain().getCodeSource().getLocation().getPath());
 			String propertiesPath = jarPath.getParentFile().getParentFile().getAbsolutePath();
-			System.out.println(propertiesPath + CONFIG_FILE_NAME);
 			inputStream = new FileInputStream(propertiesPath + CONFIG_FILE_NAME);
 			prop = new Properties();
 			prop.load(inputStream);

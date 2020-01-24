@@ -29,8 +29,6 @@ import com.pc.shuffleDeshuffle.shuffle.Shuffle;
 public class EncodeDecodeCLI {
 	
 	public static void main(String... args) throws Exception {
-		int test = Parameters.ivLength;
-		
 		boolean continueProgram = true;
 	    Scanner scanner = new Scanner(System.in);  // Create a Scanner object
 	    File inputFile;
