@@ -36,7 +36,7 @@ public class Parameters {
 		
 		try {
 			URL res = Parameters.class.getClassLoader().getResource(CONFIG_FILE_NAME);
-			System.out.println(Paths.get(res.toURI()).toFile());
+			System.out.println(res.toString());
 			inputStream = new FileInputStream(Paths.get(res.toURI()).toFile());
 			prop = new Properties();
 			prop.load(inputStream);

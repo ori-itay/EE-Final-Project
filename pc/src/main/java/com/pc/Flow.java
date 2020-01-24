@@ -23,7 +23,6 @@ public class Flow {
 	private static final String encodedFilePath = "encodedImage.png";
 	
 	public static void main(String[] args) throws IOException {
-
 		//load image
 		File inputFile = new File("200_200.jpg");		
 		
