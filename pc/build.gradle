@@ -2,7 +2,6 @@ plugins {
     id 'java'
 }
 
-//group 'org.example'
 version '1.0'
 
 //sourceCompatibility = 1.8
@@ -33,6 +32,7 @@ sourceSets {
 
 }
 
+/*
 task cliJar(type: Jar) {
     manifest {
         attributes 'Implementation-Title': 'Command Line Interface for VisualCrypto',
@@ -64,5 +64,6 @@ task flowJar(type: Jar) {
     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
     with jar
 }
+*/
 
 
