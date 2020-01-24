@@ -43,8 +43,8 @@ public class EncodeDecodeCLI {
 
     		String[] splitedCommand = userCommand.split("\\s+");
     		if(splitedCommand.length < 2 && !splitedCommand[0].equals("exit")) {
-	    		System.out.println("Usage: 'Encode [filepath] [target encoded filepath]'\n"
-	    				+ "Usage: 'Decode [encoded filepath]'\n"
+	    		System.out.println("Usage: 'Encode [input image filepath] [output encoded image filepath]'\n"
+	    				+ "Usage: 'Decode [encoded input image filepath] [output decoded image filepath]'\n"
 	    				+ "Usage: 'Exit' to stop execution.");
     			continue;
     		}
@@ -52,7 +52,6 @@ public class EncodeDecodeCLI {
     			/* constant key */
     			byte[] const_key = new byte[] {100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115};
     			SecretKeySpec skeySpec = new SecretKeySpec(const_key, Parameters.encryptionAlgorithm);
-    			/****************/
     			
     			if(splitedCommand[0].equals("encode")){
     				byte[] rawData;
@@ -105,9 +104,9 @@ public class EncodeDecodeCLI {
     				break;
     			}
     			else {
-    	    		System.out.println("Usage: 'Encode [filepath] [target encoded filepath]'\n"
-    	    				+ "Usage: 'Decode [encoded filepath]'\n"
-    	    				+ "Usage: 'Exit' to stop execution.");
+					System.out.println("Usage: 'Encode [input image filepath] [output encoded image filepath]'\n"
+							+ "Usage: 'Decode [encoded input image filepath] [output decoded image filepath]'\n"
+							+ "Usage: 'Exit' to stop execution.");
     			}
     		}
 	    }			    

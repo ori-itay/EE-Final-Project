@@ -1,34 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="4bc18366-a9da-4840-b965-55f8c5c706a8" name="Default Changelist" comment="che">
-      <change beforePath="$PROJECT_DIR$/.gradle/6.1/executionHistory/executionHistory.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/6.1/executionHistory/executionHistory.bin" afterDir="false" />
+    <list default="true" id="4bc18366-a9da-4840-b965-55f8c5c706a8" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.gradle/6.1/executionHistory/executionHistory.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/6.1/executionHistory/executionHistory.lock" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/6.1/fileContent/fileContent.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/6.1/fileContent/fileContent.lock" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gradle/6.1/fileHashes/fileHashes.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/6.1/fileHashes/fileHashes.bin" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/6.1/fileHashes/fileHashes.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/6.1/fileHashes/fileHashes.lock" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/6.1/javaCompile/javaCompile.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/6.1/javaCompile/javaCompile.lock" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/buildOutputCleanup/buildOutputCleanup.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/buildOutputCleanup/buildOutputCleanup.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gradle/checksums/checksums.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/checksums/checksums.lock" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/com/checksum/Checksum.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/com/checksum/Checksum.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/com/pc/Flow.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/com/pc/Flow.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/com/pc/FlowUtils.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/com/pc/FlowUtils.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/build/classes/java/main/com/pc/cli/EncodeDecodeCLI.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/com/pc/cli/EncodeDecodeCLI.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/com/pc/configuration/Constants.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/com/pc/configuration/Constants.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/com/pc/configuration/Parameters.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/com/pc/configuration/Parameters.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/com/pc/encoderDecoder/DisplayDecoder.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/com/pc/encoderDecoder/DisplayDecoder.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/com/pc/encoderDecoder/DisplayEncoder.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/com/pc/encoderDecoder/DisplayEncoder.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/com/pc/encoderDecoder/ImageSamplerInf.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/com/pc/encoderDecoder/ImageSamplerInf.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/com/pc/encoderDecoder/Position.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/com/pc/encoderDecoder/Position.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/com/pc/encoderDecoder/ROW.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/com/pc/encoderDecoder/ROW.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/com/pc/encoderDecoder/RotatedImageSampler.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/com/pc/encoderDecoder/RotatedImageSampler.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/com/pc/encoderDecoder/StdImageSampler.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/com/pc/encoderDecoder/StdImageSampler.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/com/pc/encryptorDecryptor/EncryptorDecryptor.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/com/pc/encryptorDecryptor/EncryptorDecryptor.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/com/pc/encryptorDecryptor/decryptor/Decryptor.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/com/pc/encryptorDecryptor/decryptor/Decryptor.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/com/pc/encryptorDecryptor/encryptor/Encryptor.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/com/pc/encryptorDecryptor/encryptor/Encryptor.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/com/pc/shuffleDeshuffle/ShuffleDeshuffle.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/com/pc/shuffleDeshuffle/ShuffleDeshuffle.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/com/pc/shuffleDeshuffle/deshuffle/Deshuffle.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/com/pc/shuffleDeshuffle/deshuffle/Deshuffle.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/com/pc/shuffleDeshuffle/shuffle/Shuffle.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/com/pc/shuffleDeshuffle/shuffle/Shuffle.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/com/pc/cli/EncodeDecodeCLI.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/pc/cli/EncodeDecodeCLI.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -176,6 +157,19 @@
       <workItem from="1579859843297" duration="744000" />
       <workItem from="1579860732862" duration="2497000" />
     </task>
+    <task id="LOCAL‎00001" summary="dimensions checksum handle (when first is wrong) bug fixed">
+      <created>1579865602823</created>
+      <option name="number" value="LOCAL‎00001" />
+      <option name="presentableId" value="LOCAL‎00001" />
+      <updated>1579865602823</updated>
+    </task>
+    <task id="LOCAL‎00002" summary="dimensions checksum handle (when first is wrong) bug fixed">
+      <created>1579865640014</created>
+      <option name="number" value="LOCAL‎00002" />
+      <option name="presentableId" value="LOCAL‎00002" />
+      <updated>1579865640014</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -183,7 +177,8 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="cli choose color levels canceled" />
-    <option name="LAST_COMMIT_MESSAGE" value="cli choose color levels canceled" />
+    <MESSAGE value="dimensions checksum handle (when first is wrong) bug fixed" />
+    <option name="LAST_COMMIT_MESSAGE" value="dimensions checksum handle (when first is wrong) bug fixed" />
   </component>
   <component name="WindowStateProjectService">
     <state x="463" y="54" key="#Flow" timestamp="1579860862045">
@@ -194,58 +189,62 @@
       <screen x="0" y="0" width="1475" height="789" />
     </state>
     <state x="588" y="285" key="#com.intellij.ide.util.projectWizard.JdkChooserPanel.MyDialog/0.0.1475.789@0.0.1475.789" timestamp="1579860764804" />
-    <state x="790" y="198" key="#xdebugger.evaluate" timestamp="1579865440909">
+    <state x="790" y="198" key="#xdebugger.evaluate" timestamp="1579865843020">
       <screen x="0" y="0" width="1475" height="789" />
     </state>
-    <state x="790" y="198" key="#xdebugger.evaluate/0.0.1475.789@0.0.1475.789" timestamp="1579865440909" />
-    <state x="356" y="0" key="CommitChangelistDialog2" timestamp="1579865599776">
+    <state x="790" y="198" key="#xdebugger.evaluate/0.0.1475.789@0.0.1475.789" timestamp="1579865843020" />
+    <state x="356" y="0" key="CommitChangelistDialog2" timestamp="1579865638144">
       <screen x="0" y="0" width="1475" height="789" />
     </state>
-    <state x="356" y="0" key="CommitChangelistDialog2/0.0.1475.789@0.0.1475.789" timestamp="1579865599776" />
-    <state width="1431" height="215" key="GridCell.Tab.0.bottom" timestamp="1579865517697">
+    <state x="356" y="0" key="CommitChangelistDialog2/0.0.1475.789@0.0.1475.789" timestamp="1579865638144" />
+    <state width="1431" height="215" key="GridCell.Tab.0.bottom" timestamp="1579866027005">
       <screen x="0" y="0" width="1475" height="789" />
     </state>
-    <state width="1431" height="215" key="GridCell.Tab.0.bottom/0.0.1475.789@0.0.1475.789" timestamp="1579865517697" />
+    <state width="1431" height="215" key="GridCell.Tab.0.bottom/0.0.1475.789@0.0.1475.789" timestamp="1579866027005" />
     <state width="1877" height="348" key="GridCell.Tab.0.bottom/0.0.1920.1040/1920.0.1920.1040@0.0.1920.1040" timestamp="1579823568327" />
-    <state width="1431" height="215" key="GridCell.Tab.0.center" timestamp="1579865517697">
+    <state width="1431" height="215" key="GridCell.Tab.0.center" timestamp="1579866027004">
       <screen x="0" y="0" width="1475" height="789" />
     </state>
-    <state width="1431" height="215" key="GridCell.Tab.0.center/0.0.1475.789@0.0.1475.789" timestamp="1579865517697" />
+    <state width="1431" height="215" key="GridCell.Tab.0.center/0.0.1475.789@0.0.1475.789" timestamp="1579866027004" />
     <state width="1877" height="348" key="GridCell.Tab.0.center/0.0.1920.1040/1920.0.1920.1040@0.0.1920.1040" timestamp="1579823568327" />
-    <state width="1431" height="215" key="GridCell.Tab.0.left" timestamp="1579865517697">
+    <state width="1431" height="215" key="GridCell.Tab.0.left" timestamp="1579866027004">
       <screen x="0" y="0" width="1475" height="789" />
     </state>
-    <state width="1431" height="215" key="GridCell.Tab.0.left/0.0.1475.789@0.0.1475.789" timestamp="1579865517697" />
+    <state width="1431" height="215" key="GridCell.Tab.0.left/0.0.1475.789@0.0.1475.789" timestamp="1579866027004" />
     <state width="1877" height="348" key="GridCell.Tab.0.left/0.0.1920.1040/1920.0.1920.1040@0.0.1920.1040" timestamp="1579823568327" />
-    <state width="1431" height="215" key="GridCell.Tab.0.right" timestamp="1579865517697">
+    <state width="1431" height="215" key="GridCell.Tab.0.right" timestamp="1579866027005">
       <screen x="0" y="0" width="1475" height="789" />
     </state>
-    <state width="1431" height="215" key="GridCell.Tab.0.right/0.0.1475.789@0.0.1475.789" timestamp="1579865517697" />
+    <state width="1431" height="215" key="GridCell.Tab.0.right/0.0.1475.789@0.0.1475.789" timestamp="1579866027005" />
     <state width="1877" height="348" key="GridCell.Tab.0.right/0.0.1920.1040/1920.0.1920.1040@0.0.1920.1040" timestamp="1579823568327" />
-    <state width="1431" height="215" key="GridCell.Tab.1.bottom" timestamp="1579865517698">
+    <state width="1431" height="215" key="GridCell.Tab.1.bottom" timestamp="1579866027005">
       <screen x="0" y="0" width="1475" height="789" />
     </state>
-    <state width="1431" height="215" key="GridCell.Tab.1.bottom/0.0.1475.789@0.0.1475.789" timestamp="1579865517698" />
+    <state width="1431" height="215" key="GridCell.Tab.1.bottom/0.0.1475.789@0.0.1475.789" timestamp="1579866027005" />
     <state width="1877" height="348" key="GridCell.Tab.1.bottom/0.0.1920.1040/1920.0.1920.1040@0.0.1920.1040" timestamp="1579823568327" />
-    <state width="1431" height="215" key="GridCell.Tab.1.center" timestamp="1579865517697">
+    <state width="1431" height="215" key="GridCell.Tab.1.center" timestamp="1579866027005">
       <screen x="0" y="0" width="1475" height="789" />
     </state>
-    <state width="1431" height="215" key="GridCell.Tab.1.center/0.0.1475.789@0.0.1475.789" timestamp="1579865517697" />
+    <state width="1431" height="215" key="GridCell.Tab.1.center/0.0.1475.789@0.0.1475.789" timestamp="1579866027005" />
     <state width="1877" height="348" key="GridCell.Tab.1.center/0.0.1920.1040/1920.0.1920.1040@0.0.1920.1040" timestamp="1579823568327" />
-    <state width="1431" height="215" key="GridCell.Tab.1.left" timestamp="1579865517697">
+    <state width="1431" height="215" key="GridCell.Tab.1.left" timestamp="1579866027005">
       <screen x="0" y="0" width="1475" height="789" />
     </state>
-    <state width="1431" height="215" key="GridCell.Tab.1.left/0.0.1475.789@0.0.1475.789" timestamp="1579865517697" />
+    <state width="1431" height="215" key="GridCell.Tab.1.left/0.0.1475.789@0.0.1475.789" timestamp="1579866027005" />
     <state width="1877" height="348" key="GridCell.Tab.1.left/0.0.1920.1040/1920.0.1920.1040@0.0.1920.1040" timestamp="1579823568327" />
-    <state width="1431" height="215" key="GridCell.Tab.1.right" timestamp="1579865517698">
+    <state width="1431" height="215" key="GridCell.Tab.1.right" timestamp="1579866027005">
       <screen x="0" y="0" width="1475" height="789" />
     </state>
-    <state width="1431" height="215" key="GridCell.Tab.1.right/0.0.1475.789@0.0.1475.789" timestamp="1579865517698" />
+    <state width="1431" height="215" key="GridCell.Tab.1.right/0.0.1475.789@0.0.1475.789" timestamp="1579866027005" />
     <state width="1877" height="348" key="GridCell.Tab.1.right/0.0.1920.1040/1920.0.1920.1040@0.0.1920.1040" timestamp="1579823568327" />
     <state x="246" y="38" key="SettingsEditor" timestamp="1579861550568">
       <screen x="0" y="0" width="1475" height="789" />
     </state>
     <state x="246" y="38" key="SettingsEditor/0.0.1475.789@0.0.1475.789" timestamp="1579861550568" />
+    <state x="330" y="117" key="Vcs.Push.Dialog.v2" timestamp="1579865641670">
+      <screen x="0" y="0" width="1475" height="789" />
+    </state>
+    <state x="330" y="117" key="Vcs.Push.Dialog.v2/0.0.1475.789@0.0.1475.789" timestamp="1579865641670" />
     <state x="554" y="313" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2" timestamp="1579864014848">
       <screen x="0" y="0" width="1475" height="789" />
     </state>
@@ -270,8 +269,8 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/src/main/java/com/pc/cli/EncodeDecodeCLI.java</url>
-          <line>121</line>
-          <option name="timeStamp" value="5" />
+          <line>85</line>
+          <option name="timeStamp" value="7" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
