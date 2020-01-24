@@ -8,7 +8,6 @@ import java.net.URL;
 import java.nio.file.Paths;
 import java.util.Properties;
 
-import static jdk.xml.internal.SecuritySupport.getClassLoader;
 
 public class Parameters {
 	private static final String ENCRYPTION_ALGORITHM = "encryptionAlgorithm";
@@ -36,7 +35,7 @@ public class Parameters {
 		
 		try {
 			URL res = Parameters.class.getClassLoader().getResource(CONFIG_FILE_NAME);
-			System.out.println(res.toString());
+			//System.out.println(Paths.get(res.toURI()));
 			inputStream = new FileInputStream(Paths.get(res.toURI()).toFile());
 			prop = new Properties();
 			prop.load(inputStream);
