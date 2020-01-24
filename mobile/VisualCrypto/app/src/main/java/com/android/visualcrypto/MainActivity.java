@@ -26,6 +26,7 @@ import androidx.core.content.ContextCompat;
 import com.android.visualcrypto.configurationFetcher.DimensionsFetcher;
 import com.android.visualcrypto.configurationFetcher.IvFetcher;
 import com.pc.configuration.Constants;
+import com.pc.configuration.Parameters;
 import com.pc.encoderDecoder.DisplayDecoder;
 import com.pc.encoderDecoder.RotatedImageSampler;
 import com.pc.encryptorDecryptor.decryptor.Decryptor;
@@ -51,6 +52,7 @@ public class MainActivity extends AppCompatActivity {
         getPermissions();
 
         try {
+            long startTime = System.nanoTime();
             File imgFile = null;
             RotatedImageSampler rotatedImageSampler = null;
             int[][] pixelArr;
@@ -77,7 +79,7 @@ public class MainActivity extends AppCompatActivity {
                 // get secret key
                 /* Using constant secret key! */
                 byte[] const_key = new byte[] {100, 101, 102, 103, 104, 105, 106 ,107, 108, 109, 110, 111, 112, 113, 114, 115};
-                SecretKeySpec secretKeySpec = new SecretKeySpec(const_key, Constants.ENCRYPTION_ALGORITHM);
+                SecretKeySpec secretKeySpec = new SecretKeySpec(const_key, Parameters.encryptionAlgorithm);
                 /* ************************** */
 
                 // deshuffle
@@ -107,6 +109,8 @@ public class MainActivity extends AppCompatActivity {
                 ImageView iView = (ImageView) findViewById(R.id.decodedImgId);
                 Log.d("iviewparameters", String.format("width: %d, height: %d", iView.getWidth(), iView.getHeight()));
                 iView.setImageBitmap(Bitmap.createScaledBitmap(bmp, iView.getWidth(), iView.getHeight(), false));
+
+                Log.d("performance", String.format("took: %s", System.nanoTime() - startTime));
             } /* Display decoded text */
             /*else if (view.getId() == R.id.decodeTxtBtn) {
                 imgFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "out.png");
