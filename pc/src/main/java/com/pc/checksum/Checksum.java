@@ -1,4 +1,4 @@
-package com.checksum;
+package com.pc.checksum;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;

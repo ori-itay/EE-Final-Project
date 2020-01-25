@@ -1,14 +1,20 @@
-plugins {
-    id 'java'
+buildscript {
+    repositories {
+        mavenCentral()
+    }
 }
+apply plugin: 'java'
+
+//plugins {
+//    id 'java'
+//}
+
 
 version '1.0'
 compileJava {
 	sourceCompatibility = '1.8'
 	targetCompatibility = '1.8'
 }
-
-
 
 jar {
     manifest {
@@ -23,12 +29,25 @@ jar {
 
 repositories {
     mavenCentral()
+    jcenter()
 }
+
+
 
 dependencies {
-    testCompile group: 'junit', name: 'junit', version: '4.12'
+    testImplementation "org.junit.jupiter:junit-jupiter-api:5.4.0-M1"
+    testRuntime "org.junit.jupiter:junit-jupiter-engine:5.4.0"
+
 }
 
+test {
+    exclude '**/*'
+    useJUnitPlatform()
+
+    testLogging {
+        events "passed", "skipped", "failed"
+    }
+}
 
 sourceSets {
     main {
@@ -36,7 +55,6 @@ sourceSets {
             srcDir 'src'
         }
     }
-
 }
 
 /*
