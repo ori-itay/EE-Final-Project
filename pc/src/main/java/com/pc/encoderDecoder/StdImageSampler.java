@@ -7,9 +7,8 @@ import com.pc.configuration.Parameters;
 import static com.pc.configuration.Constants.*;
 
 public class StdImageSampler implements ImageSamplerInf{
-	
-	public BufferedImage getProccesedImage() {
-		return proccesedImage;
+
+	public StdImageSampler() {
 	}
 
 	public int[][] getPixelMatrix() {
@@ -20,13 +19,15 @@ public class StdImageSampler implements ImageSamplerInf{
 		this.pixelMatrix = pixelMatrix;
 	}
 
-	public int getModuleSize() {
+	public int processedImage() {
 		return moduleSize;
 	}
 	
 	void setModuleSize(int moduleSize) {
 		this.moduleSize =  moduleSize;
 	}
+
+	public int getModuleSize() { return moduleSize;	}
 
 	public byte[] getDecodedData() {
 		return decodedData;
@@ -83,7 +84,6 @@ public class StdImageSampler implements ImageSamplerInf{
 	void setReceivedImageDim(int receivedImageDim) {
 		this.receivedImageDim = receivedImageDim;
 	}
-	
 
 	public int getModulesInDim() {
 		return modulesInDim;
@@ -93,9 +93,13 @@ public class StdImageSampler implements ImageSamplerInf{
 		this.modulesInDim = modulesInDim;
 	}
 
-	BufferedImage proccesedImage;
+	public int getModulesInMargin() { return modulesInMargin; }
+
+	public void setModulesInMargin(int modulesInMargin) { this.modulesInMargin = modulesInMargin; }
+
 	private int[][] pixelMatrix;
 	private int receivedImageDim;
+
 	private int moduleSize = 0;
 	private byte[] decodedData;
 	private byte[] IV1;
@@ -103,6 +107,7 @@ public class StdImageSampler implements ImageSamplerInf{
 	private byte[] IV2;
 	private byte[] IV2Checksum;
 	private int modulesInDim;
+	private int modulesInMargin;
 	
 	
 

@@ -22,10 +22,9 @@ public class DisplayDecoder {
 	}
 	
 	public static RotatedImageSampler decodePixelMatrix(int[][] pixelMatrix) throws Exception {
-					
-		Position pos = new Position(Parameters.modulesInMargin, Parameters.modulesInMargin + MODULES_IN_POS_DET_DIM);
-		//extract image configuration and return cropped rotated image
-		RotatedImageSampler imageSampler = configureImage(pixelMatrix, pos);
+
+		RotatedImageSampler imageSampler = configureImage(pixelMatrix);
+		Position pos = new Position(imageSampler.getModulesInMargin(), imageSampler.getModulesInMargin() + MODULES_IN_POS_DET_DIM);
 		imageSampler.setIV1(decodeData(imageSampler, Parameters.ivLength, pos));
 		imageSampler.setIV1Checksum(decodeData(imageSampler, CHECKSUM_LENGTH, pos));	
 		int imageDataLength = FlowUtils.computeMaxEncodedLength(imageSampler.getModulesInDim());
@@ -35,7 +34,7 @@ public class DisplayDecoder {
 		return imageSampler;
 	}
 
-	private static RotatedImageSampler configureImage(int[][] pixelMatrix, Position pos) {
+	private static RotatedImageSampler configureImage(int[][] pixelMatrix) {
 		RotatedImageSampler imageSampler = new RotatedImageSampler();
 		imageSampler.setReceivedImageDim(pixelMatrix.length);
 		imageSampler.setPixelMatrix(pixelMatrix);
@@ -127,11 +126,11 @@ public class DisplayDecoder {
 		int moduleSize;
 		int receivedDim = imageSampler.getReceivedImageDim();
 		int modulesInDim;
-    		
-		moduleSize = scanFromTopLeft(imageSampler.getPixelMatrix());
+
+		moduleSize = scanFromTopLeft(imageSampler);
 		if(moduleSize == 0) { //pattern not found from top left
-			moduleSize = scanFromBottomRight(imageSampler.getPixelMatrix());
-			imageSampler.rotationCounterClockwise = 180;
+			moduleSize = scanFromBottomRight(imageSampler);
+
 			modulesInDim = Math.floorDiv(receivedDim,moduleSize);
 		}
 		else {
@@ -141,7 +140,7 @@ public class DisplayDecoder {
 			if(!foundPattern(imageSampler.getPixelMatrix(), moduleSize, moduleSize * Parameters.modulesInMargin,
 					moduleSize * (modulesInDim - 
 							Parameters.modulesInMargin - MODULES_IN_POS_DET_DIM) )) {
-				imageSampler.rotationCounterClockwise = 270;
+
 			}
 			//seek pattern from top bottom left
 			else if(!foundPattern(imageSampler.getPixelMatrix(), moduleSize, moduleSize *
@@ -156,9 +155,10 @@ public class DisplayDecoder {
 		return;
 	}
 
-	private static int scanFromBottomRight(int[][] pixelMatrix) {
-		
-		int offset = 1, start = pixelMatrix.length - 1, firstBlack = start, followingWhiteInd = 0, moduleSize = 0;
+	private static int scanFromBottomRight(RotatedImageSampler imageSampler) {
+		int[][] pixelMatrix = imageSampler.getPixelMatrix();
+
+		int offset = 1, firstBlack = pixelMatrix.length - 1, followingWhiteInd = 0, moduleSize = 0;
 	
 		//search for first black pixel
 		while(firstBlack > pixelMatrix.length / 2) {
@@ -168,8 +168,7 @@ public class DisplayDecoder {
 				break; // found first black pixel
 			}
 				
-			firstBlack = start - offset;
-			offset*=2;
+			firstBlack--;
 		}	
 		//search for first following white pixel and extract module size (binary search)
 		offset = 1;
@@ -188,14 +187,16 @@ public class DisplayDecoder {
 		//search for position detector pattern
 		if(foundPattern(pixelMatrix, moduleSize, 
 				firstBlack + 1 - moduleSize * MODULES_IN_POS_DET_DIM, firstBlack + 1 - moduleSize * MODULES_IN_POS_DET_DIM)) {
+			imageSampler.rotationCounterClockwise = 180;
+			imageSampler.setModulesInMargin(firstBlack/moduleSize);
 			return moduleSize;
 		}
 		return 0;
 	}
 
-	private static int scanFromTopLeft(int[][] pixelMatrix) {
-		
-		int offset = 1, start = 0, firstBlack = start, followingWhiteInd = 0 , moduleSize = 0;
+	private static int scanFromTopLeft(RotatedImageSampler imageSampler) {
+		int[][] pixelMatrix = imageSampler.getPixelMatrix();
+		int offset = 1, firstBlack = 0, followingWhiteInd = 0 , moduleSize = 0;
 	
 		//search for first black pixel
 		while(firstBlack < pixelMatrix.length / 2) {
@@ -204,8 +205,7 @@ public class DisplayDecoder {
 					firstBlack--;
 				break; // found first black pixel
 			}
-			firstBlack = start + offset;
-			offset*=2;
+			firstBlack++;
 		}
 		if(firstBlack>=pixelMatrix.length / 2) return 0; //black pixel not found in first half
 		
@@ -226,7 +226,11 @@ public class DisplayDecoder {
 		}
 		//search for position detector pattern
 		if(foundPattern(pixelMatrix, moduleSize, firstBlack, firstBlack)) {
+			imageSampler.setModulesInMargin(firstBlack/moduleSize);
 			return moduleSize;
+		}
+		else{
+			imageSampler.rotationCounterClockwise = 270;
 		}
 		return 0;
 	}
