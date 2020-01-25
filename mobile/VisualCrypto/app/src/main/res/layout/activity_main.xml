@@ -8,33 +8,21 @@
     tools:context=".MainActivity">
 
     <TextView
-        android:id="@+id/dataCfg"
-        android:layout_width="407dp"
-        android:layout_height="48dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        tools:layout_editor_absoluteY="875dp" />
-
-    <TextView
         android:id="@+id/moduleSizeCfg"
-        android:layout_width="387dp"
-        android:layout_height="50dp"
-        android:layout_marginTop="56dp"
+        android:layout_width="304dp"
+        android:layout_height="23dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="44dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.417"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/dataCfg" />
-
-    <TextView
-        android:id="@+id/dataLengthCfg"
-        android:layout_width="373dp"
-        android:layout_height="54dp"
-        android:layout_marginBottom="28dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintTop_toBottomOf="@+id/decodeImgBtn" />
 
     <Button
         android:id="@+id/decodeImgBtn"
         android:layout_width="159dp"
         android:layout_height="53dp"
-        android:layout_marginTop="68dp"
+        android:layout_marginTop="500dp"
         android:onClick="decodeImage"
         android:text="@string/decode_image_as_image"
         app:layout_constraintEnd_toEndOf="parent"
@@ -43,13 +31,34 @@
 
     <ImageView
         android:id="@+id/decodedImgId"
-        android:layout_width="394dp"
-        android:layout_height="373dp"
+        android:layout_width="402dp"
+        android:layout_height="471dp"
+        android:layout_marginBottom="256dp"
+        android:contentDescription="@string/displays_the_images"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.47"
+        app:layout_constraintHorizontal_bias="0.444"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/decodeImgBtn"
         app:srcCompat="@android:color/background_light" />
+
+    <TextView
+        android:id="@+id/imageWidthCfg"
+        android:layout_width="305dp"
+        android:layout_height="21dp"
+        android:layout_marginTop="12dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/moduleSizeCfg" />
+
+    <TextView
+        android:id="@+id/imageHeightCfg"
+        android:layout_width="305dp"
+        android:layout_height="25dp"
+        android:layout_marginTop="12dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/imageWidthCfg"
+        app:layout_constraintVertical_bias="0.121" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
