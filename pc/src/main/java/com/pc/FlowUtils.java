@@ -1,11 +1,11 @@
 package com.pc;
 
-import static com.pc.configuration.Constants.*;
+import com.pc.checksum.Checksum;
+import com.pc.configuration.Parameters;
 
 import java.awt.image.BufferedImage;
 
-import com.checksum.Checksum;
-import com.pc.configuration.Parameters;
+import static com.pc.configuration.Constants.*;
 
 public class FlowUtils {
     public static byte[] convertToBytesUsingGetRGB(BufferedImage image) {

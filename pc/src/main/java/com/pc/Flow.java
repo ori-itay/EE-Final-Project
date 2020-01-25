@@ -1,22 +1,20 @@
 package com.pc;
 
 
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
-import java.util.Arrays;
-
-import javax.crypto.spec.IvParameterSpec;
-import javax.crypto.spec.SecretKeySpec;
-import javax.imageio.ImageIO;
-
-import com.checksum.Checksum;
-import com.pc.configuration.Constants;
+import com.pc.checksum.Checksum;
 import com.pc.configuration.Parameters;
 import com.pc.encoderDecoder.DisplayEncoder;
 import com.pc.encryptorDecryptor.EncryptorDecryptor;
 import com.pc.encryptorDecryptor.encryptor.Encryptor;
 import com.pc.shuffleDeshuffle.shuffle.Shuffle;
+
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import java.util.Arrays;
 
 public class Flow {
 	
@@ -30,7 +28,7 @@ public class Flow {
 		byte[] imageBytes = FlowUtils.convertToBytesUsingGetRGB(image);
 		IvParameterSpec iv = Encryptor.generateIv(Parameters.ivLength); 
 		System.out.println("IV:" + Arrays.toString(iv.getIV()));
-		byte[] chksumIV = Checksum.computeChecksum(iv.getIV()); 
+		byte[] chksumIV = Checksum.computeChecksum(iv.getIV());
 		//SecretKey skey; 
 		BufferedImage encodedImage;
 		try {

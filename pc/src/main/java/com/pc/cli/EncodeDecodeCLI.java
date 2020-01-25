@@ -1,19 +1,6 @@
 package com.pc.cli;
-import static com.pc.configuration.Constants.*;
-import static com.pc.configuration.Parameters.encodingColorLevels;
 
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.nio.ByteBuffer;
-import java.util.Arrays;
-import java.util.Scanner;
-
-import javax.crypto.spec.IvParameterSpec;
-import javax.crypto.spec.SecretKeySpec;
-import javax.imageio.IIOException;
-import javax.imageio.ImageIO;
-
-import com.checksum.Checksum;
+import com.pc.checksum.Checksum;
 import com.pc.FlowUtils;
 import com.pc.configuration.Parameters;
 import com.pc.encoderDecoder.DisplayDecoder;
@@ -24,6 +11,17 @@ import com.pc.encryptorDecryptor.decryptor.Decryptor;
 import com.pc.encryptorDecryptor.encryptor.Encryptor;
 import com.pc.shuffleDeshuffle.deshuffle.Deshuffle;
 import com.pc.shuffleDeshuffle.shuffle.Shuffle;
+
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.nio.ByteBuffer;
+import java.util.Arrays;
+import java.util.Scanner;
+
+import static com.pc.configuration.Constants.*;
 
 
 
