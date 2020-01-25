@@ -3,8 +3,11 @@ package com.android.visualcrypto.configurationFetcher;
 import com.checksum.Checksum;
 import static com.pc.configuration.Constants.IMAGE_DIMENSION_ENCODING_LENGTH;
 import static com.pc.configuration.Constants.CHECKSUM_LENGTH;
+import static com.pc.configuration.Constants.IMAGE_DIMS_ENCODING_LENGTH;
 
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 public class DimensionsFetcher {
 
@@ -19,8 +22,9 @@ public class DimensionsFetcher {
         int width1 = getIntByteBuffer(imageBytes, 0, IMAGE_DIMENSION_ENCODING_LENGTH);
         int height1 = getIntByteBuffer(imageBytes,
                 IMAGE_DIMENSION_ENCODING_LENGTH, IMAGE_DIMENSION_ENCODING_LENGTH);
-        byte[] dimensionsChecksum1 = ByteBuffer.wrap(imageBytes,
-                2*IMAGE_DIMENSION_ENCODING_LENGTH, CHECKSUM_LENGTH).array();
+//        byte[] dimensionsChecksum1 = ByteBuffer.wrap(imageBytes,
+//                2*IMAGE_DIMENSION_ENCODING_LENGTH, CHECKSUM_LENGTH).array();
+        byte[] dimensionsChecksum1 = Arrays.copyOfRange(imageBytes, IMAGE_DIMS_ENCODING_LENGTH, IMAGE_DIMS_ENCODING_LENGTH+CHECKSUM_LENGTH);
 
         boolean validDimensions1 = Checksum.isValidChecksum(width1, height1, dimensionsChecksum1);
 

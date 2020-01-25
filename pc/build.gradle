@@ -14,8 +14,11 @@ jar {
     manifest {
         attributes 'Main-Class': 'com.pc.cli.EncodeDecodeCLI'
     }
-    archiveName 'cli.jar'
+    archiveName 'all-pc.jar'
     destinationDirectory = file('.')
+//    from ('src/main/resources'){
+//        include 'config.properties'
+//    }
 }
 
 repositories {

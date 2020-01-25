@@ -3,6 +3,7 @@ package com.android.visualcrypto;
 import android.Manifest;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
@@ -14,6 +15,7 @@ import android.text.SpannableStringBuilder;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.RelativeSizeSpan;
 import android.util.Log;
+import android.view.Display;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -46,13 +48,30 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        getPermissions();
+        showEncodedImage();
+
+    }
+
+    private void showEncodedImage() {
+        String path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/encodedImage.png";
+        //File imgFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "encodedImage.png");
+//        if (!imgFile.exists()) {
+//            showAlert("Couldn't find 'encodedImage.png' in Downloads");
+//            return;
+//        }
+        Bitmap bp = BitmapFactory.decodeFile(path);
+        ImageView iView = (ImageView) findViewById(R.id.decodedImgId);
+        iView.setImageBitmap(bp);
+
     }
 
     public void decodeImage(View view) {
-        getPermissions();
+       // getPermissions();
 
         try {
             long startTime = System.nanoTime();
+
             File imgFile = null;
             RotatedImageSampler rotatedImageSampler = null;
             int[][] pixelArr;
@@ -111,7 +130,16 @@ public class MainActivity extends AppCompatActivity {
                 iView.setImageBitmap(Bitmap.createScaledBitmap(bmp, iView.getWidth(), iView.getHeight(), false));
 
                 Log.d("performance", String.format("took: %s", System.nanoTime() - startTime));
-            } /* Display decoded text */
+
+                TextView moduleSizeText = (TextView) findViewById(R.id.moduleSizeCfg);
+                moduleSizeText.setText("Pixels in module dimension: " + rotatedImageSampler.getModuleSize());
+
+                TextView imageHeightText = (TextView) findViewById(R.id.imageHeightCfg);
+                imageHeightText.setText("Image Height: " + height);
+
+                TextView imageWidthText = (TextView) findViewById(R.id.imageWidthCfg);
+                imageWidthText.setText("Image Width: " + width);
+          } /* Display decoded text */
             /*else if (view.getId() == R.id.decodeTxtBtn) {
                 imgFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "out.png");
                 if (!imgFile.exists()) {

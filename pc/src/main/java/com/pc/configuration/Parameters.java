@@ -13,14 +13,14 @@ import java.util.Properties;
 
 
 public class Parameters {
-	private static final String ENCRYPTION_ALGORITHM = "encryptionAlgorithm";
-	private static final String ENCRYPTION_MODE = "encryptionMode";
-	private static final String IV_LENGTH = "ivLength";
-	private static final String ENCODING_COLOR_LEVELS = "encodingColorLevels";
-	private static final String PIXELS_IN_MODULE = "pixelsInModule";
-	private static final String MODULES_IN_MARGIN = "modulesInMargin";
+//	private static final String ENCRYPTION_ALGORITHM = "encryptionAlgorithm";
+//	private static final String ENCRYPTION_MODE = "encryptionMode";
+//	private static final String IV_LENGTH = "ivLength";
+//	private static final String ENCODING_COLOR_LEVELS = "encodingColorLevels";
+//	private static final String PIXELS_IN_MODULE = "pixelsInModule";
+//	private static final String MODULES_IN_MARGIN = "modulesInMargin";
 
-	private static final String CONFIG_FILE_NAME = "/resources/config.properties";
+	//private static final String CONFIG_FILE_NAME = "/resources/config.properties";
 
 
 	private Parameters() {}
