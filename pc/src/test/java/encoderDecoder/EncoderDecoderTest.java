@@ -1,4 +1,4 @@
-package test.encoderDecoder;
+package encoderDecoder;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static com.pc.configuration.Constants.*;
@@ -10,11 +10,6 @@ import java.io.File;
 import java.util.Random;
 
 import javax.imageio.ImageIO;
-
-import org.junit.Ignore;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
 
 import com.pc.encoderDecoder.DisplayDecoder;
 import com.pc.encoderDecoder.DisplayEncoder;

@@ -41,21 +41,20 @@ dependencies {
 }
 
 test {
-    exclude '**/*'
     useJUnitPlatform()
 
     testLogging {
         events "passed", "skipped", "failed"
     }
 }
-
-sourceSets {
-    main {
-        java {
-            srcDir 'src'
-        }
-    }
-}
+//
+//sourceSets {
+//    main {
+//        java {
+//            srcDir 'src'
+//        }
+//    }
+//}
 
 /*
 task cliJar(type: Jar) {
