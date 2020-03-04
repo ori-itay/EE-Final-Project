@@ -41,7 +41,7 @@ public class Flow {
 			byte[] generatedXorBytes = EncryptorDecryptor.generateXorBytes(skeySpec, iv);
 			
 			byte[] encryptedImg = Encryptor.encryptImage(imageBytes, generatedXorBytes);
-			byte[] shuffledEncryptedImg = Shuffle.shuffleImgBytes(encryptedImg, iv);
+			byte[] shuffledEncryptedImg = Shuffle.shuffleImgPixels(encryptedImg, iv);
 			
 
 			encodedImage = DisplayEncoder.encodeBytes(shuffledEncryptedImg, iv.getIV(),  chksumIV);

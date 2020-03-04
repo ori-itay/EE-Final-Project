@@ -16,8 +16,11 @@ public class Deshuffle {
 		ShuffleDeshuffle.generateShuffledIndexes(indexes, ivInt, shuffledImgBytes.length);
 		final byte[] deshuffledImgBytes = new byte[shuffledImgBytes.length];
 		
-		for (int i = 0; i < shuffledImgBytes.length; i++) {
-			deshuffledImgBytes[indexes.get(i)] = shuffledImgBytes[i];
+		for (int i = 0; i < indexes.size(); i++) {
+			deshuffledImgBytes[indexes.get(i)] = shuffledImgBytes[4*i];
+			deshuffledImgBytes[indexes.get(i)+1] = shuffledImgBytes[4*i+1];
+			deshuffledImgBytes[indexes.get(i)+2] = shuffledImgBytes[4*i+2];
+			deshuffledImgBytes[indexes.get(i)+3] = shuffledImgBytes[4*i+3];
 		}
 		return deshuffledImgBytes;
 	}

@@ -25,7 +25,7 @@ public class DeshuffleTests {
 		byte[] imgBytes = new byte[Constants.MAX_ENCODED_LENGTH_BYTES];
 		new SecureRandom().nextBytes(imgBytes);
 		
-		byte[] shuffledBytes = Shuffle.shuffleImgBytes(imgBytes, iv);
+		byte[] shuffledBytes = Shuffle.shuffleImgPixels(imgBytes, iv);
 		byte[] deshuffledBytes = Deshuffle.getDeshuffledBytes(shuffledBytes, iv);
 
 		assertArrayEquals(imgBytes, deshuffledBytes);

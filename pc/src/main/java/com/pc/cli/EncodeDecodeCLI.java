@@ -67,7 +67,7 @@ public class EncodeDecodeCLI {
 					checksumIV = Checksum.computeChecksum(iv.getIV());
         			byte[] generatedXorBytes = EncryptorDecryptor.generateXorBytes(skeySpec, iv);
         			byte[] encryptedImg = Encryptor.encryptImage(rawData, generatedXorBytes);
-        			byte[] shuffledEncryptedImg = Shuffle.shuffleImgBytes(encryptedImg, iv);
+        			byte[] shuffledEncryptedImg = Shuffle.shuffleImgPixels(encryptedImg, iv);
     				
     				BufferedImage encodedImage = DisplayEncoder.encodeBytes( shuffledEncryptedImg, iv.getIV(),  checksumIV);
     				ImageIO.write(encodedImage, "png", new File(splitedCommand[2]));	
