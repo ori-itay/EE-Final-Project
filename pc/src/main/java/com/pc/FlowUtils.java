@@ -4,6 +4,7 @@ import com.pc.checksum.Checksum;
 import com.pc.configuration.Parameters;
 
 import java.awt.image.BufferedImage;
+import java.net.StandardSocketOptions;
 
 import static com.pc.configuration.Constants.*;
 
@@ -14,7 +15,7 @@ public class FlowUtils {
         short height = (short) image.getHeight();
         byte[] dimsChecksum;
         
-        int channels = 4, ARGB, index;
+        int ARGB, index;
 
         if(height > MAX_IMAGE_DIMENSION_SIZE || width > MAX_IMAGE_DIMENSION_SIZE) {
         	System.out.println("file too large\n");
@@ -22,7 +23,7 @@ public class FlowUtils {
         	System.exit(1); 
         }
         
-        byte[] imageData = new byte[width*height*channels];
+        byte[] imageData = new byte[width*height*CHANNELS];
         byte[] dimsArr = new byte[IMAGE_DIMS_ENCODING_LENGTH + CHECKSUM_LENGTH];
         
 
@@ -39,12 +40,11 @@ public class FlowUtils {
         for (int row = 0; row < height; row++) {
            for (int col = 0; col < width; col++) {
         	   ARGB = image.getRGB(col, row);
-        	   index = (row*width + col)*channels;
-        	   
-        	   imageData[index] = (byte) (ARGB >>> 24); //alpha
-        	   imageData[index + 1] = (byte) (ARGB >>> 16);//red
-        	   imageData[index + 2] = (byte) (ARGB >>> 8);//green
-        	   imageData[index + 3] = (byte) ARGB;//blue
+        	   index = (row*width + col)*CHANNELS;
+
+        	   imageData[index] = (byte) (ARGB >>> 16);//red
+        	   imageData[index + 1] = (byte) (ARGB >>> 8);//green
+        	   imageData[index + 2] = (byte) ARGB;//blue
            }
         }
         
@@ -78,7 +78,7 @@ public class FlowUtils {
 		int dim = (int) Math.ceil(Math.sqrt(modulesForEncoding)) + 2*(MODULES_IN_POS_DET_DIM+Parameters.modulesInMargin); // initial guess
 		int maxEncodedLength;
 		
-		while((maxEncodedLength=computeMaxEncodedLength(dim)) > dataLength) 
+		while(computeMaxEncodedLength(dim) > dataLength)
 			dim--;
 		while((maxEncodedLength=computeMaxEncodedLength(dim)) < dataLength) 
 			dim++;
@@ -93,7 +93,7 @@ public class FlowUtils {
 				- MODULES_IN_POS_DET_DIM*MODULES_IN_POS_DET_DIM*NUM_OF_POSITION_DETECTORS
 				-2*BITS_IN_BYTE*(Parameters.ivLength+CHECKSUM_LENGTH));
 
-		return Math.floorDiv(maxBitsToEncode, BITS_IN_BYTE);
+		return CHANNELS*Math.floorDiv(maxBitsToEncode, BITS_IN_BYTE);
 	}
     
 }

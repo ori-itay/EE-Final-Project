@@ -90,6 +90,7 @@ public class EncodeDecodeCLI {
 						checksumIV = Checksum.computeChecksum(iv.getIV());
         				if(checksumIV[0] != sampler.getIV2Checksum()[0]) {
         					System.out.println("error! both iv checksum are wrong. exiting...");
+        					System.exit(-1);
         				}
     				}
     				byte[] unShuffledEncryptedImg = Deshuffle.getDeshuffledBytes(sampler.getDecodedData(), iv);
@@ -118,7 +119,7 @@ public class EncodeDecodeCLI {
     private static BufferedImage convertToImageUsingGetRGB(byte[] imageData) {
 
 		int index;
-		int channels = 4;
+		int channels = 3;
 		
 		byte[] dims = Arrays.copyOfRange(imageData, 0, IMAGE_DIMS_ENCODING_LENGTH);
 		int width = signedShortToUnsignedInt(dims, 0, IMAGE_DIMENSION_ENCODING_LENGTH);
@@ -140,17 +141,19 @@ public class EncodeDecodeCLI {
 		
 		
 		BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-        int ARGB; 
+        int RGB;
         ByteBuffer wrapped;
         byte[] pixelData = Arrays.copyOfRange(imageData, CHECKSUM_LENGTH+IMAGE_DIMS_ENCODING_LENGTH,
         		encodedLengthBytes+CHECKSUM_LENGTH+IMAGE_DIMS_ENCODING_LENGTH);
         
         for (int row = 0; row < height; row++) {
            for (int col = 0; col < width; col++) {
-        	  index = (row*width + col)*channels;
-        	  wrapped = ByteBuffer.wrap(pixelData, index, channels);
-        	  ARGB = wrapped.getInt();
-        	  image.setRGB(col, row, ARGB);
+           	  //wrapped.put(0);
+			  index = (row*width + col)*channels;
+			  //wrapped = ByteBuffer.wrap(pixelData, index, channels);
+			  //RGB = wrapped.getInt();
+			  RGB = 0xFF000000 | pixelData[index]<<16 | pixelData[index+1]<<8 | pixelData[index+2];
+			  image.setRGB(col, row, RGB);
            }
         }
 

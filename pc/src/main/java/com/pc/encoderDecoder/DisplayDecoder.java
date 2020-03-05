@@ -11,26 +11,26 @@ import static com.pc.configuration.Constants.*;
 
 
 public class DisplayDecoder {
-	
+
 	public static RotatedImageSampler decodeFilePC(File inputFile) throws Exception {
-		
+
 		BufferedImage encodedImage = ImageIO.read(inputFile);
 		int[][] pixelMatrix = convertTo2DUsingGetRGB(encodedImage);
 		RotatedImageSampler imageSampler = decodePixelMatrix(pixelMatrix);
-		
+
 		return imageSampler;
 	}
-	
+
 	public static RotatedImageSampler decodePixelMatrix(int[][] pixelMatrix) throws Exception {
 
 		RotatedImageSampler imageSampler = configureImage(pixelMatrix);
 		Position pos = new Position(imageSampler.getModulesInMargin(), imageSampler.getModulesInMargin() + MODULES_IN_POS_DET_DIM);
-		imageSampler.setIV1(decodeData(imageSampler, Parameters.ivLength, pos));
-		imageSampler.setIV1Checksum(decodeData(imageSampler, CHECKSUM_LENGTH, pos));	
+		imageSampler.setIV1(decodeData(imageSampler, Parameters.ivLength, pos, true));
+		imageSampler.setIV1Checksum(decodeData(imageSampler, CHECKSUM_LENGTH, pos, true));
 		int imageDataLength = FlowUtils.computeMaxEncodedLength(imageSampler.getModulesInDim());
-		imageSampler.setDecodedData(decodeData(imageSampler, imageDataLength, pos));
-		imageSampler.setIV2(decodeData(imageSampler, Parameters.ivLength, pos));
-		imageSampler.setIV2Checksum(decodeData(imageSampler, CHECKSUM_LENGTH, pos));
+		imageSampler.setDecodedData(decodeData(imageSampler, imageDataLength, pos, false));
+		imageSampler.setIV2(decodeData(imageSampler, Parameters.ivLength, pos, true));
+		imageSampler.setIV2Checksum(decodeData(imageSampler, CHECKSUM_LENGTH, pos, true));
 		return imageSampler;
 	}
 
@@ -39,86 +39,102 @@ public class DisplayDecoder {
 		imageSampler.setReceivedImageDim(pixelMatrix.length);
 		imageSampler.setPixelMatrix(pixelMatrix);
 		configureModuleSizeAndRotation(imageSampler);
-		assert( imageSampler.getModuleSize() != 0);	
+		assert( imageSampler.getModuleSize() != 0);
 		//configureCrop(imageSampler);
 		return imageSampler;
 	}
-	
-	
-	private static byte[] decodeData(RotatedImageSampler imageSampler, int lengthInBytes, Position pos) {
-		
+
+
+	private static byte[] decodeData(RotatedImageSampler imageSampler, int lengthInBytes, Position pos,
+									 boolean isMetadata) {
+		int nextElemStride, greenStride, blueStride;
+		if(isMetadata) {
+			nextElemStride = 1;	greenStride = 0; blueStride = 0;
+		}
+		else {
+			nextElemStride = 3;	greenStride = 1; blueStride = 2;
+		}
+
 		byte[] decodedData = new byte[lengthInBytes];
-		
-		int bitsLeftToByte = BITS_IN_BYTE, currByteInd = 0, mask = BIT_GROUP_MASK_OF_ONES,	ones_in_mask = ENCODING_BIT_GROUP_SIZE;
-	
-		byte[] ARGB = sampleModule(imageSampler, pos);// << BITS_IN_BYTE; // shift to ignore alpha	
-		int redChannelValue = ARGB[1];
-		byte currModule = (byte) (redChannelValue / GREY_SCALE_DELTA); //assuming only single channel encoded i.e one byte. also assuming ENCODING_COLOR_LEVELS<255
-		byte maskedData, currentData = 0;
+
+		int bitsLeftToByte = BITS_IN_BYTE, currByteInd = 0, mask = BIT_GROUP_MASK_OF_ONES,
+				ones_in_mask = ENCODING_BIT_GROUP_SIZE;
+
+		int[] RGB = sampleModule(imageSampler, pos);
+		// assuming ENCODING_COLOR_LEVELS<255
+		int RChannelValue = RGB[0]/ GREY_SCALE_DELTA;
+		int GChannelValue = RGB[1]/ GREY_SCALE_DELTA;
+		int BChannelValue = RGB[2]/ GREY_SCALE_DELTA;
+		byte currentDataR = 0, currentDataG = 0, currentDataB = 0;
 
 		while (true){
 			if(ones_in_mask < bitsLeftToByte) { //mask doesn't cover all bits left in current byte
-				currentData += (0xFF) & ((mask & currModule) << (BITS_IN_BYTE - bitsLeftToByte));
+				currentDataR += (0xFF) & ((mask & RChannelValue) << (BITS_IN_BYTE - bitsLeftToByte));
+				currentDataG += (0xFF) & ((mask & GChannelValue) << (BITS_IN_BYTE - bitsLeftToByte));
+				currentDataB += (0xFF) & ((mask & BChannelValue) << (BITS_IN_BYTE - bitsLeftToByte));
 				bitsLeftToByte-= ones_in_mask;
 				mask = 0;
 			}
 			else {  //mask covers all bits left in current byte
-				currentData += ((0xFF) & ((mask & currModule) >>> (ones_in_mask - bitsLeftToByte))) <<  (BITS_IN_BYTE - bitsLeftToByte);
+				currentDataR += ((0xFF) & ((mask & RChannelValue) >>> (ones_in_mask - bitsLeftToByte))) <<  (BITS_IN_BYTE - bitsLeftToByte);
+				currentDataG += ((0xFF) & ((mask & GChannelValue) >>> (ones_in_mask - bitsLeftToByte))) <<  (BITS_IN_BYTE - bitsLeftToByte);
+				currentDataB += ((0xFF) & ((mask & BChannelValue) >>> (ones_in_mask - bitsLeftToByte))) <<  (BITS_IN_BYTE - bitsLeftToByte);
 				mask = mask >>> bitsLeftToByte; //assuming ENCODING_COLOR_LEVELS is a power of 2!
 				ones_in_mask-= bitsLeftToByte;
 				bitsLeftToByte = 0;
 			}
-			
+
 			if(mask == 0) { // get next block
-				ARGB = sampleModule(imageSampler, pos);// << BITS_IN_BYTE; // shift to ignore alpha	
-				redChannelValue = ARGB[1];
-				currModule = (byte) (redChannelValue / GREY_SCALE_DELTA); //assuming only single channel encoded i.e one byte. also assuming ENCODING_COLOR_LEVELS<255
 				mask = BIT_GROUP_MASK_OF_ONES;
 				ones_in_mask = ENCODING_BIT_GROUP_SIZE;
+				RGB = sampleModule(imageSampler, pos);
+				RChannelValue = (byte) (RGB[0]/ GREY_SCALE_DELTA);
+				GChannelValue = (byte) (RGB[1]/ GREY_SCALE_DELTA);
+				BChannelValue = (byte) (RGB[2]/ GREY_SCALE_DELTA);
 			}
-			
+
 			if(bitsLeftToByte == 0) {
-				//maskedBits = maskDataBits(currentData);
-				maskedData = currentData;
-				decodedData[currByteInd] = maskedData;
-				if(currByteInd+1<lengthInBytes) {
-					currByteInd++;
+				decodedData[currByteInd] = currentDataR;
+				decodedData[currByteInd+greenStride] = currentDataG;
+				decodedData[currByteInd+blueStride] = currentDataB;
+
+				if(currByteInd+nextElemStride<lengthInBytes) {
+					currByteInd+= nextElemStride;
 					bitsLeftToByte = BITS_IN_BYTE;
-					currentData = 0;
+					currentDataR = 0; currentDataG = 0; currentDataB = 0;
 				}
-				else 
+				else
 					return decodedData;
 			}
 		}
 	}
 
-	private static byte[] sampleModule(RotatedImageSampler imageSampler, Position pos) {
-		
+	private static int[] sampleModule(RotatedImageSampler imageSampler, Position pos) {
+
 		int rowPixel = pos.rowModule * imageSampler.getModuleSize();
-		int colPixel = pos.colModule * imageSampler.getModuleSize(); 
+		int colPixel = pos.colModule * imageSampler.getModuleSize();
 		int currPixelSample = imageSampler.getPixel(rowPixel, colPixel);
-		byte[] ARGB = new byte[4];
-		
-		ARGB[0] = (byte) (currPixelSample >>> 24); //alpha
-		ARGB[1] = (byte) (currPixelSample >>> 16); //red
-		ARGB[2] = (byte) (currPixelSample >>> 8); //green
-		ARGB[3] = (byte) (currPixelSample); //blue
-		
+		int[] RGB = new int[3];
+
+		RGB[0] = (currPixelSample >>> 16) & 0xFF; //red
+		RGB[1] = (currPixelSample >>> 8) & 0xFF; //green
+		RGB[2] = currPixelSample & 0xFF; //blue
+
 		pos.colModule++;
 		imageSampler.checkForColumnEnd(pos);
-		
-		return ARGB;
+
+		return RGB;
 	}
-	
-	 // packing an array of bytes to an int - Little Endian
+
+	// packing an array of bytes to an int - Little Endian
 	private static int byteArrayToInt(byte[] bytes) {
 		int retVal = 0;
-		for(int i = 0; i<bytes.length; i++) 
-		     retVal |= ( (bytes[i] & 0xFF) << (i*BITS_IN_BYTE) );
-		
+		for(int i = 0; i<bytes.length; i++)
+			retVal |= ( (bytes[i] & 0xFF) << (i*BITS_IN_BYTE) );
+
 		return retVal;
 	}
-	
+
 	public static int TestByteArrayToInt(byte[] bytes) { return byteArrayToInt(bytes);}
 
 
@@ -138,13 +154,13 @@ public class DisplayDecoder {
 			//seek pattern from top right
 
 			if(!foundPattern(imageSampler.getPixelMatrix(), moduleSize, moduleSize * Parameters.modulesInMargin,
-					moduleSize * (modulesInDim - 
+					moduleSize * (modulesInDim -
 							Parameters.modulesInMargin - MODULES_IN_POS_DET_DIM) )) {
 
 			}
 			//seek pattern from top bottom left
 			else if(!foundPattern(imageSampler.getPixelMatrix(), moduleSize, moduleSize *
-					(modulesInDim - 
+					(modulesInDim -
 							Parameters.modulesInMargin - MODULES_IN_POS_DET_DIM) ,moduleSize * Parameters.modulesInMargin) ) {
 				imageSampler.rotationCounterClockwise = 90;
 			}
@@ -159,7 +175,7 @@ public class DisplayDecoder {
 		int[][] pixelMatrix = imageSampler.getPixelMatrix();
 
 		int offset = 1, firstBlack = pixelMatrix.length - 1, followingWhiteInd = 0, moduleSize = 0;
-	
+
 		//search for first black pixel
 		while(firstBlack > pixelMatrix.length / 2) {
 			if(isBlackPixel(pixelMatrix[firstBlack][firstBlack])) {
@@ -167,9 +183,9 @@ public class DisplayDecoder {
 					firstBlack++;
 				break; // found first black pixel
 			}
-				
+
 			firstBlack--;
-		}	
+		}
 		//search for first following white pixel and extract module size (binary search)
 		offset = 1;
 		while(followingWhiteInd >=0) {
@@ -185,7 +201,7 @@ public class DisplayDecoder {
 			}
 		}
 		//search for position detector pattern
-		if(foundPattern(pixelMatrix, moduleSize, 
+		if(foundPattern(pixelMatrix, moduleSize,
 				firstBlack + 1 - moduleSize * MODULES_IN_POS_DET_DIM, firstBlack + 1 - moduleSize * MODULES_IN_POS_DET_DIM)) {
 			imageSampler.rotationCounterClockwise = 180;
 			imageSampler.setModulesInMargin(firstBlack/moduleSize);
@@ -197,7 +213,7 @@ public class DisplayDecoder {
 	private static int scanFromTopLeft(RotatedImageSampler imageSampler) {
 		int[][] pixelMatrix = imageSampler.getPixelMatrix();
 		int offset = 1, firstBlack = 0, followingWhiteInd = 0 , moduleSize = 0;
-	
+
 		//search for first black pixel
 		while(firstBlack < pixelMatrix.length / 2) {
 			if(isBlackPixel(pixelMatrix[firstBlack][firstBlack])) {
@@ -208,7 +224,7 @@ public class DisplayDecoder {
 			firstBlack++;
 		}
 		if(firstBlack>=pixelMatrix.length / 2) return 0; //black pixel not found in first half
-		
+
 		//search for first following white pixel and extract module size (binary search)
 		offset = 1;
 		followingWhiteInd = firstBlack + offset;
@@ -239,7 +255,7 @@ public class DisplayDecoder {
 	private static boolean foundPattern(int[][] pixelMatrix, int moduleSize, int rowStartPix, int colStartPix ) {
 		if(	isBlackPixel(pixelMatrix[rowStartPix][colStartPix]) &&
 				!isBlackPixel(pixelMatrix[rowStartPix+moduleSize][colStartPix+moduleSize]) &&
-				isBlackPixel(pixelMatrix[rowStartPix+2*moduleSize][colStartPix+2*moduleSize]) && 
+				isBlackPixel(pixelMatrix[rowStartPix+2*moduleSize][colStartPix+2*moduleSize]) &&
 				isBlackPixel(pixelMatrix[rowStartPix+3*moduleSize][colStartPix+3*moduleSize]) &&
 				isBlackPixel(pixelMatrix[rowStartPix+4*moduleSize][colStartPix+4*moduleSize]) &&
 				!isBlackPixel(pixelMatrix[rowStartPix+5*moduleSize][colStartPix+5*moduleSize]) &&
@@ -247,9 +263,9 @@ public class DisplayDecoder {
 			return true;
 		}
 		return false;
-	}	
-	
-	
+	}
+
+
 	private static boolean isBlackPixel(int pixel) {
 		if (pixel == 0xFF000000){
 			return true;
@@ -257,22 +273,22 @@ public class DisplayDecoder {
 		else {
 			return false;
 		}
-		
+
 	}
-	
-    
-    private static int[][] convertTo2DUsingGetRGB(BufferedImage image) {
-        int width = image.getWidth();
-        int height = image.getHeight();
-        int[][] result = new int[height][width];
 
-        for (int row = 0; row < height; row++) {
-           for (int col = 0; col < width; col++) {
-              result[row][col] = image.getRGB(col, row);
-           }
-        }
 
-        return result;
-     }
+	private static int[][] convertTo2DUsingGetRGB(BufferedImage image) {
+		int width = image.getWidth();
+		int height = image.getHeight();
+		int[][] result = new int[height][width];
+
+		for (int row = 0; row < height; row++) {
+			for (int col = 0; col < width; col++) {
+				result[row][col] = image.getRGB(col, row);
+			}
+		}
+
+		return result;
+	}
 
 }

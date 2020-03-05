@@ -24,5 +24,7 @@ public class Constants {
 	public static final int MAX_IMAGE_DIMENSION_SIZE = 1000;
 	
 	public static final int MAX_ENCODED_LENGTH_BYTES = MAX_IMAGE_DIMENSION_SIZE*MAX_IMAGE_DIMENSION_SIZE*4;
+
+	public static final int CHANNELS = 3;
 	
 }
