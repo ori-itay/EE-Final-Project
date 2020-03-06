@@ -12,11 +12,15 @@ import static com.pc.configuration.Constants.*;
 
 public class DisplayDecoder {
 
-	public static RotatedImageSampler decodeFilePC(File inputFile) throws Exception {
-
+	public static RotatedImageSampler decodeFilePC(String filepath) throws Exception {
+		File inputFile = new File(filepath);
 		BufferedImage encodedImage = ImageIO.read(inputFile);
 		int[][] pixelMatrix = convertTo2DUsingGetRGB(encodedImage);
 		RotatedImageSampler imageSampler = decodePixelMatrix(pixelMatrix);
+
+		//only temporary testing:
+		//CapturedImageSampler sampler = new CapturedImageSampler();
+		//sampler.locatePositionDetectors(filepath);
 
 		return imageSampler;
 	}
@@ -62,9 +66,9 @@ public class DisplayDecoder {
 
 		int[] RGB = sampleModule(imageSampler, pos);
 		// assuming ENCODING_COLOR_LEVELS<255
-		int RChannelValue = RGB[0]/ GREY_SCALE_DELTA;
-		int GChannelValue = RGB[1]/ GREY_SCALE_DELTA;
-		int BChannelValue = RGB[2]/ GREY_SCALE_DELTA;
+		int RChannelValue = RGB[0]/ COLOR_SCALE_DELTA;
+		int GChannelValue = RGB[1]/ COLOR_SCALE_DELTA;
+		int BChannelValue = RGB[2]/ COLOR_SCALE_DELTA;
 		byte currentDataR = 0, currentDataG = 0, currentDataB = 0;
 
 		while (true){
@@ -88,9 +92,9 @@ public class DisplayDecoder {
 				mask = BIT_GROUP_MASK_OF_ONES;
 				ones_in_mask = ENCODING_BIT_GROUP_SIZE;
 				RGB = sampleModule(imageSampler, pos);
-				RChannelValue = (byte) (RGB[0]/ GREY_SCALE_DELTA);
-				GChannelValue = (byte) (RGB[1]/ GREY_SCALE_DELTA);
-				BChannelValue = (byte) (RGB[2]/ GREY_SCALE_DELTA);
+				RChannelValue = (byte) (RGB[0]/ COLOR_SCALE_DELTA);
+				GChannelValue = (byte) (RGB[1]/ COLOR_SCALE_DELTA);
+				BChannelValue = (byte) (RGB[2]/ COLOR_SCALE_DELTA);
 			}
 
 			if(bitsLeftToByte == 0) {

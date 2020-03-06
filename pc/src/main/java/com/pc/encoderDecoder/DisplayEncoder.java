@@ -7,13 +7,6 @@ import com.pc.configuration.Parameters;
 
 import static com.pc.configuration.Constants.*;
 
-
-enum ROW {
-	WITH_POS_DET,
-	WITHOUT_POS_DET,
-	SAME_ROW
-}
-
 public class DisplayEncoder {
 
 	public static BufferedImage encodeBytes(byte[] binaryData, byte[] IV, byte[] ivchecksum) throws Exception {
@@ -104,9 +97,9 @@ public class DisplayEncoder {
 		int levelR, levelG, levelB;
 		Color color;
 
-		levelR = (currentDataR*GREY_SCALE_DELTA) & 0xFF;
-		levelG = (currentDataG*GREY_SCALE_DELTA) & 0xFF;
-		levelB = (currentDataB*GREY_SCALE_DELTA) & 0xFF;
+		levelR = (currentDataR*COLOR_SCALE_DELTA) & 0xFF;
+		levelG = (currentDataG*COLOR_SCALE_DELTA) & 0xFF;
+		levelB = (currentDataB*COLOR_SCALE_DELTA) & 0xFF;
 		color = new Color(levelR, levelG, levelB);
 		g.setColor(color);
 		g.fillRect(pos.colModule * Parameters.pixelsInModule, pos.rowModule * Parameters.pixelsInModule,

@@ -28,14 +28,13 @@ import static com.pc.configuration.Constants.*;
 public class EncodeDecodeCLI {
 	
 	public static void main(String... args) throws Exception {
-		boolean continueProgram = true;
 	    Scanner scanner = new Scanner(System.in);  // Create a Scanner object
 	    File inputFile;
 	    IvParameterSpec iv;
 	    byte[] checksumIV;
 		BufferedImage image;
 
-	    while(continueProgram) {
+	    while(true) {
 			System.out.println("Enter Decode/Encode command:");
 	    	String userCommand = scanner.nextLine().toLowerCase();  // Read user input
 
@@ -69,15 +68,14 @@ public class EncodeDecodeCLI {
         			byte[] encryptedImg = Encryptor.encryptImage(rawData, generatedXorBytes);
         			byte[] shuffledEncryptedImg = Shuffle.shuffleImgPixels(encryptedImg, iv);
     				
-    				BufferedImage encodedImage = DisplayEncoder.encodeBytes( shuffledEncryptedImg, iv.getIV(),  checksumIV);
+    				BufferedImage encodedImage = DisplayEncoder.encodeBytes(shuffledEncryptedImg, iv.getIV(),  checksumIV);
     				ImageIO.write(encodedImage, "png", new File(splitedCommand[2]));	
     				System.out.println("Encoded data was written to "+ splitedCommand[2]);
     			}
     			else if(splitedCommand[0].equals("decode")) {
 					RotatedImageSampler sampler;
         			try {
-        				inputFile = new File(splitedCommand[1]);
-						sampler = DisplayDecoder.decodeFilePC(inputFile);
+						sampler = DisplayDecoder.decodeFilePC(splitedCommand[1]);
         			}
         			catch(Exception NullPointerException){
 						System.out.println("Entered input filepath has error.\n");
@@ -102,7 +100,6 @@ public class EncodeDecodeCLI {
 
     			}
     			else if(splitedCommand[0].equals("exit")){
-    				continueProgram = false;
     				System.out.println("Exiting..\n");
     				break;
     			}
@@ -119,7 +116,6 @@ public class EncodeDecodeCLI {
     private static BufferedImage convertToImageUsingGetRGB(byte[] imageData) {
 
 		int index;
-		int channels = 3;
 		
 		byte[] dims = Arrays.copyOfRange(imageData, 0, IMAGE_DIMS_ENCODING_LENGTH);
 		int width = signedShortToUnsignedInt(dims, 0, IMAGE_DIMENSION_ENCODING_LENGTH);
@@ -137,21 +133,17 @@ public class EncodeDecodeCLI {
 				System.exit(-1);
 			}
 		}
-		int encodedLengthBytes = width*height*channels;
+		int encodedLengthBytes = width*height*CHANNELS;
 		
 		
 		BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
         int RGB;
-        ByteBuffer wrapped;
         byte[] pixelData = Arrays.copyOfRange(imageData, CHECKSUM_LENGTH+IMAGE_DIMS_ENCODING_LENGTH,
         		encodedLengthBytes+CHECKSUM_LENGTH+IMAGE_DIMS_ENCODING_LENGTH);
         
         for (int row = 0; row < height; row++) {
            for (int col = 0; col < width; col++) {
-           	  //wrapped.put(0);
-			  index = (row*width + col)*channels;
-			  //wrapped = ByteBuffer.wrap(pixelData, index, channels);
-			  //RGB = wrapped.getInt();
+			  index = (row*width + col)*CHANNELS;
 			  RGB = 0xFF000000 | pixelData[index]<<16 | pixelData[index+1]<<8 | pixelData[index+2];
 			  image.setRGB(col, row, RGB);
            }
