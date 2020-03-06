@@ -22,6 +22,7 @@ import androidx.core.content.ContextCompat;
 
 import com.android.visualcrypto.configurationFetcher.DimensionsFetcher;
 import com.android.visualcrypto.configurationFetcher.IvFetcher;
+import com.android.visualcrypto.opencvSampler.OpencvSampler;
 import com.pc.configuration.Constants;
 import com.pc.configuration.Parameters;
 import com.pc.encoderDecoder.DisplayDecoder;
@@ -32,6 +33,8 @@ import com.pc.shuffleDeshuffle.deshuffle.Deshuffle;
 import org.opencv.android.OpenCVLoader;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 
 import javax.crypto.spec.IvParameterSpec;
@@ -91,8 +94,12 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    public void decodeImage(View view) {
+    public void decodeImage(View view) throws IOException {
        // getPermissions();
+        InputStream is = this.getAssets().open("itay_color_small.jpg");
+        Bitmap b = BitmapFactory.decodeStream(is);
+        OpencvSampler sampler = new OpencvSampler();
+        sampler.locatePositionDetectors(b);
 
         try {
             long startTime = System.nanoTime();
