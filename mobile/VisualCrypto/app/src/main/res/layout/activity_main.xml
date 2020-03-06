@@ -22,10 +22,11 @@
         android:id="@+id/decodeImgBtn"
         android:layout_width="159dp"
         android:layout_height="53dp"
-        android:layout_marginTop="500dp"
+        android:layout_marginTop="476dp"
         android:onClick="decodeImage"
         android:text="@string/decode_image_as_image"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.547"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -60,5 +61,17 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/imageWidthCfg"
         app:layout_constraintVertical_bias="0.121" />
+
+    <Button
+        android:id="@+id/captureImageBTN"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="49dp"
+        android:text="@string/click_to_take_picture"
+        app:layout_constraintBottom_toTopOf="@+id/moduleSizeCfg"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.605"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/decodeImgBtn" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

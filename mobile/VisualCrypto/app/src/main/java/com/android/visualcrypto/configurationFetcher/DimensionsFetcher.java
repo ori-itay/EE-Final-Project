@@ -1,6 +1,7 @@
 package com.android.visualcrypto.configurationFetcher;
 
-import com.checksum.Checksum;
+import com.pc.checksum.Checksum;
+
 import static com.pc.configuration.Constants.IMAGE_DIMENSION_ENCODING_LENGTH;
 import static com.pc.configuration.Constants.CHECKSUM_LENGTH;
 import static com.pc.configuration.Constants.IMAGE_DIMS_ENCODING_LENGTH;

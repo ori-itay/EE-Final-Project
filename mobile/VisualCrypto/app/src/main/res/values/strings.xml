@@ -7,4 +7,5 @@
     <string name="dataLengthText">Data length is:</string>
     <string name="moduleSizeText">Module size is:</string>
     <string name="displays_the_images">Displays the images</string>
+    <string name="click_to_take_picture">Click to take picture</string>
 </resources>
