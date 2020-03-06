@@ -1,6 +1,6 @@
 package com.android.visualcrypto.configurationFetcher;
 
-import com.checksum.Checksum;
+import com.pc.checksum.Checksum;
 import com.pc.encoderDecoder.RotatedImageSampler;
 
 public class IvFetcher {

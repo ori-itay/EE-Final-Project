@@ -2,21 +2,16 @@ package com.android.visualcrypto;
 
 import android.Manifest;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Color;
-import android.graphics.Typeface;
 import android.os.Bundle;
 import android.os.Environment;
-import android.text.Spannable;
-import android.text.SpannableStringBuilder;
-import android.text.style.ForegroundColorSpan;
-import android.text.style.RelativeSizeSpan;
+import android.provider.MediaStore;
 import android.util.Log;
-import android.view.Display;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -34,9 +29,10 @@ import com.pc.encoderDecoder.RotatedImageSampler;
 import com.pc.encryptorDecryptor.decryptor.Decryptor;
 import com.pc.shuffleDeshuffle.deshuffle.Deshuffle;
 
+import org.opencv.android.OpenCVLoader;
+
 import java.io.File;
 import java.nio.ByteBuffer;
-import java.lang.Short;
 
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
@@ -44,13 +40,42 @@ import javax.crypto.spec.SecretKeySpec;
 
 public class MainActivity extends AppCompatActivity {
 
+    private static final int CAMERA_REQUEST = 1888;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        if (!OpenCVLoader.initDebug()) {showAlert("OpenCV failed to load..Exiting"); return;}
         setContentView(R.layout.activity_main);
-        getPermissions();
+        getPermissions(); // gets camera and write permissions
         showEncodedImage();
+        Button captureImageBTN = (Button) this.findViewById(R.id.captureImageBTN);
+        captureImageBTN.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                takePicture();
+            }
+        });
+    }
 
+    private void takePicture() {
+        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
+            startActivityForResult(takePictureIntent, CAMERA_REQUEST);
+        }
+    }
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data){
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == CAMERA_REQUEST) {
+            if (resultCode == RESULT_OK) {
+                Bundle extras = data.getExtras();
+                Bitmap bitmap = (Bitmap) extras.get("data");
+                ImageView iView = (ImageView) findViewById(R.id.decodedImgId);
+                iView.setImageBitmap(bitmap);
+            }
+        }
     }
 
     private void showEncodedImage() {
@@ -236,10 +261,17 @@ public class MainActivity extends AppCompatActivity {
                 PackageManager.PERMISSION_GRANTED){
 
             if (ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this,
-                    Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
-
-            } else {
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE)) {}
+            else {
                 ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},1);
+            }
+        }
+
+        if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+            if (ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this,
+                    Manifest.permission.CAMERA)) {}
+            else {
+                ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.CAMERA},1);
             }
         }
     }
