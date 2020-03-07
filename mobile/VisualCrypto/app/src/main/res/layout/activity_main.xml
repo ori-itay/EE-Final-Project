@@ -73,4 +73,16 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="@+id/decodeImgBtn" />
 
+    <Button
+        android:id="@+id/magicBTN"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="44dp"
+        android:onClick="test"
+        android:text="Button"
+        app:layout_constraintBottom_toTopOf="@+id/moduleSizeCfg"
+        app:layout_constraintEnd_toStartOf="@+id/decodeImgBtn"
+        app:layout_constraintHorizontal_bias="0.52"
+        app:layout_constraintStart_toStartOf="parent" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -13,7 +13,7 @@ import org.opencv.objdetect.QRCodeDetector;
 
 public class OpenCvSampler extends StdImageSampler {
 
-    //MatOfPoint2f corners = null; If helpful, return this for more redundancy
+    MatOfPoint2f corners = null;
     private Point[] pointsArr = null;
     private final Bitmap b;
     private boolean searchedPositionDetectors;
@@ -23,8 +23,8 @@ public class OpenCvSampler extends StdImageSampler {
         this.searchedPositionDetectors = false;
     }
 
-    public Point[] getPositionDetectorsLocation() {
-        if (pointsArr == null && !searchedPositionDetectors) {
+    public MatOfPoint2f getPositionDetectorsLocation() {
+        if (this.corners == null && !searchedPositionDetectors) {
             searchedPositionDetectors = true;
             Mat mat = new Mat (b.getWidth(), b.getHeight(), CvType.CV_8UC1);
             Utils.bitmapToMat(b, mat);
@@ -37,10 +37,12 @@ public class OpenCvSampler extends StdImageSampler {
             //detector.setEpsY(3);
             Mat points = new Mat();
             if (detector.detect(mat, points)){
-                this.pointsArr = new MatOfPoint2f(points).toArray();
+                //this.pointsArr = new MatOfPoint2f(points).toArray();
+                this.corners = new MatOfPoint2f(points);
+
             }
         }
-        return this.pointsArr;
+        return this.corners;
         /*
         // Writing the image
         Utils.matToBitmap(mat, b);

@@ -34,7 +34,13 @@ import com.pc.encryptorDecryptor.decryptor.Decryptor;
 import com.pc.shuffleDeshuffle.deshuffle.Deshuffle;
 
 import org.opencv.android.OpenCVLoader;
+import org.opencv.android.Utils;
+import org.opencv.calib3d.Calib3d;
+import org.opencv.core.Mat;
+import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
+import org.opencv.imgcodecs.Imgcodecs;
+import org.opencv.imgproc.Imgproc;
 
 import java.io.File;
 import java.io.IOException;
@@ -49,6 +55,8 @@ import java.util.Date;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+
+//import static com.android.visualcrypto.openCvUtils.ImageTransformer.homographicTransform;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -65,7 +73,7 @@ public class MainActivity extends AppCompatActivity {
         }
         setContentView(R.layout.activity_main);
         getPermissions(); // gets camera and write permissions
-        showEncodedImage();
+        //showEncodedImage();
         Button captureImageBTN = this.findViewById(R.id.captureImageBTN);
         captureImageBTN.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -158,19 +166,23 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private void decodeImage() {
-        try {
+    public void test(View v) throws IOException {
+        InputStream is = this.getAssets().open("itay_working_rotated.jpeg");
+        Bitmap b = BitmapFactory.decodeStream(is);
 
-            //InputStream is = this.getAssets().open("encodedImage.png");
-            InputStream is = this.getAssets().open("capturedEncoded.png");
-            Bitmap b = BitmapFactory.decodeStream(is);
-            OpenCvSampler sampler = new OpenCvSampler(b);
-            Point[] positions = sampler.getPositionDetectorsLocation();
+        //set the rotated image
+        ImageView vi = findViewById(R.id.decodedImgId);
+        vi.setImageBitmap(b);
 
-        } catch (IOException e) {
-            e.printStackTrace();
+        OpenCvSampler sampler = new OpenCvSampler(b);
+        MatOfPoint2f positions = sampler.getPositionDetectorsLocation();
+        if (positions == null) {
+            throw new RuntimeException("Didn't find position detectors!");
         }
+        homographicTransform(positions);
+    }
 
+    private void decodeImage() {
         try {
             long startTime = System.nanoTime();
 
@@ -327,7 +339,32 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
+    // TODO: remove me and learn how to call findViewByID from another class!!!!
+    public void homographicTransform(MatOfPoint2f coordinates) {
+        //get normal qr code picture
+        Bitmap bit = BitmapFactory.decodeFile(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/encodedImage.png");
+        OpenCvSampler other = new OpenCvSampler(bit);
+        MatOfPoint2f dstCoordinates = other.getPositionDetectorsLocation();
+
+
+
+
+        Mat H = new Mat();
+        H = Calib3d.findHomography(coordinates, dstCoordinates);
+        Mat img1_warp = new Mat();
+        Mat img1 = Imgcodecs.imread(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/encodedImage.png");
+        Imgproc.warpPerspective(img1, img1_warp, H, img1.size());
+        Bitmap bp = Bitmap.createBitmap(img1_warp.cols(), img1_warp.rows(), Bitmap.Config.ARGB_8888);
+        Utils.matToBitmap(img1_warp, bp);
+
+        ImageView iView = findViewById(R.id.decodedImgId);
+        iView.setImageBitmap(Bitmap.createScaledBitmap(bp, iView.getWidth(), iView.getHeight(), false));
+
+    }
+
 }
+
+
 
 /* Example of setSpan with colors etc
                 imgFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "out.png");
