@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
@@ -19,10 +20,11 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.content.FileProvider;
 
 import com.android.visualcrypto.configurationFetcher.DimensionsFetcher;
 import com.android.visualcrypto.configurationFetcher.IvFetcher;
-import com.android.visualcrypto.opencvSampler.OpencvSampler;
+//import com.android.visualcrypto.opencvSampler.OpencvSampler;
 import com.pc.configuration.Constants;
 import com.pc.configuration.Parameters;
 import com.pc.encoderDecoder.DisplayDecoder;
@@ -36,6 +38,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
@@ -60,13 +64,43 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
+    private String currentPhotoPath;
+
+    private File createImageFile() throws IOException {
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        String imageFileName = "JPEG_" + timeStamp + "_";
+        File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+        File image = File.createTempFile(
+                imageFileName,  /* prefix */
+                ".jpg",         /* suffix */
+                storageDir      /* directory */
+        );
+
+        // Save a file: path for use with ACTION_VIEW intents
+        currentPhotoPath = image.getAbsolutePath();
+        return image;
+    }
 
     private void takePicture() {
         Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
-            startActivityForResult(takePictureIntent, CAMERA_REQUEST);
+            File photoFile = null;
+            try {
+                photoFile = createImageFile();
+            } catch (IOException ex) {
+                showAlert("Error while creating photoFile");
+                Log.d("photoFile","Error while creating photoFile", ex);
+                return;
+            }
+            if (photoFile != null) {
+                Uri photoURI = FileProvider.getUriForFile(this,
+                        "com.android.visualcrypto", photoFile);
+                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
+                startActivityForResult(takePictureIntent, CAMERA_REQUEST);
+            }
         }
     }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data){
         super.onActivityResult(requestCode, resultCode, data);
@@ -96,10 +130,10 @@ public class MainActivity extends AppCompatActivity {
 
     public void decodeImage(View view) throws IOException {
        // getPermissions();
-        InputStream is = this.getAssets().open("itay_color_small.jpg");
-        Bitmap b = BitmapFactory.decodeStream(is);
-        OpencvSampler sampler = new OpencvSampler();
-        sampler.locatePositionDetectors(b);
+//        InputStream is = this.getAssets().open("itay_color_small.jpg");
+//        Bitmap b = BitmapFactory.decodeStream(is);
+//        OpencvSampler sampler = new OpencvSampler();
+//        sampler.locatePositionDetectors(b);
 
         try {
             long startTime = System.nanoTime();
