@@ -27,6 +27,7 @@ import com.android.visualcrypto.cameraUtils.CameraRotationFix;
 import com.android.visualcrypto.configurationFetcher.DimensionsFetcher;
 import com.android.visualcrypto.configurationFetcher.IvFetcher;
 //import com.android.visualcrypto.opencvSampler.OpencvSampler;
+import com.android.visualcrypto.openCvSampler.OpenCvSampler;
 import com.pc.configuration.Constants;
 import com.pc.configuration.Parameters;
 import com.pc.encoderDecoder.DisplayDecoder;
@@ -37,7 +38,9 @@ import com.pc.shuffleDeshuffle.deshuffle.Deshuffle;
 import org.opencv.android.OpenCVLoader;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
@@ -153,10 +156,15 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void decodeImage() {
-//        InputStream is = this.getAssets().open("itay_color_small.jpg");
-//        Bitmap b = BitmapFactory.decodeStream(is);
-//        OpencvSampler sampler = new OpencvSampler();
-//        sampler.locatePositionDetectors(b);
+        try {
+            OpenCvSampler sampler = new OpenCvSampler();
+            //InputStream is = this.getAssets().open("encodedImage.png");
+            InputStream is = this.getAssets().open("capturedEncoded.jpeg");
+            Bitmap b = BitmapFactory.decodeStream(is);
+            sampler.locatePositionDetectors(b);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
         try {
             long startTime = System.nanoTime();
