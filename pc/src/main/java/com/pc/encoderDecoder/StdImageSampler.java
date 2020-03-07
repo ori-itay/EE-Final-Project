@@ -118,18 +118,19 @@ public class StdImageSampler implements ImageSamplerInf{
 	static void imageCheckForColumnEnd(Position pos, int imageDim) {
 		
 		if(pos.colModule == (imageDim - Parameters.modulesInMargin - MODULES_IN_POS_DET_DIM) ) {
-			//end of column in rows of top position detectors (except for the last top one)	
-			if(pos.rowModule + 1 < Parameters.modulesInMargin + MODULES_IN_POS_DET_DIM) {	
+			//end of row (last column) in rows of top position detectors (except for the last top one)
+			if(pos.rowModule + 1 < Parameters.modulesInMargin + MODULES_IN_POS_DET_DIM) {
+				//next row is in row of position detector
 				pos.colModule = (Parameters.modulesInMargin + MODULES_IN_POS_DET_DIM);
 				pos.rowModule++;
 			}
-			//end of column when in last row of top position detector	
 			else if (pos.rowModule + 1 == (Parameters.modulesInMargin + MODULES_IN_POS_DET_DIM) ) {
+				//end of column when in last row of top position detector
 				pos.colModule = Parameters.modulesInMargin;
 				pos.rowModule++;
 			}
 		}
-		//end of column in rows without position detector	
+		//end of row (last column) in rows without position detector on right
 		else if(pos.colModule == (imageDim - Parameters.modulesInMargin) ) {
 			//next row is with position detector
 			if(pos.rowModule + 1 >= (imageDim - Parameters.modulesInMargin - MODULES_IN_POS_DET_DIM)) 

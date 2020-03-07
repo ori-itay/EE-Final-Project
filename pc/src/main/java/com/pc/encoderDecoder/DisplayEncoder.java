@@ -117,14 +117,14 @@ public class DisplayEncoder {
 		int colTopLeft = Parameters.modulesInMargin * Parameters.pixelsInModule;
 		int rowTopRight = Parameters.modulesInMargin * Parameters.pixelsInModule;
 		int colTopRight = (MODULES_IN_ENCODED_IMAGE_DIM-
-				Parameters.modulesInMargin-MODULES_IN_POS_DET_DIM) * Parameters.pixelsInModule;
+				Parameters.modulesInMargin-MODULES_IN_POS_DET_DIM + 1) * Parameters.pixelsInModule;
 		int rowBottomLeft = (MODULES_IN_ENCODED_IMAGE_DIM-
-				Parameters.modulesInMargin-MODULES_IN_POS_DET_DIM) * Parameters.pixelsInModule;
+				Parameters.modulesInMargin-MODULES_IN_POS_DET_DIM + 1) * Parameters.pixelsInModule;
 		int colBottomLeft = Parameters.modulesInMargin * Parameters.pixelsInModule;
 		int rowModuleOffset, colModuleOffset;
 
-		for(rowModuleOffset = 0; rowModuleOffset< MODULES_IN_POS_DET_DIM; rowModuleOffset++) {
-			for(colModuleOffset = 0; colModuleOffset< MODULES_IN_POS_DET_DIM; colModuleOffset++) {
+		for(rowModuleOffset = 0; rowModuleOffset< MODULES_IN_POS_DET_DIM - 1; rowModuleOffset++) {
+			for(colModuleOffset = 0; colModuleOffset< MODULES_IN_POS_DET_DIM - 1; colModuleOffset++) {
 
 				if( !((rowModuleOffset == MID_LAYER_OFFSET_1 || rowModuleOffset == MID_LAYER_OFFSET_2) &&
 						(colModuleOffset >= MID_LAYER_OFFSET_1 && colModuleOffset <= MID_LAYER_OFFSET_2)) &&
