@@ -4,11 +4,15 @@ import static com.pc.configuration.Parameters.ivLength;
 import static com.pc.configuration.Constants.MAX_ENCODED_LENGTH_BYTES;
 
 import java.nio.ByteBuffer;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 //import java.util.concurrent.ExecutorService;
 //import java.util.concurrent.Executors;
 
 import javax.crypto.Cipher;
 
+import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
@@ -27,7 +31,7 @@ public class EncryptorDecryptor {
 		return xoredImage;
 	}
 	
-	public static byte[] generateXorBytes(SecretKeySpec skeySpec, IvParameterSpec iv) throws Exception { 
+	public static byte[] generateXorBytes(SecretKeySpec skeySpec, IvParameterSpec iv) throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidAlgorithmParameterException, InvalidKeyException {
 		final Cipher cipher = Cipher.getInstance(encryptionMethod);
 		final byte[] cipherIV = new byte[16];
 		System.arraycopy(iv.getIV(), 0, cipherIV, 0, ivLength);

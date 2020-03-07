@@ -23,7 +23,6 @@
         android:layout_width="159dp"
         android:layout_height="53dp"
         android:layout_marginTop="476dp"
-        android:onClick="decodeImage"
         android:text="@string/decode_image_as_image"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.547"

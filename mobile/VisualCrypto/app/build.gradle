@@ -5,7 +5,7 @@ android {
     buildToolsVersion "29.0.2"
     defaultConfig {
         applicationId "com.android.visualcrypto"
-        minSdkVersion 26
+        minSdkVersion 28
         targetSdkVersion 28
         versionCode 1
         versionName "1.0"
@@ -29,4 +29,6 @@ dependencies {
     implementation 'com.quickbirdstudios:opencv:4.1.0'
     testImplementation 'junit:junit:4.12'
     implementation files('libs/all-pc.jar')
+    implementation 'org.jetbrains:annotations-java5:15.0'
+    implementation 'androidx.exifinterface:exifinterface:1.1.0-alpha01'
 }

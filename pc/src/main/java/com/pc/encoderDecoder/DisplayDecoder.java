@@ -1,6 +1,7 @@
 package com.pc.encoderDecoder;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.IOException;
 
 import javax.imageio.ImageIO;
 
@@ -12,7 +13,7 @@ import static com.pc.configuration.Constants.*;
 
 public class DisplayDecoder {
 
-	public static RotatedImageSampler decodeFilePC(String filepath) throws Exception {
+	public static RotatedImageSampler decodeFilePC(String filepath) throws IOException {
 		File inputFile = new File(filepath);
 		BufferedImage encodedImage = ImageIO.read(inputFile);
 		int[][] pixelMatrix = convertTo2DUsingGetRGB(encodedImage);
@@ -25,7 +26,7 @@ public class DisplayDecoder {
 		return imageSampler;
 	}
 
-	public static RotatedImageSampler decodePixelMatrix(int[][] pixelMatrix) throws Exception {
+	public static RotatedImageSampler decodePixelMatrix(int[][] pixelMatrix)  {
 
 		RotatedImageSampler imageSampler = configureImage(pixelMatrix);
 		Position pos = new Position(imageSampler.getModulesInMargin(), imageSampler.getModulesInMargin() + MODULES_IN_POS_DET_DIM);

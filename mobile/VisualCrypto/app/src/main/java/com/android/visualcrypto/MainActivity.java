@@ -1,6 +1,7 @@
 package com.android.visualcrypto;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -22,6 +23,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 
+import com.android.visualcrypto.cameraUtils.CameraRotationFix;
 import com.android.visualcrypto.configurationFetcher.DimensionsFetcher;
 import com.android.visualcrypto.configurationFetcher.IvFetcher;
 //import com.android.visualcrypto.opencvSampler.OpencvSampler;
@@ -36,11 +38,15 @@ import org.opencv.android.OpenCVLoader;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
 
+import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
@@ -48,6 +54,7 @@ import javax.crypto.spec.SecretKeySpec;
 public class MainActivity extends AppCompatActivity {
 
     private static final int CAMERA_REQUEST = 1888;
+    private String currentPhotoPath;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,16 +70,22 @@ public class MainActivity extends AppCompatActivity {
                 takePicture();
             }
         });
+        Button decodeImageBTN = (Button) this.findViewById(R.id.decodeImgBtn);
+        decodeImageBTN.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                decodeImage();
+            }
+        });
     }
-    private String currentPhotoPath;
 
     private File createImageFile() throws IOException {
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-        String imageFileName = "JPEG_" + timeStamp + "_";
+        String imageFileName = "TEMP_" + timeStamp + "_";
         File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
         File image = File.createTempFile(
                 imageFileName,  /* prefix */
-                ".jpg",         /* suffix */
+                ".png",         /* suffix */
                 storageDir      /* directory */
         );
 
@@ -107,10 +120,21 @@ public class MainActivity extends AppCompatActivity {
 
         if (requestCode == CAMERA_REQUEST) {
             if (resultCode == RESULT_OK) {
-                Bundle extras = data.getExtras();
-                Bitmap bitmap = (Bitmap) extras.get("data");
-                ImageView iView = (ImageView) findViewById(R.id.decodedImgId);
-                iView.setImageBitmap(bitmap);
+                File file = new File(currentPhotoPath);
+                try {
+                    Bitmap bmap = MediaStore.Images.Media.getBitmap(getContentResolver(), Uri.fromFile(file));
+                    if (bmap != null) {
+                        Bitmap rotatedBitmap = CameraRotationFix.fixRotation(bmap, file.getAbsolutePath());
+                        ImageView iView = (ImageView) findViewById(R.id.decodedImgId);
+                        iView.setImageBitmap(rotatedBitmap);
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } finally {
+                    if (file.exists()){
+                        file.delete();
+                    }
+                }
             }
         }
     }
@@ -128,8 +152,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    public void decodeImage(View view) throws IOException {
-       // getPermissions();
+    public void decodeImage() {
 //        InputStream is = this.getAssets().open("itay_color_small.jpg");
 //        Bitmap b = BitmapFactory.decodeStream(is);
 //        OpencvSampler sampler = new OpencvSampler();
@@ -142,114 +165,78 @@ public class MainActivity extends AppCompatActivity {
             RotatedImageSampler rotatedImageSampler = null;
             int[][] pixelArr;
             /* Display decoded image */
-            if (view.getId() == R.id.decodeImgBtn) {
-                imgFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "encodedImage.png");
-                if (!imgFile.exists()) {
-                    showAlert("Couldn't find 'encodedImage.png' in Downloads");
-                    return;
-                }
-
-                pixelArr = get2DPixelArray(imgFile);
-                rotatedImageSampler = DisplayDecoder.decodePixelMatrix(pixelArr);
-                /* decode */
-                byte[] decodedBytes = rotatedImageSampler.getDecodedData();
-
-                /* get iv */
-                byte[] iv = IvFetcher.getIV(rotatedImageSampler);
-                if (iv == null) {
-                    showAlert("Cannot decode the image: IV checksums are wrong!");
-                    return;
-                }
-                IvParameterSpec ivSpec = new IvParameterSpec(iv);
-                // get secret key
-                /* Using constant secret key! */
-                byte[] const_key = new byte[] {100, 101, 102, 103, 104, 105, 106 ,107, 108, 109, 110, 111, 112, 113, 114, 115};
-                SecretKeySpec secretKeySpec = new SecretKeySpec(const_key, Parameters.encryptionAlgorithm);
-                /* ************************** */
-
-                // deshuffle
-                byte[] deshuffledBytes = Deshuffle.getDeshuffledBytes(decodedBytes, ivSpec);
-
-                /* decrypt */
-                byte[] imageBytes = Decryptor.decryptImage(deshuffledBytes, secretKeySpec, ivSpec);
-
-                /* fetch the image dimensions */
-                DimensionsFetcher dimensionsFetcher = new DimensionsFetcher(imageBytes);
-                int width = dimensionsFetcher.getWidth();
-                int height = dimensionsFetcher.getHeight();
-
-                if (width == 0 || height == 0){
-                    showAlert("Cannot decode the image: Dimensions checksum are wrong!");
-                    return;
-                } else if (width > Constants.MAX_IMAGE_DIMENSION_SIZE || height > Constants.MAX_IMAGE_DIMENSION_SIZE){
-                    showAlert("Error: image dimension larger than " + Constants.MAX_IMAGE_DIMENSION_SIZE);
-                    return;
-                }
-
-                /* convert to Bitmap */
-                Bitmap bmp = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-                setBitmapPixels(bmp, imageBytes, width, height);
-
-                /* display the image */
-                ImageView iView = (ImageView) findViewById(R.id.decodedImgId);
-                Log.d("iviewparameters", String.format("width: %d, height: %d", iView.getWidth(), iView.getHeight()));
-                iView.setImageBitmap(Bitmap.createScaledBitmap(bmp, iView.getWidth(), iView.getHeight(), false));
-
-                Log.d("performance", String.format("took: %s", System.nanoTime() - startTime));
-
-                TextView moduleSizeText = (TextView) findViewById(R.id.moduleSizeCfg);
-                moduleSizeText.setText("Pixels in module dimension: " + rotatedImageSampler.getModuleSize());
-
-                TextView imageHeightText = (TextView) findViewById(R.id.imageHeightCfg);
-                imageHeightText.setText("Image Height: " + height);
-
-                TextView imageWidthText = (TextView) findViewById(R.id.imageWidthCfg);
-                imageWidthText.setText("Image Width: " + width);
-          } /* Display decoded text */
-            /*else if (view.getId() == R.id.decodeTxtBtn) {
-                imgFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "out.png");
-                if (!imgFile.exists()) {
-                    showAlert("Couldn't find 'out.png' in Downloads");
-                    return;
-                }
-                pixelArr = get2DPixelArray(imgFile);
-                rotatedImageSampler = DisplayDecoder.decodePixelMatrix(pixelArr);
-
-                TextView dataCfgText = (TextView) findViewById(R.id.dataCfg);
-                SpannableStringBuilder dataTxt = new SpannableStringBuilder(getString(R.string.dataText));
-                dataTxt.setSpan(new android.text.style.StyleSpan(Typeface.BOLD), 0, dataTxt.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-                dataTxt.setSpan(new RelativeSizeSpan(2f), 0, dataTxt.length(), 0);
-                dataTxt.setSpan(new ForegroundColorSpan(Color.BLACK), 0, dataTxt.length(), 0);
-                dataCfgText.setText(dataTxt.append(new String(rotatedImageSampler.getDecodedData())));
-            }
-
-            if (imgFile == null){
+            imgFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "encodedImage.png");
+            if (!imgFile.exists()) {
+                showAlert("Couldn't find 'encodedImage.png' in Downloads");
                 return;
             }
 
-            TextView dataLengthCfgText = (TextView) findViewById(R.id.dataLengthCfg);
-            TextView moduleSizeCfgText = (TextView) findViewById(R.id.moduleSizeCfg);
+            pixelArr = get2DPixelArray(imgFile);
+            rotatedImageSampler = DisplayDecoder.decodePixelMatrix(pixelArr);
+            /* decode */
+            byte[] decodedBytes = rotatedImageSampler.getDecodedData();
 
-            SpannableStringBuilder dataLengthTxt = new SpannableStringBuilder(getString(R.string.dataLengthText));
-            dataLengthTxt.setSpan(new android.text.style.StyleSpan(Typeface.BOLD), 0, dataLengthTxt.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-            dataLengthTxt.setSpan(new RelativeSizeSpan(2f), 0, dataLengthTxt.length(), 0);
-            dataLengthTxt.setSpan(new ForegroundColorSpan(Color.BLACK), 0, dataLengthTxt.length(), 0);
+            /* get iv */
+            byte[] iv = IvFetcher.getIV(rotatedImageSampler);
+            if (iv == null) {
+                showAlert("Cannot decode the image: IV checksums are wrong!");
+                return;
+            }
+            IvParameterSpec ivSpec = new IvParameterSpec(iv);
+            // get secret key
+            /* Using constant secret key! */
+            byte[] const_key = new byte[] {100, 101, 102, 103, 104, 105, 106 ,107, 108, 109, 110, 111, 112, 113, 114, 115};
+            SecretKeySpec secretKeySpec = new SecretKeySpec(const_key, Parameters.encryptionAlgorithm);
+            /* ************************** */
 
+            // deshuffle
+            byte[] deshuffledBytes = Deshuffle.getDeshuffledBytes(decodedBytes, ivSpec);
 
-            SpannableStringBuilder moduleSizeTxt = new SpannableStringBuilder(getString(R.string.moduleSizeText));
-            moduleSizeTxt.setSpan(new android.text.style.StyleSpan(Typeface.BOLD), 0, moduleSizeTxt.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-            moduleSizeTxt.setSpan(new RelativeSizeSpan(2f), 0, moduleSizeTxt.length(), 0);
-            moduleSizeTxt.setSpan(new ForegroundColorSpan(Color.BLACK), 0, moduleSizeTxt.length(), 0);
+            /* decrypt */
+            byte[] imageBytes = Decryptor.decryptImage(deshuffledBytes, secretKeySpec, ivSpec);
 
-            dataLengthCfgText.setText(dataLengthTxt.append(String.valueOf(rotatedImageSampler.getDataLength())));
-            moduleSizeCfgText.setText(moduleSizeTxt.append(String.valueOf(rotatedImageSampler.getModuleSize())));*/
+            /* fetch the image dimensions */
+            DimensionsFetcher dimensionsFetcher = new DimensionsFetcher(imageBytes);
+            int width = dimensionsFetcher.getWidth();
+            int height = dimensionsFetcher.getHeight();
 
-        } catch (Exception e) {
-            showAlert("Exception occurred: " + e.getMessage());
-            Log.d("decodeFile exception:", e.getMessage());
+            if (width == 0 || height == 0){
+                showAlert("Cannot decode the image: Dimensions checksum are wrong!");
+                return;
+            } else if (width > Constants.MAX_IMAGE_DIMENSION_SIZE || height > Constants.MAX_IMAGE_DIMENSION_SIZE){
+                showAlert("Error: image dimension larger than " + Constants.MAX_IMAGE_DIMENSION_SIZE);
+                return;
+            }
+
+            /* convert to Bitmap */
+            Bitmap bmp = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+            setBitmapPixels(bmp, imageBytes, width, height);
+
+            /* display the image */
+            ImageView iView = (ImageView) findViewById(R.id.decodedImgId);
+            Log.d("iviewparameters", String.format("width: %d, height: %d", iView.getWidth(), iView.getHeight()));
+            iView.setImageBitmap(Bitmap.createScaledBitmap(bmp, iView.getWidth(), iView.getHeight(), false));
+
+            Log.d("performance", String.format("took: %s", System.nanoTime() - startTime));
+
+            /* display configuration information */
+            showConfigurationInfo(rotatedImageSampler, height, width);
+        } catch (InvalidAlgorithmParameterException | NoSuchAlgorithmException |
+                InvalidKeyException | NoSuchPaddingException e) {
+            showAlert("Exception in decodeFile: " + e.getCause());
+            Log.e("decodeFile exception:", e.getStackTrace().toString());
         }
+    }
 
+    private void showConfigurationInfo(RotatedImageSampler rotatedImageSampler, int height, int width) {
+        TextView moduleSizeText = (TextView) findViewById(R.id.moduleSizeCfg);
+        moduleSizeText.setText("Pixels in module dimension: " + rotatedImageSampler.getModuleSize());
 
+        TextView imageHeightText = (TextView) findViewById(R.id.imageHeightCfg);
+        imageHeightText.setText("Image Height: " + height);
+
+        TextView imageWidthText = (TextView) findViewById(R.id.imageWidthCfg);
+        imageWidthText.setText("Image Width: " + width);
     }
 
     private void showAlert(String msg) {
@@ -284,13 +271,22 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setBitmapPixels(Bitmap bmp, byte[] imageBytes, int width, int height){
+        final byte ALPHA_VALUE = (byte) 0xff;
         final int METADATA_LENGTH = 5;
         int index, ARGB;
         ByteBuffer wrapped;
         for (int row = 0; row < height; row++) {
             for (int col = 0; col < width; col++) {
-                index = (row*width + col)*4;
-                wrapped = ByteBuffer.wrap(imageBytes, METADATA_LENGTH + index, 4);
+                index = (row*width + col)*Constants.CHANNELS;
+                if (Constants.CHANNELS == 4) {
+                    wrapped = ByteBuffer.wrap(imageBytes, METADATA_LENGTH + index, Constants.CHANNELS);
+                } else if (Constants.CHANNELS == 3) {
+                    wrapped = ByteBuffer.allocate(4);
+                    wrapped.put(ALPHA_VALUE);
+                    wrapped.put(imageBytes, METADATA_LENGTH + index, Constants.CHANNELS);
+                    wrapped.position(0); // Sets the position to the start of the ByteBuffer
+                }
+
                 ARGB = wrapped.getInt();
                 bmp.setPixel(col, row, ARGB);
             }
@@ -317,4 +313,42 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 }
+
+/* Example of setSpan with colors etc
+                imgFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "out.png");
+                        if (!imgFile.exists()) {
+                        showAlert("Couldn't find 'out.png' in Downloads");
+                        return;
+                        }
+                        pixelArr = get2DPixelArray(imgFile);
+                        rotatedImageSampler = DisplayDecoder.decodePixelMatrix(pixelArr);
+
+                        TextView dataCfgText = (TextView) findViewById(R.id.dataCfg);
+                        SpannableStringBuilder dataTxt = new SpannableStringBuilder(getString(R.string.dataText));
+                        dataTxt.setSpan(new android.text.style.StyleSpan(Typeface.BOLD), 0, dataTxt.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                        dataTxt.setSpan(new RelativeSizeSpan(2f), 0, dataTxt.length(), 0);
+                        dataTxt.setSpan(new ForegroundColorSpan(Color.BLACK), 0, dataTxt.length(), 0);
+                        dataCfgText.setText(dataTxt.append(new String(rotatedImageSampler.getDecodedData())));
+                        }
+
+                        if (imgFile == null){
+                        return;
+                        }
+
+                        TextView dataLengthCfgText = (TextView) findViewById(R.id.dataLengthCfg);
+                        TextView moduleSizeCfgText = (TextView) findViewById(R.id.moduleSizeCfg);
+
+                        SpannableStringBuilder dataLengthTxt = new SpannableStringBuilder(getString(R.string.dataLengthText));
+                        dataLengthTxt.setSpan(new android.text.style.StyleSpan(Typeface.BOLD), 0, dataLengthTxt.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                        dataLengthTxt.setSpan(new RelativeSizeSpan(2f), 0, dataLengthTxt.length(), 0);
+                        dataLengthTxt.setSpan(new ForegroundColorSpan(Color.BLACK), 0, dataLengthTxt.length(), 0);
+
+
+                        SpannableStringBuilder moduleSizeTxt = new SpannableStringBuilder(getString(R.string.moduleSizeText));
+                        moduleSizeTxt.setSpan(new android.text.style.StyleSpan(Typeface.BOLD), 0, moduleSizeTxt.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                        moduleSizeTxt.setSpan(new RelativeSizeSpan(2f), 0, moduleSizeTxt.length(), 0);
+                        moduleSizeTxt.setSpan(new ForegroundColorSpan(Color.BLACK), 0, moduleSizeTxt.length(), 0);
+
+                        dataLengthCfgText.setText(dataLengthTxt.append(String.valueOf(rotatedImageSampler.getDataLength())));
+                        moduleSizeCfgText.setText(moduleSizeTxt.append(String.valueOf(rotatedImageSampler.getModuleSize())));*/
 
