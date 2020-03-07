@@ -1,7 +1,6 @@
 package com.android.visualcrypto;
 
 import android.Manifest;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -26,8 +25,7 @@ import androidx.core.content.FileProvider;
 import com.android.visualcrypto.cameraUtils.CameraRotationFix;
 import com.android.visualcrypto.configurationFetcher.DimensionsFetcher;
 import com.android.visualcrypto.configurationFetcher.IvFetcher;
-//import com.android.visualcrypto.opencvSampler.OpencvSampler;
-import com.android.visualcrypto.openCvSampler.OpenCvSampler;
+import com.android.visualcrypto.openCvUtils.OpenCvSampler;
 import com.pc.configuration.Constants;
 import com.pc.configuration.Parameters;
 import com.pc.encoderDecoder.DisplayDecoder;
@@ -36,9 +34,9 @@ import com.pc.encryptorDecryptor.decryptor.Decryptor;
 import com.pc.shuffleDeshuffle.deshuffle.Deshuffle;
 
 import org.opencv.android.OpenCVLoader;
+import org.opencv.core.Point;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
@@ -46,7 +44,6 @@ import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
 import java.util.Date;
 
 import javax.crypto.NoSuchPaddingException;
@@ -62,18 +59,21 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (!OpenCVLoader.initDebug()) {showAlert("OpenCV failed to load..Exiting"); return;}
+        if (!OpenCVLoader.initDebug()) {
+            showAlert("OpenCV failed to load..Exiting");
+            return;
+        }
         setContentView(R.layout.activity_main);
         getPermissions(); // gets camera and write permissions
         showEncodedImage();
-        Button captureImageBTN = (Button) this.findViewById(R.id.captureImageBTN);
+        Button captureImageBTN = this.findViewById(R.id.captureImageBTN);
         captureImageBTN.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 takePicture();
             }
         });
-        Button decodeImageBTN = (Button) this.findViewById(R.id.decodeImgBtn);
+        Button decodeImageBTN = this.findViewById(R.id.decodeImgBtn);
         decodeImageBTN.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -100,12 +100,12 @@ public class MainActivity extends AppCompatActivity {
     private void takePicture() {
         Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
-            File photoFile = null;
+            File photoFile;
             try {
                 photoFile = createImageFile();
             } catch (IOException ex) {
                 showAlert("Error while creating photoFile");
-                Log.d("photoFile","Error while creating photoFile", ex);
+                Log.d("photoFile", "Error while creating photoFile", ex);
                 return;
             }
             if (photoFile != null) {
@@ -118,7 +118,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data){
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
         if (requestCode == CAMERA_REQUEST) {
@@ -128,14 +128,17 @@ public class MainActivity extends AppCompatActivity {
                     Bitmap bmap = MediaStore.Images.Media.getBitmap(getContentResolver(), Uri.fromFile(file));
                     if (bmap != null) {
                         Bitmap rotatedBitmap = CameraRotationFix.fixRotation(bmap, file.getAbsolutePath());
-                        ImageView iView = (ImageView) findViewById(R.id.decodedImgId);
+                        ImageView iView = findViewById(R.id.decodedImgId);
                         iView.setImageBitmap(rotatedBitmap);
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
                 } finally {
-                    if (file.exists()){
-                        file.delete();
+                    if (file.exists()) {
+                        boolean res = file.delete();
+                        if (!res) {
+                            Log.d("Cleaning", "Unable to delete captured photo");
+                        }
                     }
                 }
             }
@@ -150,18 +153,20 @@ public class MainActivity extends AppCompatActivity {
 //            return;
 //        }
         Bitmap bp = BitmapFactory.decodeFile(path);
-        ImageView iView = (ImageView) findViewById(R.id.decodedImgId);
+        ImageView iView = findViewById(R.id.decodedImgId);
         iView.setImageBitmap(bp);
 
     }
 
-    public void decodeImage() {
+    private void decodeImage() {
         try {
-            OpenCvSampler sampler = new OpenCvSampler();
+
             //InputStream is = this.getAssets().open("encodedImage.png");
-            InputStream is = this.getAssets().open("capturedEncoded.jpeg");
+            InputStream is = this.getAssets().open("capturedEncoded.png");
             Bitmap b = BitmapFactory.decodeStream(is);
-            sampler.locatePositionDetectors(b);
+            OpenCvSampler sampler = new OpenCvSampler(b);
+            Point[] positions = sampler.getPositionDetectorsLocation();
+
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -169,8 +174,8 @@ public class MainActivity extends AppCompatActivity {
         try {
             long startTime = System.nanoTime();
 
-            File imgFile = null;
-            RotatedImageSampler rotatedImageSampler = null;
+            File imgFile;
+            RotatedImageSampler rotatedImageSampler;
             int[][] pixelArr;
             /* Display decoded image */
             imgFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "encodedImage.png");
@@ -193,7 +198,7 @@ public class MainActivity extends AppCompatActivity {
             IvParameterSpec ivSpec = new IvParameterSpec(iv);
             // get secret key
             /* Using constant secret key! */
-            byte[] const_key = new byte[] {100, 101, 102, 103, 104, 105, 106 ,107, 108, 109, 110, 111, 112, 113, 114, 115};
+            byte[] const_key = new byte[]{100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115};
             SecretKeySpec secretKeySpec = new SecretKeySpec(const_key, Parameters.encryptionAlgorithm);
             /* ************************** */
 
@@ -208,10 +213,10 @@ public class MainActivity extends AppCompatActivity {
             int width = dimensionsFetcher.getWidth();
             int height = dimensionsFetcher.getHeight();
 
-            if (width == 0 || height == 0){
+            if (width == 0 || height == 0) {
                 showAlert("Cannot decode the image: Dimensions checksum are wrong!");
                 return;
-            } else if (width > Constants.MAX_IMAGE_DIMENSION_SIZE || height > Constants.MAX_IMAGE_DIMENSION_SIZE){
+            } else if (width > Constants.MAX_IMAGE_DIMENSION_SIZE || height > Constants.MAX_IMAGE_DIMENSION_SIZE) {
                 showAlert("Error: image dimension larger than " + Constants.MAX_IMAGE_DIMENSION_SIZE);
                 return;
             }
@@ -221,7 +226,7 @@ public class MainActivity extends AppCompatActivity {
             setBitmapPixels(bmp, imageBytes, width, height);
 
             /* display the image */
-            ImageView iView = (ImageView) findViewById(R.id.decodedImgId);
+            ImageView iView = findViewById(R.id.decodedImgId);
             Log.d("iviewparameters", String.format("width: %d, height: %d", iView.getWidth(), iView.getHeight()));
             iView.setImageBitmap(Bitmap.createScaledBitmap(bmp, iView.getWidth(), iView.getHeight(), false));
 
@@ -231,8 +236,8 @@ public class MainActivity extends AppCompatActivity {
             showConfigurationInfo(rotatedImageSampler, height, width);
         } catch (InvalidAlgorithmParameterException | NoSuchAlgorithmException |
                 InvalidKeyException | NoSuchPaddingException e) {
-            showAlert("Exception in decodeFile: " + e.getCause());
-            Log.e("decodeFile exception:", e.getStackTrace().toString());
+            showAlert("Exception in decodeImage: " + e.getCause());
+            Log.e("decodeImage", "decodeFile exception", e);
         }
     }
 
@@ -264,28 +269,32 @@ public class MainActivity extends AppCompatActivity {
     private int[][] get2DPixelArray(File imgFile) {
         int[][] twoDimPixels;
         Bitmap bMap = BitmapFactory.decodeFile(imgFile.getAbsolutePath());
-        int width = bMap.getWidth(); int height = bMap.getHeight();
-        Log.d("parameters: ",  "Width,Height: " + width+ ", " + height);
-        int[] pixels = new int[width*height];
+        int width = bMap.getWidth();
+        int height = bMap.getHeight();
+        Log.d("parameters: ", "Width,Height: " + width + ", " + height);
+        int[] pixels = new int[width * height];
         twoDimPixels = new int[width][height];
         bMap.getPixels(pixels, 0, width, 0, 0, width, height);
 
-        for (int row = 0 ; row < width; row++){
-            for (int col = 0 ; col < height; col++){
-                twoDimPixels[row][col] = pixels[row * width + col];
+        for (int row = 0; row < width; row++) {
+            if (height >= 0) {
+                System.arraycopy(pixels, row * width, twoDimPixels[row], 0, height); // TODO: debug correctness!!
             }
+//            for (int col = 0 ; col < height; col++){
+//                twoDimPixels[row][col] = pixels[row * width + col];
+//            }
         }
         return twoDimPixels;
     }
 
-    private void setBitmapPixels(Bitmap bmp, byte[] imageBytes, int width, int height){
+    private void setBitmapPixels(Bitmap bmp, byte[] imageBytes, int width, int height) {
         final byte ALPHA_VALUE = (byte) 0xff;
         final int METADATA_LENGTH = 5;
         int index, ARGB;
         ByteBuffer wrapped;
         for (int row = 0; row < height; row++) {
             for (int col = 0; col < width; col++) {
-                index = (row*width + col)*Constants.CHANNELS;
+                index = (row * width + col) * Constants.CHANNELS;
                 if (Constants.CHANNELS == 4) {
                     wrapped = ByteBuffer.wrap(imageBytes, METADATA_LENGTH + index, Constants.CHANNELS);
                 } else if (Constants.CHANNELS == 3) {
@@ -303,20 +312,18 @@ public class MainActivity extends AppCompatActivity {
 
     private void getPermissions() {
         if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE) !=
-                PackageManager.PERMISSION_GRANTED){
-
-            if (ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this,
-                    Manifest.permission.WRITE_EXTERNAL_STORAGE)) {}
-            else {
-                ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},1);
+                PackageManager.PERMISSION_GRANTED) {
+            if (!ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+                ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
             }
         }
 
+
         if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-            if (ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this,
-                    Manifest.permission.CAMERA)) {}
-            else {
-                ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.CAMERA},1);
+            if (!ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this,
+                    Manifest.permission.CAMERA)) {
+                ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.CAMERA}, 2);
             }
         }
     }
