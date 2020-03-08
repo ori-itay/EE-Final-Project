@@ -79,7 +79,7 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="44dp"
         android:onClick="test"
-        android:text="Button"
+        android:text="test"
         app:layout_constraintBottom_toTopOf="@+id/moduleSizeCfg"
         app:layout_constraintEnd_toStartOf="@+id/decodeImgBtn"
         app:layout_constraintHorizontal_bias="0.52"

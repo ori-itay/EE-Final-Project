@@ -36,11 +36,17 @@ import com.pc.shuffleDeshuffle.deshuffle.Deshuffle;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
 import org.opencv.calib3d.Calib3d;
+import org.opencv.core.Core;
+import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
+import org.opencv.core.Scalar;
+import org.opencv.core.Size;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
+import org.opencv.objdetect.QRCodeDetector;
+import org.opencv.utils.Converters;
 
 import java.io.File;
 import java.io.IOException;
@@ -50,7 +56,10 @@ import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
+import java.util.Random;
 
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
@@ -167,19 +176,21 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void test(View v) throws IOException {
-        InputStream is = this.getAssets().open("itay_working_rotated.jpeg");
-        Bitmap b = BitmapFactory.decodeStream(is);
+//        InputStream is = this.getAssets().open("from_phone.png");
+//        Bitmap b = BitmapFactory.decodeStream(is);
+//
+//        //set the rotated image
+//        ImageView vi = findViewById(R.id.decodedImgId);
+//        vi.setImageBitmap(b);
+//
+//        OpenCvSampler sampler = new OpenCvSampler(b);
+//        MatOfPoint2f positions = sampler.getPositionDetectorsLocation();
+//        if (positions == null) {
+//            throw new RuntimeException("Didn't find position detectors!");
+//        }
+//        homographicTransform(positions);
+        homographicTransform(null);
 
-        //set the rotated image
-        ImageView vi = findViewById(R.id.decodedImgId);
-        vi.setImageBitmap(b);
-
-        OpenCvSampler sampler = new OpenCvSampler(b);
-        MatOfPoint2f positions = sampler.getPositionDetectorsLocation();
-        if (positions == null) {
-            throw new RuntimeException("Didn't find position detectors!");
-        }
-        homographicTransform(positions);
     }
 
     private void decodeImage() {
@@ -341,25 +352,57 @@ public class MainActivity extends AppCompatActivity {
     }
     // TODO: remove me and learn how to call findViewByID from another class!!!!
     public void homographicTransform(MatOfPoint2f coordinates) {
-        //get normal qr code picture
-        Bitmap bit = BitmapFactory.decodeFile(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/encodedImage.png");
-        OpenCvSampler other = new OpenCvSampler(bit);
-        MatOfPoint2f dstCoordinates = other.getPositionDetectorsLocation();
+        Mat img1 = Imgcodecs.imread(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/trying_snip.jpg", Imgcodecs.IMREAD_GRAYSCALE);
+        //Mat img2 = Imgcodecs.imread(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/trying_original_image1.jpg", Imgcodecs.IMREAD_GRAYSCALE);
+        //Mat img3 = new Mat(img1.rows(), img1.cols(), CvType.CV_8UC1);
+
+        /*  IMG_1_WARP WORKING IN CHESS BOARD*/
+//        Mat img1 = Imgcodecs.imread(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/rotatedImage.jpg", Imgcodecs.IMREAD_GRAYSCALE);
+//        Mat img2 = Imgcodecs.imread(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/originalImage.jpg", Imgcodecs.IMREAD_GRAYSCALE);
+//        MatOfPoint2f corners1 = new MatOfPoint2f(), corners2 = new MatOfPoint2f();
+//        boolean found1 = Calib3d.findChessboardCorners(img1, new Size(9, 6), corners1);
+//        boolean found2 = Calib3d.findChessboardCorners(img2, new Size(9, 6), corners2);
+
+//        Bitmap bit1 = BitmapFactory.decodeFile(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/rotatedImage.png");
+//        OpenCvSampler other = new OpenCvSampler(bit1);
+//        MatOfPoint2f corners1 = other.getPositionDetectorsLocation();
+//
+//        Bitmap bit2 = BitmapFactory.decodeFile(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/originalImage.png");
+//        OpenCvSampler somename = new OpenCvSampler(bit2);
+//        MatOfPoint2f corners2 = somename.getPositionDetectorsLocation();
+
+        int qrDim = 116; // TODO: implement to be dynamic
+        QRCodeDetector detector = new QRCodeDetector();
+        MatOfPoint2f corners1 = new MatOfPoint2f();//, corners2 = new MatOfPoint2f();
+        boolean found1 = detector.detect(img1, corners1);
+        //boolean found2 = detector.detect(img2, corners2);
+        MatOfPoint2f corners2 = new MatOfPoint2f(new Point(0,0), new Point(qrDim,0), new Point(qrDim,qrDim), new Point(0,qrDim)); // TODO: verify it contains appropriate white margin
 
 
 
 
         Mat H = new Mat();
-        H = Calib3d.findHomography(coordinates, dstCoordinates);
+        H = Calib3d.findHomography(corners1, corners2);
         Mat img1_warp = new Mat();
-        Mat img1 = Imgcodecs.imread(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/encodedImage.png");
+
         Imgproc.warpPerspective(img1, img1_warp, H, img1.size());
-        Bitmap bp = Bitmap.createBitmap(img1_warp.cols(), img1_warp.rows(), Bitmap.Config.ARGB_8888);
-        Utils.matToBitmap(img1_warp, bp);
+        Imgcodecs.imwrite(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/homographicImage.png", img1_warp);
 
-        ImageView iView = findViewById(R.id.decodedImgId);
-        iView.setImageBitmap(Bitmap.createScaledBitmap(bp, iView.getWidth(), iView.getHeight(), false));
+    }
 
+    private Scalar RandomColor () {
+        Random rng = new Random();
+        int r = rng.nextInt(256);
+        int g = rng.nextInt(256);
+        int b = rng.nextInt(256);
+        return new Scalar(r, g, b);
+    }
+
+
+    private Bitmap convertMatToBitmap(Mat mat) {
+        Bitmap bp = Bitmap.createBitmap(mat.cols(), mat.rows(), Bitmap.Config.ARGB_8888);
+        Utils.matToBitmap(mat, bp);
+        return bp;
     }
 
 }
