@@ -27,18 +27,22 @@ public class EncoderDecoderTest {
         File decodedFile = new File("./decodedImage.jpg");
         File newEncodedFile = new File("./newEncodedImage.jpg");
         File newDecodedFile = new File("./newDecodedImage.jpg");
-
-        BufferedImage encodedImage = EncodeDecodeCLI.executeEncodingProccess("./200_200.jpg", const_key);
-		ImageIO.write(encodedImage, "jpg", encodedFile);
-        BufferedImage decodedImage = EncodeDecodeCLI.executeDecodingProccess("./encodedImage.jpg", const_key);
-        ImageIO.write(decodedImage, "jpg", decodedFile);
-        BufferedImage newEncodedImage = EncodeDecodeCLI.executeEncodingProccess("./decodedImage.jpg", const_key);
-        ImageIO.write(encodedImage, "jpg", newEncodedFile);
-        BufferedImage newDecodedImage = EncodeDecodeCLI.executeDecodingProccess("./encodedImage.jpg", const_key);
-        ImageIO.write(encodedImage, "jpg", newDecodedFile);
-
+        //original image
         File origFile = new File("./200_200.jpg");
         BufferedImage origImage = ImageIO.read(origFile);
+
+        //encode 1
+        BufferedImage encodedImage = EncodeDecodeCLI.executeEncodingProccess("./200_200.jpg", const_key);
+		ImageIO.write(encodedImage, "jpg", encodedFile);
+        //decode 1
+        BufferedImage decodedImage = EncodeDecodeCLI.executeDecodingProccess("./encodedImage.jpg", const_key);
+        ImageIO.write(decodedImage, "jpg", decodedFile);
+        //encode 2 (encode the decoded image)
+        BufferedImage newEncodedImage = EncodeDecodeCLI.executeEncodingProccess("./decodedImage.jpg", const_key);
+        ImageIO.write(encodedImage, "jpg", newEncodedFile);
+        //decode 2 (decode the new encoded image)
+        BufferedImage newDecodedImage = EncodeDecodeCLI.executeDecodingProccess("./encodedImage.jpg", const_key);
+        ImageIO.write(encodedImage, "jpg", newDecodedFile);
 
 		assertEquals(decodedImage.getWidth(), newDecodedImage.getWidth());
         assertEquals(newDecodedImage.getHeight(), newDecodedImage.getHeight());
@@ -46,8 +50,8 @@ public class EncoderDecoderTest {
         assertEquals(newDecodedImage.getHeight(), origImage.getHeight());
     	for (int row=0 ; row < newDecodedImage.getHeight() ; row++) {
     		for (int col=0; col < newDecodedImage.getWidth(); col++) {
-    			assertEquals (newDecodedImage.getRGB(col,  row) , newDecodedImage.getRGB(col,  row));
-                assertEquals (newDecodedImage.getRGB(col,  row)<<8 , origImage.getRGB(col,  row)<<8);
+    			assertEquals (decodedImage.getRGB(col,  row) , newDecodedImage.getRGB(col,  row));
+                assertEquals (origImage.getRGB(col,  row)<<8 , decodedImage.getRGB(col,  row)<<8); //checks only RGB (no alpha)
     		}
     	}
 	}
