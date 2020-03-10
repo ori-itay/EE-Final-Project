@@ -29,8 +29,8 @@ import static org.junit.Assert.assertEquals;
 @RunWith(AndroidJUnit4ClassRunner.class)
 public class FlowTest {
 
-    private final String ENCODED_IMG_PATH = "encodedTest2.jpg";
-    private final String ORIGINAL_IMG_PATH = "originalTest2.jpg";
+    private final String ENCODED_IMG_PATH = "encodedTest1.jpg";
+    private final String ORIGINAL_IMG_PATH = "originalTest1.jpg";
 
     @Rule
     public ActivityTestRule<MainActivity> rule = new ActivityTestRule<>(MainActivity.class);
@@ -58,8 +58,8 @@ public class FlowTest {
                     if (row==149 && col ==5){
                         Log.d("testAndroidFlow", String.format("ExpectedPixel: %d, resPixel: %d", expectedPixel, resPixel));
                     }
-                    assertEquals(String.format("Wrong pixel: expectedPixel[%d]=%d, resPixel[%d]=%d", row, expectedPixel,
-                            col, resPixel), expectedPixel, resPixel);
+                    assertEquals(String.format("Wrong pixel at row: %d, col: %d", row, col,
+                            resPixel), expectedPixel, resPixel);
                 }
             }
 

@@ -23,14 +23,9 @@ import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 
 import com.android.visualcrypto.cameraUtils.CameraRotationFix;
-import com.android.visualcrypto.configurationFetcher.DimensionsFetcher;
-import com.android.visualcrypto.configurationFetcher.IvFetcher;
+import com.android.visualcrypto.flow.Flow;
 import com.pc.configuration.Constants;
-import com.pc.configuration.Parameters;
-import com.pc.encoderDecoder.DisplayDecoder;
 import com.pc.encoderDecoder.RotatedImageSampler;
-import com.pc.encryptorDecryptor.decryptor.Decryptor;
-import com.pc.shuffleDeshuffle.deshuffle.Deshuffle;
 
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
@@ -38,9 +33,9 @@ import org.opencv.calib3d.Calib3d;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
-import org.opencv.core.Scalar;
+
 import org.opencv.imgcodecs.Imgcodecs;
-import org.opencv.imgproc.Imgproc;
+
 import org.opencv.objdetect.QRCodeDetector;
 
 import java.io.File;
@@ -52,13 +47,12 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Random;
 
 import javax.crypto.NoSuchPaddingException;
-import javax.crypto.spec.IvParameterSpec;
-import javax.crypto.spec.SecretKeySpec;
 
 //import static com.android.visualcrypto.openCvUtils.ImageTransformer.homographicTransform;
+import static com.android.visualcrypto.openCvUtils.Utils.getMaxDistance;
+import static com.android.visualcrypto.openCvUtils.Utils.getModuleStride;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -98,7 +92,7 @@ public class MainActivity extends AppCompatActivity {
         File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
         File image = File.createTempFile(
                 imageFileName,  /* prefix */
-                ".png",         /* suffix */
+                ".jpg",         /* suffix */
                 storageDir      /* directory */
         );
 
@@ -191,8 +185,8 @@ public class MainActivity extends AppCompatActivity {
             long startTime = System.nanoTime();
 
             //File imgFile;
-            RotatedImageSampler rotatedImageSampler;
-            int[][] pixelArr;
+            //RotatedImageSampler rotatedImageSampler;
+            //int[][] pixelArr;
             /* Display decoded image */
 //            imgFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "encodedImage.png");
 //            if (!imgFile.exists()) {
@@ -203,57 +197,58 @@ public class MainActivity extends AppCompatActivity {
             InputStream encodedStream = getAssets().open(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) +  "encodedImage.png");
             // TODO: handle ENCODED STREAM FAILURE CHECK
             Bitmap encodedBitmap = BitmapFactory.decodeStream(encodedStream);
+            Bitmap resBitmap = Flow.executeAndroidFlow(encodedBitmap);
 
-            pixelArr = get2DPixelArray(encodedBitmap);
-            rotatedImageSampler = DisplayDecoder.decodePixelMatrix(pixelArr);
-            /* decode */
-            byte[] decodedBytes = rotatedImageSampler.getDecodedData();
-
-            /* get iv */
-            byte[] iv = IvFetcher.getIV(rotatedImageSampler);
-            if (iv == null) {
-                showAlert("Cannot decode the image: IV checksums are wrong!");
-                return;
-            }
-            IvParameterSpec ivSpec = new IvParameterSpec(iv);
-            // get secret key
-            /* Using constant secret key! */
-            byte[] const_key = new byte[]{100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115};
-            SecretKeySpec secretKeySpec = new SecretKeySpec(const_key, Parameters.encryptionAlgorithm);
-            /* ************************** */
-
-            // deshuffle
-            byte[] deshuffledBytes = Deshuffle.getDeshuffledBytes(decodedBytes, ivSpec);
-
-            /* decrypt */
-            byte[] imageBytes = Decryptor.decryptImage(deshuffledBytes, secretKeySpec, ivSpec);
-
-            /* fetch the image dimensions */
-            DimensionsFetcher dimensionsFetcher = new DimensionsFetcher(imageBytes);
-            int width = dimensionsFetcher.getWidth();
-            int height = dimensionsFetcher.getHeight();
-
-            if (width == 0 || height == 0) {
-                showAlert("Cannot decode the image: Dimensions checksum are wrong!");
-                return;
-            } else if (width > Constants.MAX_IMAGE_DIMENSION_SIZE || height > Constants.MAX_IMAGE_DIMENSION_SIZE) {
-                showAlert("Error: image dimension larger than " + Constants.MAX_IMAGE_DIMENSION_SIZE);
-                return;
-            }
-
-            /* convert to Bitmap */
-            Bitmap bmp = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-            setBitmapPixels(bmp, imageBytes, width, height);
+//            pixelArr = get2DPixelArray(encodedBitmap);
+//            rotatedImageSampler = DisplayDecoder.decodePixelMatrix(pixelArr);
+//            /* decode */
+//            byte[] decodedBytes = rotatedImageSampler.getDecodedData();
+//
+//            /* get iv */
+//            byte[] iv = IvFetcher.getIV(rotatedImageSampler);
+//            if (iv == null) {
+//                showAlert("Cannot decode the image: IV checksums are wrong!");
+//                return;
+//            }
+//            IvParameterSpec ivSpec = new IvParameterSpec(iv);
+//            // get secret key
+//            /* Using constant secret key! */
+//            byte[] const_key = new byte[]{100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115};
+//            SecretKeySpec secretKeySpec = new SecretKeySpec(const_key, Parameters.encryptionAlgorithm);
+//            /* ************************** */
+//
+//            // deshuffle
+//            byte[] deshuffledBytes = Deshuffle.getDeshuffledBytes(decodedBytes, ivSpec);
+//
+//            /* decrypt */
+//            byte[] imageBytes = Decryptor.decryptImage(deshuffledBytes, secretKeySpec, ivSpec);
+//
+//            /* fetch the image dimensions */
+//            DimensionsFetcher dimensionsFetcher = new DimensionsFetcher(imageBytes);
+//            int width = dimensionsFetcher.getWidth();
+//            int height = dimensionsFetcher.getHeight();
+//
+//            if (width == 0 || height == 0) {
+//                showAlert("Cannot decode the image: Dimensions checksum are wrong!");
+//                return;
+//            } else if (width > Constants.MAX_IMAGE_DIMENSION_SIZE || height > Constants.MAX_IMAGE_DIMENSION_SIZE) {
+//                showAlert("Error: image dimension larger than " + Constants.MAX_IMAGE_DIMENSION_SIZE);
+//                return;
+//            }
+//
+//            /* convert to Bitmap */
+//            Bitmap bmp = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+//            setBitmapPixels(bmp, imageBytes, width, height);
 
             /* display the image */
             ImageView iView = findViewById(R.id.decodedImgId);
             Log.d("iviewparameters", String.format("width: %d, height: %d", iView.getWidth(), iView.getHeight()));
-            iView.setImageBitmap(Bitmap.createScaledBitmap(bmp, iView.getWidth(), iView.getHeight(), false));
+            iView.setImageBitmap(Bitmap.createScaledBitmap(resBitmap, iView.getWidth(), iView.getHeight(), false));
 
             Log.d("performance", String.format("took: %s", System.nanoTime() - startTime));
 
             /* display configuration information */
-            showConfigurationInfo(rotatedImageSampler, height, width);
+            //showConfigurationInfo(rotatedImageSampler, height, width);
         } catch (InvalidAlgorithmParameterException | NoSuchAlgorithmException | InvalidKeyException | NoSuchPaddingException | IOException e) {
             showAlert("Exception in decodeImage: " + e.getCause());
             Log.e("decodeImage", "decodeFile exception", e);
@@ -347,7 +342,7 @@ public class MainActivity extends AppCompatActivity {
     }
     // TODO: remove me and learn how to call findViewByID from another class!!!!
     public void homographicTransform(MatOfPoint2f coordinates) {
-        Mat img1 = Imgcodecs.imread(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/trying_snip.jpg", Imgcodecs.IMREAD_GRAYSCALE);
+        Mat capturedImg = Imgcodecs.imread(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/trying_original_image.jpg", Imgcodecs.IMREAD_GRAYSCALE);
         //Mat img2 = Imgcodecs.imread(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/trying_original_image1.jpg", Imgcodecs.IMREAD_GRAYSCALE);
         //Mat img3 = new Mat(img1.rows(), img1.cols(), CvType.CV_8UC1);
 
@@ -366,31 +361,30 @@ public class MainActivity extends AppCompatActivity {
 //        OpenCvSampler somename = new OpenCvSampler(bit2);
 //        MatOfPoint2f corners2 = somename.getPositionDetectorsLocation();
 
-        int qrDim = 116; // TODO: implement to be dynamic
+        //int qrDim = 116; // TODO: implement to be dynamic
         QRCodeDetector detector = new QRCodeDetector();
         MatOfPoint2f corners1 = new MatOfPoint2f();//, corners2 = new MatOfPoint2f();
-        boolean found1 = detector.detect(img1, corners1);
+        boolean found1 = detector.detect(capturedImg, corners1);
         //boolean found2 = detector.detect(img2, corners2);
-        MatOfPoint2f corners2 = new MatOfPoint2f(new Point(0,0), new Point(qrDim,0), new Point(qrDim,qrDim), new Point(0,qrDim)); // TODO: verify it contains appropriate white margin
+        assert found1;
+        MatOfPoint2f corners2 = new MatOfPoint2f(new Point(0,0), new Point(1,0), new Point(1,1), new Point(0,1)); // TODO: verify it contains appropriate white margin
 
 
 
 
         Mat H = new Mat();
         H = Calib3d.findHomography(corners1, corners2);
-        Mat img1_warp = new Mat();
+        Mat inverseH = H.inv();
 
-        Imgproc.warpPerspective(img1, img1_warp, H, img1.size());
-        Imgcodecs.imwrite(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/homographicImage.png", img1_warp);
+        Point[] pts = corners1.toArray();
+        double maxPixelStride = 1/getMaxDistance(pts[0], pts[1], pts[2], pts[3]);
+        double moduleStride = getModuleStride(maxPixelStride, H, capturedImg);
+        //Mat img1_warp = new Mat();
 
-    }
 
-    private Scalar RandomColor () {
-        Random rng = new Random();
-        int r = rng.nextInt(256);
-        int g = rng.nextInt(256);
-        int b = rng.nextInt(256);
-        return new Scalar(r, g, b);
+        //Imgproc.warpPerspective(img1, img1_warp, H, new Size(1,1));
+       // Imgcodecs.imwrite(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/homographicImage.png", img1_warp);
+
     }
 
 
