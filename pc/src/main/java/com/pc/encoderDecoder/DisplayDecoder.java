@@ -99,17 +99,42 @@ public class DisplayDecoder {
 			}
 
 			if(bitsLeftToByte == 0) {
-				decodedData[currByteInd] = currentDataR;
-				decodedData[currByteInd+greenStride] = currentDataG;
-				decodedData[currByteInd+blueStride] = currentDataB;
-
 				if(currByteInd+nextElemStride<lengthInBytes) {
+					decodedData[currByteInd] = currentDataR;
+					decodedData[currByteInd+greenStride] = currentDataG;
+					decodedData[currByteInd+blueStride] = currentDataB;
 					currByteInd+= nextElemStride;
 					bitsLeftToByte = BITS_IN_BYTE;
 					currentDataR = 0; currentDataG = 0; currentDataB = 0;
 				}
-				else
+				else{
+					int remainder = lengthInBytes - currByteInd;
+					switch (remainder){
+						case(3): {
+							decodedData[currByteInd+blueStride] = currentDataB;
+						}
+						case (2):{
+							decodedData[currByteInd+greenStride] = currentDataG;
+						}
+						case(1):{
+							decodedData[currByteInd] = currentDataR;
+						}
+					}/*
+					if(currByteInd+blueStride<lengthInBytes){
+						decodedData[currByteInd] = currentDataR;
+						decodedData[currByteInd+greenStride] = currentDataG;
+						decodedData[currByteInd+blueStride] = currentDataB;
+					}
+					if(currByteInd+greenStride<lengthInBytes){
+						decodedData[currByteInd] = currentDataR;
+						decodedData[currByteInd+greenStride] = currentDataG;
+					}
+					if(currByteInd<lengthInBytes){
+						decodedData[currByteInd] = currentDataR;
+					}*/
 					return decodedData;
+				}
+
 			}
 		}
 	}

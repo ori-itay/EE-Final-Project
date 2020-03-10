@@ -2,6 +2,7 @@ package com.pc.encoderDecoder;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
+import java.util.Arrays;
 
 import com.pc.configuration.Parameters;
 
@@ -79,11 +80,24 @@ public class DisplayEncoder {
 
 			if(bitsLeftInByte == 0) {
 				if(currByteInd + nextElemStride < binaryData.length) {
-					currByteInd+= nextElemStride;
 					bitsLeftInByte = BITS_IN_BYTE;
-					currByteR = binaryData[currByteInd];
-					currByteG = binaryData[currByteInd+greenStride];
-					currByteB = binaryData[currByteInd+blueStride];
+					currByteInd+= nextElemStride;
+
+					if(currByteInd + blueStride < binaryData.length) {
+						currByteR = binaryData[currByteInd];
+						currByteG = binaryData[currByteInd + greenStride];
+						currByteB = binaryData[currByteInd + blueStride];
+					}
+					else if (currByteInd + greenStride < binaryData.length) {
+						currByteR = binaryData[currByteInd];
+						currByteG = binaryData[currByteInd + greenStride];
+						currByteB = 0;
+					}
+					else {
+						currByteR = binaryData[currByteInd];
+						currByteG = 0;
+						currByteB = 0;
+					}
 				}
 				else {
 					encodeBlock(currentDataR, currentDataG, currentDataB, g, pos);

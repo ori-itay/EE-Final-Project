@@ -61,6 +61,7 @@ public class EncodeDecodeCLI {
         				System.out.println("Entered input filepath has error.\n");
         				continue;
         			}
+
 	       			rawData = FlowUtils.convertToBytesUsingGetRGB(image) ;
         			iv = Encryptor.generateIv(Parameters.ivLength);
 					checksumIV = Checksum.computeChecksum(iv.getIV());
