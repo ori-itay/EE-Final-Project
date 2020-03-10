@@ -25,7 +25,6 @@ import androidx.core.content.FileProvider;
 import com.android.visualcrypto.cameraUtils.CameraRotationFix;
 import com.android.visualcrypto.configurationFetcher.DimensionsFetcher;
 import com.android.visualcrypto.configurationFetcher.IvFetcher;
-import com.android.visualcrypto.openCvUtils.OpenCvSampler;
 import com.pc.configuration.Constants;
 import com.pc.configuration.Parameters;
 import com.pc.encoderDecoder.DisplayDecoder;
@@ -36,29 +35,22 @@ import com.pc.shuffleDeshuffle.deshuffle.Deshuffle;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
 import org.opencv.calib3d.Calib3d;
-import org.opencv.core.Core;
-import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
 import org.opencv.core.Scalar;
-import org.opencv.core.Size;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.objdetect.QRCodeDetector;
-import org.opencv.utils.Converters;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 import java.util.Random;
 
 import javax.crypto.NoSuchPaddingException;
@@ -289,7 +281,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    private int[][] get2DPixelArray(File imgFile) {
+    public static int[][] get2DPixelArray(File imgFile) {
         int[][] twoDimPixels;
         Bitmap bMap = BitmapFactory.decodeFile(imgFile.getAbsolutePath());
         int width = bMap.getWidth();
@@ -310,7 +302,7 @@ public class MainActivity extends AppCompatActivity {
         return twoDimPixels;
     }
 
-    private void setBitmapPixels(Bitmap bmp, byte[] imageBytes, int width, int height) {
+    public static void setBitmapPixels(Bitmap bmp, byte[] imageBytes, int width, int height) {
         final byte ALPHA_VALUE = (byte) 0xff;
         final int METADATA_LENGTH = 5;
         int index, ARGB;

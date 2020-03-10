@@ -31,4 +31,5 @@ dependencies {
     implementation files('libs/all-pc.jar')
     implementation 'org.jetbrains:annotations-java5:15.0'
     implementation 'androidx.exifinterface:exifinterface:1.1.0-alpha01'
+    testImplementation "org.mockito:mockito-core:1.9.5"
 }
