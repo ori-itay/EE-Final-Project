@@ -11,48 +11,46 @@ import java.util.Random;
 
 import javax.imageio.ImageIO;
 
+import com.pc.cli.EncodeDecodeCLI;
 import com.pc.encoderDecoder.DisplayDecoder;
 import com.pc.encoderDecoder.DisplayEncoder;
+import org.junit.jupiter.api.Test;
 
 public class EncoderDecoderTest {
-	
-//	@Ignore
-//	@Test
-//	public void testByteArrayToInt() {
-//		byte[] byteArray = {1,2,3};
-//		int returnVal = DisplayDecoder.TestByteArrayToInt(byteArray);
-//		assertEquals(returnVal, 197121);
-//	}
-//	
-//	@Ignore
-//	@Test
-//	public void testEncodeDecodeEncodeIdempotentLongest() throws Exception {
-//		
-//		int length = MAX_ENCODED_LENGTH_BYTES;
-//		byte[] byteArr = new byte [length/BITS_IN_BYTE];
-//		Random rand = new Random(); 
-//		for(int i = 0; i < byteArr.length; i++) { byteArr[i] = (byte) rand.nextInt(127);}
-//		//Arrays.fill(byteArr, 0, byteArr.length -1, (byte) 127);
-//		String testData = new String(byteArr);
-//		BufferedImage encodedImage = DisplayEncoder.encodeBytes(testData.getBytes());
-//		//save encoded image
-//		String path = "C:\\Users\\user\\Downloads\\qrcode.png";
-//		File encodedFile = new File(path);
-//		ImageIO.write(encodedImage, "png", encodedFile);
-//		String decodedString = new String(DisplayDecoder.decodeFilePC(encodedFile).getDecodedData());		
-//		assertEquals(testData.length(), decodedString.length());
-//		assertEquals(testData, decodedString);
-//		
-//		BufferedImage newEncodedImage = DisplayEncoder.encodeBytes(decodedString.getBytes());
-//
-//		assertEquals(newEncodedImage.getWidth(), encodedImage.getWidth());
-//		assertEquals(newEncodedImage.getHeight(), encodedImage.getHeight());
-//    	for (int row=0 ; row < newEncodedImage.getHeight() ; row++) {
-//    		for (int col=0; col < newEncodedImage.getWidth(); col++) {
-//    			assertEquals (newEncodedImage.getRGB(col,  row) , encodedImage.getRGB(col,  row));
-//    		}
-//    	}
-//	}
+
+
+	@Test
+	public void testEncodeDecodeEncodeIdempotentLongest() throws Exception {
+        byte[] const_key = new byte[] {100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115};
+
+        File encodedFile = new File("./encodedImage.jpg");
+        File decodedFile = new File("./decodedImage.jpg");
+        File newEncodedFile = new File("./newEncodedImage.jpg");
+        File newDecodedFile = new File("./newDecodedImage.jpg");
+
+        BufferedImage encodedImage = EncodeDecodeCLI.executeEncodingProccess("./200_200.jpg", const_key);
+		ImageIO.write(encodedImage, "jpg", encodedFile);
+        BufferedImage decodedImage = EncodeDecodeCLI.executeDecodingProccess("./encodedImage.jpg", const_key);
+        ImageIO.write(decodedImage, "jpg", decodedFile);
+        BufferedImage newEncodedImage = EncodeDecodeCLI.executeEncodingProccess("./decodedImage.jpg", const_key);
+        ImageIO.write(encodedImage, "jpg", newEncodedFile);
+        BufferedImage newDecodedImage = EncodeDecodeCLI.executeDecodingProccess("./encodedImage.jpg", const_key);
+        ImageIO.write(encodedImage, "jpg", newDecodedFile);
+
+        File origFile = new File("./200_200.jpg");
+        BufferedImage origImage = ImageIO.read(origFile);
+
+		assertEquals(decodedImage.getWidth(), newDecodedImage.getWidth());
+        assertEquals(newDecodedImage.getHeight(), newDecodedImage.getHeight());
+        assertEquals(decodedImage.getWidth(), origImage.getWidth());
+        assertEquals(newDecodedImage.getHeight(), origImage.getHeight());
+    	for (int row=0 ; row < newDecodedImage.getHeight() ; row++) {
+    		for (int col=0; col < newDecodedImage.getWidth(); col++) {
+    			assertEquals (newDecodedImage.getRGB(col,  row) , newDecodedImage.getRGB(col,  row));
+                assertEquals (newDecodedImage.getRGB(col,  row)<<8 , origImage.getRGB(col,  row)<<8);
+    		}
+    	}
+	}
 //	
 //	@Ignore
 //	@Test

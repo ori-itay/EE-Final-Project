@@ -12,12 +12,16 @@ import com.pc.encryptorDecryptor.encryptor.Encryptor;
 import com.pc.shuffleDeshuffle.deshuffle.Deshuffle;
 import com.pc.shuffleDeshuffle.shuffle.Shuffle;
 
+import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.nio.ByteBuffer;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Scanner;
 
@@ -29,10 +33,6 @@ public class EncodeDecodeCLI {
 	
 	public static void main(String... args) throws Exception {
 	    Scanner scanner = new Scanner(System.in);  // Create a Scanner object
-	    File inputFile;
-	    IvParameterSpec iv;
-	    byte[] checksumIV;
-		BufferedImage image;
 
 	    while(true) {
 			System.out.println("Enter Decode/Encode command:");
@@ -48,54 +48,14 @@ public class EncodeDecodeCLI {
     		else {  
     			/* constant key */
     			byte[] const_key = new byte[] {100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115};
-    			SecretKeySpec skeySpec = new SecretKeySpec(const_key, Parameters.encryptionAlgorithm);
     			
     			if(splitedCommand[0].equals("encode")){
-    				byte[] rawData;
-    				
-	       			try {
-	       				inputFile = new File(splitedCommand[1]);
-						image = ImageIO.read(inputFile);
-	       			}
-        			catch(Exception ex){
-        				System.out.println("Entered input filepath has error.\n");
-        				continue;
-        			}
-
-	       			rawData = FlowUtils.convertToBytesUsingGetRGB(image) ;
-        			iv = Encryptor.generateIv(Parameters.ivLength);
-					checksumIV = Checksum.computeChecksum(iv.getIV());
-        			byte[] generatedXorBytes = EncryptorDecryptor.generateXorBytes(skeySpec, iv);
-        			byte[] encryptedImg = Encryptor.encryptImage(rawData, generatedXorBytes);
-        			byte[] shuffledEncryptedImg = Shuffle.shuffleImgPixels(encryptedImg, iv);
-    				
-    				BufferedImage encodedImage = DisplayEncoder.encodeBytes(shuffledEncryptedImg, iv.getIV(),  checksumIV);
+					BufferedImage encodedImage = executeEncodingProccess(splitedCommand[1], const_key);
     				ImageIO.write(encodedImage, "png", new File(splitedCommand[2]));	
     				System.out.println("Encoded data was written to "+ splitedCommand[2]);
     			}
     			else if(splitedCommand[0].equals("decode")) {
-					RotatedImageSampler sampler;
-        			try {
-						sampler = DisplayDecoder.decodeFilePC(splitedCommand[1]);
-        			}
-        			catch(Exception NullPointerException){
-						System.out.println("Entered input filepath has error.\n");
-        				continue;
-        			}
-    				iv = new IvParameterSpec(sampler.getIV1());
-					checksumIV = Checksum.computeChecksum(iv.getIV());
-    				if(checksumIV[0] != sampler.getIV1Checksum()[0]) {
-        				iv = new IvParameterSpec(sampler.getIV2());
-						checksumIV = Checksum.computeChecksum(iv.getIV());
-        				if(checksumIV[0] != sampler.getIV2Checksum()[0]) {
-        					System.out.println("error! both iv checksum are wrong. exiting...");
-        					System.exit(-1);
-        				}
-    				}
-    				byte[] unShuffledEncryptedImg = Deshuffle.getDeshuffledBytes(sampler.getDecodedData(), iv);
-    				byte[] decryptedBytes = Decryptor.decryptImage(unShuffledEncryptedImg, skeySpec, iv);
-
-					BufferedImage decodedImage = convertToImageUsingGetRGB(decryptedBytes);
+					BufferedImage decodedImage = executeDecodingProccess(splitedCommand[1], const_key);
 					ImageIO.write(decodedImage, "png", new File(splitedCommand[2]));
 					System.out.println("Decoded image was written to "+ splitedCommand[2]);
 
@@ -113,8 +73,55 @@ public class EncodeDecodeCLI {
 	    }			    
 	    scanner.close();
 	}
-	
-    private static BufferedImage convertToImageUsingGetRGB(byte[] imageData) {
+
+	public static BufferedImage executeDecodingProccess(String filepath, byte[] const_key) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidAlgorithmParameterException, InvalidKeyException {
+		RotatedImageSampler sampler;
+		try {
+			sampler = DisplayDecoder.decodeFilePC(filepath);
+		}
+		catch(Exception NullPointerException){
+			System.out.println("Entered input filepath has error.\n");
+			return null;
+		}
+		IvParameterSpec iv = new IvParameterSpec(sampler.getIV1());
+		byte[] checksumIV = Checksum.computeChecksum(iv.getIV());
+		if(checksumIV[0] != sampler.getIV1Checksum()[0]) {
+			iv = new IvParameterSpec(sampler.getIV2());
+			checksumIV = Checksum.computeChecksum(iv.getIV());
+			if(checksumIV[0] != sampler.getIV2Checksum()[0]) {
+				System.out.println("error! both iv checksum are wrong. exiting...");
+				System.exit(-1);
+			}
+		}
+		byte[] unShuffledEncryptedImg = Deshuffle.getDeshuffledBytes(sampler.getDecodedData(), iv);
+		SecretKeySpec skeySpec = new SecretKeySpec(const_key, Parameters.encryptionAlgorithm);
+		byte[] decryptedBytes = Decryptor.decryptImage(unShuffledEncryptedImg, skeySpec, iv);
+
+		return convertToImageUsingGetRGB(decryptedBytes);
+	}
+
+	public static BufferedImage executeEncodingProccess(String filepath, byte[] const_key) throws Exception {
+		BufferedImage image;
+		try {
+			File inputFile = new File(filepath);
+			image = ImageIO.read(inputFile);
+		}
+		catch(Exception ex){
+			System.out.println("Entered input filepath has error.\n");
+			return null;
+		}
+		byte[] rawData = FlowUtils.convertToBytesUsingGetRGB(image) ;
+		IvParameterSpec iv = Encryptor.generateIv(Parameters.ivLength);
+		byte[] checksumIV = Checksum.computeChecksum(iv.getIV());
+		SecretKeySpec skeySpec = new SecretKeySpec(const_key, Parameters.encryptionAlgorithm);
+		byte[] generatedXorBytes = EncryptorDecryptor.generateXorBytes(skeySpec, iv);
+		byte[] encryptedImg = Encryptor.encryptImage(rawData, generatedXorBytes);
+		byte[] shuffledEncryptedImg = Shuffle.shuffleImgPixels(encryptedImg, iv);
+
+		return DisplayEncoder.encodeBytes(shuffledEncryptedImg, iv.getIV(),  checksumIV);
+	}
+
+	private static BufferedImage convertToImageUsingGetRGB(byte[] imageData) {
 
 		int index;
 		
