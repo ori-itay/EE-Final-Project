@@ -45,6 +45,7 @@ import org.opencv.objdetect.QRCodeDetector;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
@@ -189,17 +190,21 @@ public class MainActivity extends AppCompatActivity {
         try {
             long startTime = System.nanoTime();
 
-            File imgFile;
+            //File imgFile;
             RotatedImageSampler rotatedImageSampler;
             int[][] pixelArr;
             /* Display decoded image */
-            imgFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "encodedImage.png");
-            if (!imgFile.exists()) {
-                showAlert("Couldn't find 'encodedImage.png' in Downloads");
-                return;
-            }
+//            imgFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "encodedImage.png");
+//            if (!imgFile.exists()) {
+//                showAlert("Couldn't find 'encodedImage.png' in Downloads");
+//                return;
+//            }
 
-            pixelArr = get2DPixelArray(imgFile);
+            InputStream encodedStream = getAssets().open(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) +  "encodedImage.png");
+            // TODO: handle ENCODED STREAM FAILURE CHECK
+            Bitmap encodedBitmap = BitmapFactory.decodeStream(encodedStream);
+
+            pixelArr = get2DPixelArray(encodedBitmap);
             rotatedImageSampler = DisplayDecoder.decodePixelMatrix(pixelArr);
             /* decode */
             byte[] decodedBytes = rotatedImageSampler.getDecodedData();
@@ -249,8 +254,7 @@ public class MainActivity extends AppCompatActivity {
 
             /* display configuration information */
             showConfigurationInfo(rotatedImageSampler, height, width);
-        } catch (InvalidAlgorithmParameterException | NoSuchAlgorithmException |
-                InvalidKeyException | NoSuchPaddingException e) {
+        } catch (InvalidAlgorithmParameterException | NoSuchAlgorithmException | InvalidKeyException | NoSuchPaddingException | IOException e) {
             showAlert("Exception in decodeImage: " + e.getCause());
             Log.e("decodeImage", "decodeFile exception", e);
         }
@@ -281,9 +285,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    public static int[][] get2DPixelArray(File imgFile) {
+    public static int[][] get2DPixelArray(Bitmap bMap) {
         int[][] twoDimPixels;
-        Bitmap bMap = BitmapFactory.decodeFile(imgFile.getAbsolutePath());
         int width = bMap.getWidth();
         int height = bMap.getHeight();
         Log.d("parameters: ", "Width,Height: " + width + ", " + height);

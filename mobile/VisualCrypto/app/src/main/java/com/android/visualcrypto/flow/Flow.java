@@ -23,11 +23,11 @@ import javax.crypto.spec.SecretKeySpec;
 
 public class Flow {
 
-    public static Bitmap executeAndroidFlow(File encodedFile) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidAlgorithmParameterException, InvalidKeyException {
+    public static Bitmap executeAndroidFlow(Bitmap encodedBitmap) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidAlgorithmParameterException, InvalidKeyException {
         RotatedImageSampler rotatedImageSampler;
         int[][] pixelArr;
 
-        pixelArr = MainActivity.get2DPixelArray(encodedFile);
+        pixelArr = MainActivity.get2DPixelArray(encodedBitmap);
         rotatedImageSampler = DisplayDecoder.decodePixelMatrix(pixelArr);
         /* decode */
         byte[] decodedBytes = rotatedImageSampler.getDecodedData();
