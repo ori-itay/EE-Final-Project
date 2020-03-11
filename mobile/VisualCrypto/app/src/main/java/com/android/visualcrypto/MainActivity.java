@@ -342,7 +342,7 @@ public class MainActivity extends AppCompatActivity {
     }
     // TODO: remove me and learn how to call findViewByID from another class!!!!
     public void homographicTransform(MatOfPoint2f coordinates) {
-        Mat capturedImg = Imgcodecs.imread(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/trying_original_image.jpg", Imgcodecs.IMREAD_GRAYSCALE);
+        Mat capturedImg = Imgcodecs.imread(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/encodedImage.png", Imgcodecs.IMREAD_GRAYSCALE);
         //Mat img2 = Imgcodecs.imread(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/trying_original_image1.jpg", Imgcodecs.IMREAD_GRAYSCALE);
         //Mat img3 = new Mat(img1.rows(), img1.cols(), CvType.CV_8UC1);
 

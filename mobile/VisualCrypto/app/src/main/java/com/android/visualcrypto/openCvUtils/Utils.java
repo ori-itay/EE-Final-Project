@@ -3,14 +3,10 @@ package com.android.visualcrypto.openCvUtils;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
-import org.opencv.core.Scalar;
-import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.utils.Converters;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import static org.opencv.utils.Converters.vector_double_to_Mat;
 
 public class Utils {
 
@@ -44,7 +40,7 @@ public class Utils {
             //Mat ads = unDistortedImageMatCord * inverseH.t();
             //capturedImg.get(DistortedImageMatCord.
             Mat res = new Mat();
-           Core.multiply(inverseH,  unDistortedImageMatCord, res); //TODO: continue from here..put size in res etc
+           Core.gemm(inverseH,  unDistortedImageMatCord, 1.0, new Mat(), 0, res, 0); //TODO: continue from here..put size in res etc
             int b =4;
 
         }

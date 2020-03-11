@@ -52,9 +52,9 @@ public class FlowTest {
             Bitmap expectedBitmap = BitmapFactory.decodeStream(expectedStream);
             for (int row = 0 ; row < expectedBitmap.getHeight(); row++) {
                 for (int col = 0; col < expectedBitmap.getWidth(); col++) {
-                    int expectedPixel = expectedBitmap.getPixel(row, col);
-                    assert resBitmap != null;
-                    int resPixel = resBitmap.getPixel(row, col);
+                    int expectedPixel = expectedBitmap.getPixel(col, row);
+                    //assert resBitmap != null;
+                    int resPixel = resBitmap.getPixel(col, row);
                     if (row==149 && col ==5){
                         Log.d("testAndroidFlow", String.format("ExpectedPixel: %d, resPixel: %d", expectedPixel, resPixel));
                     }
