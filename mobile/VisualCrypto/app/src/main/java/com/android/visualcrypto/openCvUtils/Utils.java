@@ -1,6 +1,7 @@
 package com.android.visualcrypto.openCvUtils;
 
 import org.opencv.core.Core;
+import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
 import org.opencv.utils.Converters;
@@ -28,25 +29,37 @@ public class Utils {
     // DistortedImage * H = UnDistortedImage
     public static double getModuleStride(double maxPixelStride, Mat inverseH, Mat capturedImg) {
         double startingPoint = maxPixelStride / 2.0;
-        List<Double> unDistortedImage = new ArrayList<>();
-        unDistortedImage.add(0, startingPoint);
-        unDistortedImage.add(1, startingPoint);
-        unDistortedImage.add(2, 1.0);
+       // List<Double> unDistortedImage = new ArrayList<>();
+        double undistortedLocX = startingPoint;
+        double undistortedLocY = startingPoint;
+
+//        unDistortedImage.add(0, undistortedLocX);
+//        unDistortedImage.add(1, undistortedLocY);
+//        unDistortedImage.add(2, 1.0);
+        Mat unDistortedImageMatCord = new Mat(1, 3, CvType.CV_64F);
+        unDistortedImageMatCord.put(0,0, undistortedLocX);
+        unDistortedImageMatCord.put(0,1,undistortedLocY);
+        unDistortedImageMatCord.put(0,2, 1);
+
 
         for (int i = 0; i < Math.max(capturedImg.height(), capturedImg.width()); i++){
-            Mat unDistortedImageMatCord = Converters.vector_double_to_Mat(unDistortedImage);
-            //Mat res = inverseH.mul(unDistortedImageMatCord);
-            //Mat DistortedImageMatCord = unDistortedImageMatCord.mul(inverseH);
-            //Mat ads = unDistortedImageMatCord * inverseH.t();
-            //capturedImg.get(DistortedImageMatCord.
-            Mat res = new Mat();
-           Core.gemm(inverseH,  unDistortedImageMatCord, 1.0, new Mat(), 0, res, 0); //TODO: continue from here..put size in res etc
-            int b =4;
+            Mat distoredImageMatCord = new Mat();
+            Core.gemm(unDistortedImageMatCord,  inverseH, 1.0, new Mat(), 0, distoredImageMatCord, 0); // res = inverseH.t() * undistortedImageMatCord
+            double x = distoredImageMatCord.get(0,0)[0];
+            double y = distoredImageMatCord.get(0,1)[0];
+            double z = distoredImageMatCord.get(0,2)[0];
+            x = (double) x / z;
+            y = (double) y / z;
+            z = (double) z / z;
 
+            int indexRow = (int) (Math.round(x));
+            int indexCol = (int) (Math.round(y));
+            double pixel = capturedImg.get(indexRow, indexCol)[0];
+            undistortedLocX += maxPixelStride;
+            undistortedLocY += maxPixelStride;
+            unDistortedImageMatCord.put(0,0, undistortedLocX);
+            unDistortedImageMatCord.put(0,1, undistortedLocY);
         }
-
-
-
         return 0.0;
     }
 }
