@@ -39,7 +39,6 @@ public class Utils {
         boolean firstBlackFound = false;
         double undistortedModuleDimension = 0.0;
 
-
         //for (int i = 0; i < Math.max(capturedImg.height(), capturedImg.width()); i++){
         while(undistortedLocX < 1 && undistortedLocY < 1){
             Mat distoredImageMatCord = new Mat();
@@ -54,15 +53,15 @@ public class Utils {
             int indexRow = (int) (Math.round(x));
             int indexCol = (int) (Math.round(y));
             double pixel = capturedImg.get(indexRow, indexCol)[0];
-            if(pixel<127 && !firstBlackFound){ //or ==?. meaning it's first black after whites!
+            if(pixel<127 && !firstBlackFound){ // first black after whites!
                 firstBlackFound = true;
             }
-            else if(pixel<127 && firstBlackFound){ //still black after first black was found
+            else if(pixel<127 && firstBlackFound){ // still black after first black was found
                 undistortedModuleDimension+= minPixelStride;
             }
-            else if(pixel>=127 && firstBlackFound){ //first white after first black was found
+            else if(pixel>=127 && firstBlackFound){ // first white after first black was found
                 undistortedModuleDimension+= minPixelStride;
-                return undistortedModuleDimension/7;
+                return undistortedModuleDimension;
             }
             undistortedLocX += minPixelStride;
             undistortedLocY += minPixelStride;
