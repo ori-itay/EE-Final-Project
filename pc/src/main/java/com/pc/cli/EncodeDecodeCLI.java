@@ -36,10 +36,10 @@ public class EncodeDecodeCLI {
 
 	    while(true) {
 			System.out.println("Enter Decode/Encode command:");
-	    	String userCommand = scanner.nextLine().toLowerCase();  // Read user input
+	    	String userCommand = scanner.nextLine();  // Read user input
 
     		String[] splitedCommand = userCommand.split("\\s+");
-    		if(splitedCommand.length < 2 && !splitedCommand[0].equals("exit")) {
+    		if(splitedCommand.length < 2 && !splitedCommand[0].toLowerCase().equals("exit")) {
 	    		System.out.println("Usage: 'Encode [input image filepath] [output encoded image filepath]'\n"
 	    				+ "Usage: 'Decode [encoded input image filepath] [output decoded image filepath]'\n"
 	    				+ "Usage: 'Exit' to stop execution.");
@@ -49,18 +49,18 @@ public class EncodeDecodeCLI {
     			/* constant key */
     			byte[] const_key = new byte[] {100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115};
     			
-    			if(splitedCommand[0].equals("encode")){
+    			if(splitedCommand[0].toLowerCase().equals("encode")){
 					BufferedImage encodedImage = executeEncodingProccess(splitedCommand[1], const_key);
-    				ImageIO.write(encodedImage, "png", new File(splitedCommand[2]));	
+    				ImageIO.write(encodedImage, "png", new File(splitedCommand[2]));
     				System.out.println("Encoded data was written to "+ splitedCommand[2]);
     			}
-    			else if(splitedCommand[0].equals("decode")) {
+    			else if(splitedCommand[0].toLowerCase().equals("decode")) {
 					BufferedImage decodedImage = executeDecodingProccess(splitedCommand[1], const_key);
 					ImageIO.write(decodedImage, "png", new File(splitedCommand[2]));
 					System.out.println("Decoded image was written to "+ splitedCommand[2]);
 
     			}
-    			else if(splitedCommand[0].equals("exit")){
+    			else if(splitedCommand[0].toLowerCase().equals("exit")){
     				System.out.println("Exiting..\n");
     				break;
     			}

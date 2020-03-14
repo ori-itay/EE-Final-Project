@@ -24,6 +24,7 @@ import androidx.core.content.FileProvider;
 
 import com.android.visualcrypto.cameraUtils.CameraRotationFix;
 import com.android.visualcrypto.flow.Flow;
+import com.google.zxing.NotFoundException;
 import com.pc.configuration.Constants;
 import com.pc.encoderDecoder.RotatedImageSampler;
 
@@ -33,9 +34,7 @@ import org.opencv.calib3d.Calib3d;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
-
 import org.opencv.imgcodecs.Imgcodecs;
-
 import org.opencv.objdetect.QRCodeDetector;
 
 import java.io.File;
@@ -50,9 +49,10 @@ import java.util.Date;
 
 import javax.crypto.NoSuchPaddingException;
 
-//import static com.android.visualcrypto.openCvUtils.ImageTransformer.homographicTransform;
 import static com.android.visualcrypto.openCvUtils.Utils.getMaxDistance;
 import static com.android.visualcrypto.openCvUtils.Utils.getModuleStride;
+
+//import static com.android.visualcrypto.openCvUtils.ImageTransformer.homographicTransform;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -84,6 +84,9 @@ public class MainActivity extends AppCompatActivity {
                 decodeImage();
             }
         });
+        //zxing - maybe for next stage
+        //IntentIntegrator integrator = new IntentIntegrator(this);
+        //integrator.initiateScan();
     }
 
     private File createImageFile() throws IOException {
@@ -124,6 +127,14 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        /* zxing code - continuous scan. maybe for next stage
+        IntentResult scanResult = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);
+        if (scanResult != null) {
+            // handle scan result
+            //here is where you would get the data from the scanResult
+            //and store locally by writing to a file or however you
+            //intend to store it
+        }*/
 
         if (requestCode == CAMERA_REQUEST) {
             if (resultCode == RESULT_OK) {
@@ -162,9 +173,22 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    public void test(View v) throws IOException {
-//        InputStream is = this.getAssets().open("from_phone.png");
-//        Bitmap b = BitmapFactory.decodeStream(is);
+    public void test(View v) throws IOException, NotFoundException {
+        InputStream is = this.getAssets().open("realQR.jpg");
+        Bitmap b = BitmapFactory.decodeStream(is);
+
+        int[] intArray = new int[b.getWidth()*b.getHeight()];
+        //copy pixel data from the Bitmap into the 'intArray' array
+        b.getPixels(intArray, 0, b.getWidth(), 0, 0, b.getWidth(), b.getHeight());
+
+        /*zxing code - maybe for next stage
+        LuminanceSource source = new RGBLuminanceSource(b.getWidth(), b.getHeight(),intArray);
+        BinaryBitmap bitmap = new BinaryBitmap(new HybridBinarizer(source));
+        Detector d =  new Detector(bitmap.getBlackMatrix());
+        DetectorResult detectorResult = d.detect(false);
+        //DetectorResult detectorResult = new Detector(bitmap.getBlackMatrix()).detect(false);
+        ResultPoint[] points;
+        points = detectorResult.getPoints(); */
 //
 //        //set the rotated image
 //        ImageView vi = findViewById(R.id.decodedImgId);
@@ -172,6 +196,7 @@ public class MainActivity extends AppCompatActivity {
 //
 //        OpenCvSampler sampler = new OpenCvSampler(b);
 //        MatOfPoint2f positions = sampler.getPositionDetectorsLocation();
+
 //        if (positions == null) {
 //            throw new RuntimeException("Didn't find position detectors!");
 //        }
@@ -377,8 +402,9 @@ public class MainActivity extends AppCompatActivity {
         Mat inverseH = H.inv();
 
         Point[] pts = corners1.toArray();
-        double maxPixelStride = 1/getMaxDistance(pts[0], pts[1], pts[2], pts[3]);
-        double moduleStride = getModuleStride(maxPixelStride, H, capturedImg);
+        double minPixelStride = 1/getMaxDistance(pts[0], pts[1], pts[2], pts[3]);
+        double moduleStride = getModuleStride(minPixelStride, inverseH, capturedImg);
+        double x = moduleStride;
         //Mat img1_warp = new Mat();
 
 

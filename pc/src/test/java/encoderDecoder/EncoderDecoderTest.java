@@ -20,7 +20,7 @@ public class EncoderDecoderTest {
 
 
 	@Test
-	public void testEncodeDecodeEncodeIdempotentLongest() throws Exception {
+	public void testEncodeDecodeEndToEndIdempotent() throws Exception {
         byte[] const_key = new byte[] {100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115};
 
         File encodedFile = new File("./encodedImage.jpg");

@@ -4,10 +4,6 @@ import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
-import org.opencv.utils.Converters;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class Utils {
 
@@ -27,8 +23,8 @@ public class Utils {
     }
 
     // DistortedImage * H = UnDistortedImage
-    public static double getModuleStride(double maxPixelStride, Mat inverseH, Mat capturedImg) {
-        double startingPoint = maxPixelStride / 2.0;
+    public static double getModuleStride(double minPixelStride, Mat inverseH, Mat capturedImg) {
+        double startingPoint = minPixelStride / 2.0;
        // List<Double> unDistortedImage = new ArrayList<>();
         double undistortedLocX = startingPoint;
         double undistortedLocY = startingPoint;
@@ -40,9 +36,12 @@ public class Utils {
         unDistortedImageMatCord.put(0,0, undistortedLocX);
         unDistortedImageMatCord.put(0,1,undistortedLocY);
         unDistortedImageMatCord.put(0,2, 1);
+        boolean firstBlackFound = false;
+        double undistortedModuleDimension = 0.0;
 
 
-        for (int i = 0; i < Math.max(capturedImg.height(), capturedImg.width()); i++){
+        //for (int i = 0; i < Math.max(capturedImg.height(), capturedImg.width()); i++){
+        while(undistortedLocX < 1 && undistortedLocY < 1){
             Mat distoredImageMatCord = new Mat();
             Core.gemm(unDistortedImageMatCord,  inverseH, 1.0, new Mat(), 0, distoredImageMatCord, 0); // res = inverseH.t() * undistortedImageMatCord
             double x = distoredImageMatCord.get(0,0)[0];
@@ -55,8 +54,18 @@ public class Utils {
             int indexRow = (int) (Math.round(x));
             int indexCol = (int) (Math.round(y));
             double pixel = capturedImg.get(indexRow, indexCol)[0];
-            undistortedLocX += maxPixelStride;
-            undistortedLocY += maxPixelStride;
+            if(pixel<127 && !firstBlackFound){ //or ==?. meaning it's first black after whites!
+                firstBlackFound = true;
+            }
+            else if(pixel<127 && firstBlackFound){ //still black after first black was found
+                undistortedModuleDimension+= minPixelStride;
+            }
+            else if(pixel>=127 && firstBlackFound){ //first white after first black was found
+                undistortedModuleDimension+= minPixelStride;
+                return undistortedModuleDimension/7;
+            }
+            undistortedLocX += minPixelStride;
+            undistortedLocY += minPixelStride;
             unDistortedImageMatCord.put(0,0, undistortedLocX);
             unDistortedImageMatCord.put(0,1, undistortedLocY);
         }
