@@ -46,20 +46,22 @@ public class Utils {
             double x = distoredImageMatCord.get(0,0)[0];
             double y = distoredImageMatCord.get(0,1)[0];
             double z = distoredImageMatCord.get(0,2)[0];
-            x = (double) x / z;
-            y = (double) y / z;
-            z = (double) z / z;
+            //x = (double) x / z;
+            //y = (double) y / z;
+            //z = (double) z / z;
+            int BLACK_THRESHOLD = 40;
 
             int indexRow = (int) (Math.round(x));
             int indexCol = (int) (Math.round(y));
-            double pixel = capturedImg.get(indexRow, indexCol)[0];
-            if(pixel<127 && !firstBlackFound){ // first black after whites!
+            double[] channels = capturedImg.get(indexRow, indexCol);
+            double pixel = (int) (channels[0] + channels[1] + channels[2]) / 3.0;
+            if (pixel < BLACK_THRESHOLD && !firstBlackFound){ // first black after whites!
                 firstBlackFound = true;
             }
-            else if(pixel<127 && firstBlackFound){ // still black after first black was found
+            else if(pixel < BLACK_THRESHOLD && firstBlackFound){ // still black after first black was found
                 undistortedModuleDimension+= minPixelStride;
             }
-            else if(pixel>=127 && firstBlackFound){ // first white after first black was found
+            else if(pixel >= BLACK_THRESHOLD && firstBlackFound){ // first white after first black was found
                 undistortedModuleDimension+= minPixelStride;
                 return undistortedModuleDimension;
             }

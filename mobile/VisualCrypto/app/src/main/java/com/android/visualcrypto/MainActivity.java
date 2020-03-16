@@ -24,18 +24,16 @@ import androidx.core.content.FileProvider;
 
 import com.android.visualcrypto.cameraUtils.CameraRotationFix;
 import com.android.visualcrypto.flow.Flow;
+import com.android.visualcrypto.openCvUtils.DistortedImageSampler;
 import com.google.zxing.NotFoundException;
 import com.pc.configuration.Constants;
 import com.pc.encoderDecoder.RotatedImageSampler;
 
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
-import org.opencv.calib3d.Calib3d;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint2f;
-import org.opencv.core.Point;
 import org.opencv.imgcodecs.Imgcodecs;
-import org.opencv.objdetect.QRCodeDetector;
 
 import java.io.File;
 import java.io.IOException;
@@ -48,9 +46,6 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import javax.crypto.NoSuchPaddingException;
-
-import static com.android.visualcrypto.openCvUtils.Utils.getMaxDistance;
-import static com.android.visualcrypto.openCvUtils.Utils.getModuleStride;
 
 //import static com.android.visualcrypto.openCvUtils.ImageTransformer.homographicTransform;
 
@@ -367,44 +362,24 @@ public class MainActivity extends AppCompatActivity {
     }
     // TODO: remove me and learn how to call findViewByID from another class!!!!
     public void homographicTransform(MatOfPoint2f coordinates) {
-        Mat capturedImg = Imgcodecs.imread(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/encodedImage.png", Imgcodecs.IMREAD_GRAYSCALE);
+        Mat capturedImg = Imgcodecs.imread(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/encodedImage.jpg");
         //Mat img2 = Imgcodecs.imread(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/trying_original_image1.jpg", Imgcodecs.IMREAD_GRAYSCALE);
         //Mat img3 = new Mat(img1.rows(), img1.cols(), CvType.CV_8UC1);
 
-        /*  IMG_1_WARP WORKING IN CHESS BOARD*/
-//        Mat img1 = Imgcodecs.imread(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/rotatedImage.jpg", Imgcodecs.IMREAD_GRAYSCALE);
-//        Mat img2 = Imgcodecs.imread(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/originalImage.jpg", Imgcodecs.IMREAD_GRAYSCALE);
-//        MatOfPoint2f corners1 = new MatOfPoint2f(), corners2 = new MatOfPoint2f();
-//        boolean found1 = Calib3d.findChessboardCorners(img1, new Size(9, 6), corners1);
-//        boolean found2 = Calib3d.findChessboardCorners(img2, new Size(9, 6), corners2);
 
-//        Bitmap bit1 = BitmapFactory.decodeFile(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/rotatedImage.png");
-//        OpenCvSampler other = new OpenCvSampler(bit1);
-//        MatOfPoint2f corners1 = other.getPositionDetectorsLocation();
-//
-//        Bitmap bit2 = BitmapFactory.decodeFile(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/originalImage.png");
-//        OpenCvSampler somename = new OpenCvSampler(bit2);
-//        MatOfPoint2f corners2 = somename.getPositionDetectorsLocation();
 
-        //int qrDim = 116; // TODO: implement to be dynamic
-        QRCodeDetector detector = new QRCodeDetector();
-        MatOfPoint2f corners1 = new MatOfPoint2f();//, corners2 = new MatOfPoint2f();
-        boolean found1 = detector.detect(capturedImg, corners1);
-        //boolean found2 = detector.detect(img2, corners2);
-        assert found1;
-        MatOfPoint2f corners2 = new MatOfPoint2f(new Point(0,0), new Point(1,0), new Point(1,1), new Point(0,1)); // TODO: verify it contains appropriate white margin
+        DistortedImageSampler distortedImageSampler = new DistortedImageSampler(capturedImg);
 
 
 
 
-        Mat H = new Mat();
-        H = Calib3d.findHomography(corners1, corners2);
-        Mat inverseH = H.inv();
 
-        Point[] pts = corners1.toArray();
-        double minPixelStride = 1/getMaxDistance(pts[0], pts[1], pts[2], pts[3]);
-        double moduleStride = getModuleStride(minPixelStride, inverseH, capturedImg);
-        double x = moduleStride;
+
+
+
+        //Mat undistortedQR = buildImage(moduleStride, inverseH, capturedImg);
+        //getUndistortedQR(moduleStride);
+
         //Mat img1_warp = new Mat();
 
 
