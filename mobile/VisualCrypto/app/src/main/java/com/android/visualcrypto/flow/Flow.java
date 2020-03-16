@@ -5,12 +5,15 @@ import android.graphics.Bitmap;
 import com.android.visualcrypto.MainActivity;
 import com.android.visualcrypto.configurationFetcher.DimensionsFetcher;
 import com.android.visualcrypto.configurationFetcher.IvFetcher;
+import com.android.visualcrypto.openCvUtils.DistortedImageSampler;
 import com.pc.configuration.Constants;
 import com.pc.configuration.Parameters;
 import com.pc.encoderDecoder.DisplayDecoder;
 import com.pc.encoderDecoder.RotatedImageSampler;
 import com.pc.encryptorDecryptor.decryptor.Decryptor;
 import com.pc.shuffleDeshuffle.deshuffle.Deshuffle;
+
+import org.opencv.core.Mat;
 
 import java.io.File;
 import java.security.InvalidAlgorithmParameterException;
@@ -23,17 +26,18 @@ import javax.crypto.spec.SecretKeySpec;
 
 public class Flow {
 
-    public static Bitmap executeAndroidFlow(Bitmap encodedBitmap) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidAlgorithmParameterException, InvalidKeyException {
-        RotatedImageSampler rotatedImageSampler;
+    public static Bitmap executeAndroidFlow(Mat capturedImg, Bitmap encodedBitmap) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidAlgorithmParameterException, InvalidKeyException {
+        DistortedImageSampler distortedImageSampler = new DistortedImageSampler(capturedImg);
+        //RotatedImageSampler rotatedImageSampler;
         int[][] pixelArr;
 
         pixelArr = MainActivity.get2DPixelArray(encodedBitmap);
-        rotatedImageSampler = DisplayDecoder.decodePixelMatrix(pixelArr);
+        DisplayDecoder.decodePixelMatrix(distortedImageSampler, pixelArr);
         /* decode */
-        byte[] decodedBytes = rotatedImageSampler.getDecodedData();
+        byte[] decodedBytes = distortedImageSampler.getDecodedData();
 
         /* get iv */
-        byte[] iv = IvFetcher.getIV(rotatedImageSampler);
+        byte[] iv = IvFetcher.getIV(distortedImageSampler);
         if (iv == null) {
             //showAlert("Cannot decode the image: IV checksums are wrong!");
             return null;

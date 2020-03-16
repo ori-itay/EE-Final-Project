@@ -34,6 +34,7 @@ import org.opencv.android.Utils;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.imgcodecs.Imgcodecs;
+import org.opencv.utils.Converters;
 
 import java.io.File;
 import java.io.IOException;
@@ -196,7 +197,7 @@ public class MainActivity extends AppCompatActivity {
 //            throw new RuntimeException("Didn't find position detectors!");
 //        }
 //        homographicTransform(positions);
-        homographicTransform(null);
+        //homographicTransform(null);
 
     }
 
@@ -214,51 +215,16 @@ public class MainActivity extends AppCompatActivity {
 //                return;
 //            }
 
-            InputStream encodedStream = getAssets().open(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) +  "encodedImage.png");
+            InputStream encodedStream = getAssets().open( "samplerTest.jpg");
             // TODO: handle ENCODED STREAM FAILURE CHECK
             Bitmap encodedBitmap = BitmapFactory.decodeStream(encodedStream);
-            Bitmap resBitmap = Flow.executeAndroidFlow(encodedBitmap);
-
-//            pixelArr = get2DPixelArray(encodedBitmap);
-//            rotatedImageSampler = DisplayDecoder.decodePixelMatrix(pixelArr);
-//            /* decode */
-//            byte[] decodedBytes = rotatedImageSampler.getDecodedData();
-//
-//            /* get iv */
-//            byte[] iv = IvFetcher.getIV(rotatedImageSampler);
-//            if (iv == null) {
-//                showAlert("Cannot decode the image: IV checksums are wrong!");
-//                return;
-//            }
-//            IvParameterSpec ivSpec = new IvParameterSpec(iv);
-//            // get secret key
-//            /* Using constant secret key! */
-//            byte[] const_key = new byte[]{100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115};
-//            SecretKeySpec secretKeySpec = new SecretKeySpec(const_key, Parameters.encryptionAlgorithm);
-//            /* ************************** */
-//
-//            // deshuffle
-//            byte[] deshuffledBytes = Deshuffle.getDeshuffledBytes(decodedBytes, ivSpec);
-//
-//            /* decrypt */
-//            byte[] imageBytes = Decryptor.decryptImage(deshuffledBytes, secretKeySpec, ivSpec);
-//
-//            /* fetch the image dimensions */
-//            DimensionsFetcher dimensionsFetcher = new DimensionsFetcher(imageBytes);
-//            int width = dimensionsFetcher.getWidth();
-//            int height = dimensionsFetcher.getHeight();
-//
-//            if (width == 0 || height == 0) {
-//                showAlert("Cannot decode the image: Dimensions checksum are wrong!");
-//                return;
-//            } else if (width > Constants.MAX_IMAGE_DIMENSION_SIZE || height > Constants.MAX_IMAGE_DIMENSION_SIZE) {
-//                showAlert("Error: image dimension larger than " + Constants.MAX_IMAGE_DIMENSION_SIZE);
-//                return;
-//            }
-//
-//            /* convert to Bitmap */
-//            Bitmap bmp = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-//            setBitmapPixels(bmp, imageBytes, width, height);
+            Mat capturedImage = new Mat();
+            Utils.bitmapToMat(encodedBitmap, capturedImage);
+            Bitmap resBitmap = Flow.executeAndroidFlow(capturedImage, encodedBitmap);
+            if (resBitmap == null) {
+                showAlert("Error: resBitmap returned null");
+                return;
+            }
 
             /* display the image */
             ImageView iView = findViewById(R.id.decodedImgId);
@@ -361,32 +327,14 @@ public class MainActivity extends AppCompatActivity {
         }
     }
     // TODO: remove me and learn how to call findViewByID from another class!!!!
-    public void homographicTransform(MatOfPoint2f coordinates) {
-        Mat capturedImg = Imgcodecs.imread(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/encodedImage.jpg");
-        //Mat img2 = Imgcodecs.imread(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/trying_original_image1.jpg", Imgcodecs.IMREAD_GRAYSCALE);
-        //Mat img3 = new Mat(img1.rows(), img1.cols(), CvType.CV_8UC1);
-
-
-
-        DistortedImageSampler distortedImageSampler = new DistortedImageSampler(capturedImg);
-
-
-
-
-
-
-
-
-        //Mat undistortedQR = buildImage(moduleStride, inverseH, capturedImg);
-        //getUndistortedQR(moduleStride);
-
-        //Mat img1_warp = new Mat();
-
-
-        //Imgproc.warpPerspective(img1, img1_warp, H, new Size(1,1));
-       // Imgcodecs.imwrite(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/homographicImage.png", img1_warp);
-
-    }
+//    public void homographicTransform(MatOfPoint2f coordinates) {
+//        //Mat capturedImg = Imgcodecs.imread(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/encodedImage.jpg");
+//
+//
+//        //Imgproc.warpPerspective(img1, img1_warp, H, new Size(1,1));
+//       // Imgcodecs.imwrite(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/homographicImage.png", img1_warp);
+//
+//    }
 
 
     private Bitmap convertMatToBitmap(Mat mat) {

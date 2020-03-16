@@ -19,15 +19,15 @@ public class StdImageSampler implements ImageSamplerInf{
 		this.pixelMatrix = pixelMatrix;
 	}
 
-	public int processedImage() {
-		return moduleSize;
-	}
-	
-	void setModuleSize(int moduleSize) {
+//	public int processedImage() {
+//		return moduleSize;
+//	}
+//
+	protected void setModuleSize(double moduleSize) {
 		this.moduleSize =  moduleSize;
 	}
 
-	public int getModuleSize() { return moduleSize;	}
+	public double getModuleSize() { return moduleSize;	}
 
 	public byte[] getDecodedData() {
 		return decodedData;
@@ -68,6 +68,9 @@ public class StdImageSampler implements ImageSamplerInf{
 	public int getPixel(int rowPixel, int colPixel) {
 		return this.getPixelMatrix()[rowPixel][colPixel];
 	}
+	public int getPixel(double rowPixel, double colPixel) {
+		return 0;
+	}
 	
 	public int getWidth() {
 	    return receivedImageDim;
@@ -89,7 +92,7 @@ public class StdImageSampler implements ImageSamplerInf{
 		return modulesInDim;
 	}
 	
-	void setModulesInDim(int modulesInDim) {
+	protected void setModulesInDim(int modulesInDim) {
 		this.modulesInDim = modulesInDim;
 	}
 
@@ -100,7 +103,7 @@ public class StdImageSampler implements ImageSamplerInf{
 	private int[][] pixelMatrix;
 	private int receivedImageDim;
 
-	private int moduleSize = 0;
+	private double moduleSize = 0.0;
 	private byte[] decodedData;
 	private byte[] IV1;
 	private byte[] IV1Checksum;

@@ -13,22 +13,22 @@ import static com.pc.configuration.Constants.*;
 
 public class DisplayDecoder {
 
-	public static RotatedImageSampler decodeFilePC(String filepath) throws IOException {
-		File inputFile = new File(filepath);
-		BufferedImage encodedImage = ImageIO.read(inputFile);
-		int[][] pixelMatrix = convertTo2DUsingGetRGB(encodedImage);
-		RotatedImageSampler imageSampler = decodePixelMatrix(pixelMatrix);
+//	public static RotatedImageSampler decodeFilePC(String filepath) throws IOException {
+//		File inputFile = new File(filepath);
+//		BufferedImage encodedImage = ImageIO.read(inputFile);
+//		int[][] pixelMatrix = convertTo2DUsingGetRGB(encodedImage);
+//		RotatedImageSampler imageSampler = decodePixelMatrix(pixelMatrix);
+//
+//		//only temporary testing:
+//		//CapturedImageSampler sampler = new CapturedImageSampler();
+//		//sampler.locatePositionDetectors(filepath);
+//
+//		return imageSampler;
+//	}
 
-		//only temporary testing:
-		//CapturedImageSampler sampler = new CapturedImageSampler();
-		//sampler.locatePositionDetectors(filepath);
+	public static void decodePixelMatrix(StdImageSampler imageSampler, int[][] pixelMatrix)  {
 
-		return imageSampler;
-	}
-
-	public static RotatedImageSampler decodePixelMatrix(int[][] pixelMatrix)  {
-
-		RotatedImageSampler imageSampler = configureImage(pixelMatrix);
+		configureImage(imageSampler, pixelMatrix);
 		Position pos = new Position(imageSampler.getModulesInMargin(), imageSampler.getModulesInMargin() + MODULES_IN_POS_DET_DIM);
 		imageSampler.setIV1(decodeData(imageSampler, Parameters.ivLength, pos, true));
 		imageSampler.setIV1Checksum(decodeData(imageSampler, CHECKSUM_LENGTH, pos, true));
@@ -36,21 +36,20 @@ public class DisplayDecoder {
 		imageSampler.setDecodedData(decodeData(imageSampler, imageDataLength, pos, false));
 		imageSampler.setIV2(decodeData(imageSampler, Parameters.ivLength, pos, true));
 		imageSampler.setIV2Checksum(decodeData(imageSampler, CHECKSUM_LENGTH, pos, true));
-		return imageSampler;
+		return;
 	}
 
-	private static RotatedImageSampler configureImage(int[][] pixelMatrix) {
-		RotatedImageSampler imageSampler = new RotatedImageSampler();
+	private static void configureImage(StdImageSampler imageSampler, int[][] pixelMatrix) {
 		imageSampler.setReceivedImageDim(pixelMatrix.length);
 		imageSampler.setPixelMatrix(pixelMatrix);
-		configureModuleSizeAndRotation(imageSampler);
+		//configureModuleSizeAndRotation(imageSampler);
 		assert( imageSampler.getModuleSize() != 0);
 		//configureCrop(imageSampler);
-		return imageSampler;
+		return;
 	}
 
 
-	private static byte[] decodeData(RotatedImageSampler imageSampler, int lengthInBytes, Position pos,
+	private static byte[] decodeData(StdImageSampler imageSampler, int lengthInBytes, Position pos,
 									 boolean isMetadata) {
 		int nextElemStride, greenStride, blueStride;
 		if(isMetadata) {
@@ -139,10 +138,12 @@ public class DisplayDecoder {
 		}
 	}
 
-	private static int[] sampleModule(RotatedImageSampler imageSampler, Position pos) {
+	private static int[] sampleModule(StdImageSampler imageSampler, Position pos) {
 
-		int rowPixel = pos.rowModule * imageSampler.getModuleSize();
-		int colPixel = pos.colModule * imageSampler.getModuleSize();
+		//int rowPixel = pos.rowModule * imageSampler.getModuleSize();
+		//int colPixel = pos.colModule * imageSampler.getModuleSize();
+		double rowPixel = (0.5 + pos.rowModule) * imageSampler.getModuleSize(); //  (imageSampler.getModuleSize() / 2) + (pos.rowModule * imageSampler.getModuleSize())
+		double colPixel = (0.5 + pos.colModule) * imageSampler.getModuleSize();
 		int currPixelSample = imageSampler.getPixel(rowPixel, colPixel);
 		int[] RGB = new int[3];
 
@@ -168,118 +169,118 @@ public class DisplayDecoder {
 	public static int TestByteArrayToInt(byte[] bytes) { return byteArrayToInt(bytes);}
 
 
-	private static void configureModuleSizeAndRotation(RotatedImageSampler imageSampler) {
-		int moduleSize;
-		int receivedDim = imageSampler.getReceivedImageDim();
-		int modulesInDim;
+//	private static void configureModuleSizeAndRotation(StdImageSampler imageSampler) {
+//		int moduleSize;
+//		int receivedDim = imageSampler.getReceivedImageDim();
+//		int modulesInDim;
+//
+//		moduleSize = scanFromTopLeft(imageSampler);
+//		if(moduleSize == 0) { //pattern not found from top left
+//			moduleSize = scanFromBottomRight(imageSampler);
+//
+//			modulesInDim = Math.floorDiv(receivedDim,moduleSize);
+//		}
+//		else {
+//			modulesInDim = Math.floorDiv(receivedDim,moduleSize);
+//			//seek pattern from top right
+//
+//			if(!foundPattern(imageSampler.getPixelMatrix(), moduleSize, moduleSize * Parameters.modulesInMargin,
+//					moduleSize * (modulesInDim -
+//							Parameters.modulesInMargin - MODULES_IN_POS_DET_DIM) )) {
+//
+//			}
+//			//seek pattern from top bottom left
+//			else if(!foundPattern(imageSampler.getPixelMatrix(), moduleSize, moduleSize *
+//					(modulesInDim -
+//							Parameters.modulesInMargin - MODULES_IN_POS_DET_DIM) ,moduleSize * Parameters.modulesInMargin) ) {
+//				imageSampler.rotationCounterClockwise = 90;
+//			}
+//			// else: pattern not found from bottom right - no need to rotate
+//		}
+//		imageSampler.setModuleSize(moduleSize);
+//		imageSampler.setModulesInDim(modulesInDim);
+//		return;
+//	}
 
-		moduleSize = scanFromTopLeft(imageSampler);
-		if(moduleSize == 0) { //pattern not found from top left
-			moduleSize = scanFromBottomRight(imageSampler);
-
-			modulesInDim = Math.floorDiv(receivedDim,moduleSize);
-		}
-		else {
-			modulesInDim = Math.floorDiv(receivedDim,moduleSize);
-			//seek pattern from top right
-
-			if(!foundPattern(imageSampler.getPixelMatrix(), moduleSize, moduleSize * Parameters.modulesInMargin,
-					moduleSize * (modulesInDim -
-							Parameters.modulesInMargin - MODULES_IN_POS_DET_DIM) )) {
-
-			}
-			//seek pattern from top bottom left
-			else if(!foundPattern(imageSampler.getPixelMatrix(), moduleSize, moduleSize *
-					(modulesInDim -
-							Parameters.modulesInMargin - MODULES_IN_POS_DET_DIM) ,moduleSize * Parameters.modulesInMargin) ) {
-				imageSampler.rotationCounterClockwise = 90;
-			}
-			// else: pattern not found from bottom right - no need to rotate
-		}
-		imageSampler.setModuleSize(moduleSize);
-		imageSampler.setModulesInDim(modulesInDim);
-		return;
-	}
-
-	private static int scanFromBottomRight(RotatedImageSampler imageSampler) {
-		int[][] pixelMatrix = imageSampler.getPixelMatrix();
-
-		int offset = 1, firstBlack = pixelMatrix.length - 1, followingWhiteInd = 0, moduleSize = 0;
-
-		//search for first black pixel
-		while(firstBlack > pixelMatrix.length / 2) {
-			if(isBlackPixel(pixelMatrix[firstBlack][firstBlack])) {
-				while(isBlackPixel(pixelMatrix[firstBlack+1][firstBlack+1])) //found black pixel - go back until the very first one
-					firstBlack++;
-				break; // found first black pixel
-			}
-
-			firstBlack--;
-		}
-		//search for first following white pixel and extract module size (binary search)
-		offset = 1;
-		while(followingWhiteInd >=0) {
-			followingWhiteInd = firstBlack - offset;
-			while(followingWhiteInd < pixelMatrix.length && !isBlackPixel(pixelMatrix[followingWhiteInd][followingWhiteInd])) //found white pixel - go back until closest black pixel
-				followingWhiteInd++;
-			if(!isBlackPixel(pixelMatrix[followingWhiteInd-1][followingWhiteInd-1])) {  //found last black in module - extract module size 
-				moduleSize = firstBlack - (followingWhiteInd-1);
-				break;
-			}
-			else {
-				offset*=2;
-			}
-		}
-		//search for position detector pattern
-		if(foundPattern(pixelMatrix, moduleSize,
-				firstBlack + 1 - moduleSize * MODULES_IN_POS_DET_DIM, firstBlack + 1 - moduleSize * MODULES_IN_POS_DET_DIM)) {
-			imageSampler.rotationCounterClockwise = 180;
-			imageSampler.setModulesInMargin(firstBlack/moduleSize);
-			return moduleSize;
-		}
-		return 0;
-	}
-
-	private static int scanFromTopLeft(RotatedImageSampler imageSampler) {
-		int[][] pixelMatrix = imageSampler.getPixelMatrix();
-		int offset = 1, firstBlack = 0, followingWhiteInd = 0 , moduleSize = 0;
-
-		//search for first black pixel
-		while(firstBlack < pixelMatrix.length / 2) {
-			if(isBlackPixel(pixelMatrix[firstBlack][firstBlack])) {
-				while(isBlackPixel(pixelMatrix[firstBlack-1][firstBlack-1])) //found black pixel - go back until the very first one
-					firstBlack--;
-				break; // found first black pixel
-			}
-			firstBlack++;
-		}
-		if(firstBlack>=pixelMatrix.length / 2) return 0; //black pixel not found in first half
-
-		//search for first following white pixel and extract module size (binary search)
-		offset = 1;
-		followingWhiteInd = firstBlack + offset;
-		while(followingWhiteInd < pixelMatrix.length) {
-			while(followingWhiteInd > 0 && !isBlackPixel(pixelMatrix[followingWhiteInd][followingWhiteInd])) ////found white pixel - go back until closest black pixel
-				followingWhiteInd--;
-			if(!isBlackPixel(pixelMatrix[followingWhiteInd+1][followingWhiteInd+1])) { //found last black in module - extract module size 
-				moduleSize = followingWhiteInd+1-firstBlack;
-				break;
-			}
-			else {
-				offset*=2;
-			}
-			followingWhiteInd = firstBlack + offset;
-		}
-		//search for position detector pattern
-		if(foundPattern(pixelMatrix, moduleSize, firstBlack, firstBlack)) {
-			imageSampler.setModulesInMargin(firstBlack/moduleSize);
-			return moduleSize;
-		}
-		else{
-			imageSampler.rotationCounterClockwise = 270;
-		}
-		return 0;
-	}
+//	private static int scanFromBottomRight(StdImageSampler imageSampler) {
+//		int[][] pixelMatrix = imageSampler.getPixelMatrix();
+//
+//		int offset = 1, firstBlack = pixelMatrix.length - 1, followingWhiteInd = 0, moduleSize = 0;
+//
+//		//search for first black pixel
+//		while(firstBlack > pixelMatrix.length / 2) {
+//			if(isBlackPixel(pixelMatrix[firstBlack][firstBlack])) {
+//				while(isBlackPixel(pixelMatrix[firstBlack+1][firstBlack+1])) //found black pixel - go back until the very first one
+//					firstBlack++;
+//				break; // found first black pixel
+//			}
+//
+//			firstBlack--;
+//		}
+//		//search for first following white pixel and extract module size (binary search)
+//		offset = 1;
+//		while(followingWhiteInd >=0) {
+//			followingWhiteInd = firstBlack - offset;
+//			while(followingWhiteInd < pixelMatrix.length && !isBlackPixel(pixelMatrix[followingWhiteInd][followingWhiteInd])) //found white pixel - go back until closest black pixel
+//				followingWhiteInd++;
+//			if(!isBlackPixel(pixelMatrix[followingWhiteInd-1][followingWhiteInd-1])) {  //found last black in module - extract module size
+//				moduleSize = firstBlack - (followingWhiteInd-1);
+//				break;
+//			}
+//			else {
+//				offset*=2;
+//			}
+//		}
+//		//search for position detector pattern
+//		if(foundPattern(pixelMatrix, moduleSize,
+//				firstBlack + 1 - moduleSize * MODULES_IN_POS_DET_DIM, firstBlack + 1 - moduleSize * MODULES_IN_POS_DET_DIM)) {
+//			imageSampler.rotationCounterClockwise = 180;
+//			imageSampler.setModulesInMargin(firstBlack/moduleSize);
+//			return moduleSize;
+//		}
+//		return 0;
+//	}
+//
+//	private static int scanFromTopLeft(StdImageSampler imageSampler) {
+//		int[][] pixelMatrix = imageSampler.getPixelMatrix();
+//		int offset = 1, firstBlack = 0, followingWhiteInd = 0 , moduleSize = 0;
+//
+//		//search for first black pixel
+//		while(firstBlack < pixelMatrix.length / 2) {
+//			if(isBlackPixel(pixelMatrix[firstBlack][firstBlack])) {
+//				while(isBlackPixel(pixelMatrix[firstBlack-1][firstBlack-1])) //found black pixel - go back until the very first one
+//					firstBlack--;
+//				break; // found first black pixel
+//			}
+//			firstBlack++;
+//		}
+//		if(firstBlack>=pixelMatrix.length / 2) return 0; //black pixel not found in first half
+//
+//		//search for first following white pixel and extract module size (binary search)
+//		offset = 1;
+//		followingWhiteInd = firstBlack + offset;
+//		while(followingWhiteInd < pixelMatrix.length) {
+//			while(followingWhiteInd > 0 && !isBlackPixel(pixelMatrix[followingWhiteInd][followingWhiteInd])) ////found white pixel - go back until closest black pixel
+//				followingWhiteInd--;
+//			if(!isBlackPixel(pixelMatrix[followingWhiteInd+1][followingWhiteInd+1])) { //found last black in module - extract module size
+//				moduleSize = followingWhiteInd+1-firstBlack;
+//				break;
+//			}
+//			else {
+//				offset*=2;
+//			}
+//			followingWhiteInd = firstBlack + offset;
+//		}
+//		//search for position detector pattern
+//		if(foundPattern(pixelMatrix, moduleSize, firstBlack, firstBlack)) {
+//			imageSampler.setModulesInMargin(firstBlack/moduleSize);
+//			return moduleSize;
+//		}
+//		else{
+//			imageSampler.rotationCounterClockwise = 270;
+//		}
+//		return 0;
+//	}
 
 
 	private static boolean foundPattern(int[][] pixelMatrix, int moduleSize, int rowStartPix, int colStartPix ) {

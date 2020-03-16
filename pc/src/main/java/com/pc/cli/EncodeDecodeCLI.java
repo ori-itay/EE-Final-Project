@@ -54,12 +54,12 @@ public class EncodeDecodeCLI {
     				ImageIO.write(encodedImage, "png", new File(splitedCommand[2]));
     				System.out.println("Encoded data was written to "+ splitedCommand[2]);
     			}
-    			else if(splitedCommand[0].toLowerCase().equals("decode")) {
-					BufferedImage decodedImage = executeDecodingProccess(splitedCommand[1], const_key);
-					ImageIO.write(decodedImage, "png", new File(splitedCommand[2]));
-					System.out.println("Decoded image was written to "+ splitedCommand[2]);
-
-    			}
+//    			else if(splitedCommand[0].toLowerCase().equals("decode")) {
+////					BufferedImage decodedImage = executeDecodingProccess(splitedCommand[1], const_key);
+////					ImageIO.write(decodedImage, "png", new File(splitedCommand[2]));
+////					System.out.println("Decoded image was written to "+ splitedCommand[2]);
+////
+////    			}
     			else if(splitedCommand[0].toLowerCase().equals("exit")){
     				System.out.println("Exiting..\n");
     				break;
@@ -74,31 +74,31 @@ public class EncodeDecodeCLI {
 	    scanner.close();
 	}
 
-	public static BufferedImage executeDecodingProccess(String filepath, byte[] const_key) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidAlgorithmParameterException, InvalidKeyException {
-		RotatedImageSampler sampler;
-		try {
-			sampler = DisplayDecoder.decodeFilePC(filepath);
-		}
-		catch(Exception NullPointerException){
-			System.out.println("Entered input filepath has error.\n");
-			return null;
-		}
-		IvParameterSpec iv = new IvParameterSpec(sampler.getIV1());
-		byte[] checksumIV = Checksum.computeChecksum(iv.getIV());
-		if(checksumIV[0] != sampler.getIV1Checksum()[0]) {
-			iv = new IvParameterSpec(sampler.getIV2());
-			checksumIV = Checksum.computeChecksum(iv.getIV());
-			if(checksumIV[0] != sampler.getIV2Checksum()[0]) {
-				System.out.println("error! both iv checksum are wrong. exiting...");
-				System.exit(-1);
-			}
-		}
-		byte[] unShuffledEncryptedImg = Deshuffle.getDeshuffledBytes(sampler.getDecodedData(), iv);
-		SecretKeySpec skeySpec = new SecretKeySpec(const_key, Parameters.encryptionAlgorithm);
-		byte[] decryptedBytes = Decryptor.decryptImage(unShuffledEncryptedImg, skeySpec, iv);
-
-		return convertToImageUsingGetRGB(decryptedBytes);
-	}
+//	public static BufferedImage executeDecodingProccess(String filepath, byte[] const_key) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidAlgorithmParameterException, InvalidKeyException {
+//		RotatedImageSampler sampler;
+//		try {
+//			sampler = DisplayDecoder.decodeFilePC(filepath);
+//		}
+//		catch(Exception NullPointerException){
+//			System.out.println("Entered input filepath has error.\n");
+//			return null;
+//		}
+//		IvParameterSpec iv = new IvParameterSpec(sampler.getIV1());
+//		byte[] checksumIV = Checksum.computeChecksum(iv.getIV());
+//		if(checksumIV[0] != sampler.getIV1Checksum()[0]) {
+//			iv = new IvParameterSpec(sampler.getIV2());
+//			checksumIV = Checksum.computeChecksum(iv.getIV());
+//			if(checksumIV[0] != sampler.getIV2Checksum()[0]) {
+//				System.out.println("error! both iv checksum are wrong. exiting...");
+//				System.exit(-1);
+//			}
+//		}
+//		byte[] unShuffledEncryptedImg = Deshuffle.getDeshuffledBytes(sampler.getDecodedData(), iv);
+//		SecretKeySpec skeySpec = new SecretKeySpec(const_key, Parameters.encryptionAlgorithm);
+//		byte[] decryptedBytes = Decryptor.decryptImage(unShuffledEncryptedImg, skeySpec, iv);
+//
+//		return convertToImageUsingGetRGB(decryptedBytes);
+//	}
 
 	public static BufferedImage executeEncodingProccess(String filepath, byte[] const_key) throws Exception {
 		BufferedImage image;

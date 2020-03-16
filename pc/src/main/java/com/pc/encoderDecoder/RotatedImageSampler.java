@@ -4,7 +4,10 @@ public class RotatedImageSampler extends StdImageSampler {
 	
 	int rotationCounterClockwise = 0;//by degrees
 	
-	public int getPixel(int rowPixel, int colPixel) {
+	public int getPixel(double rowPixelD, double colPixelD) {
+		int rowPixel = (int) Math.floor(rowPixelD);
+		int colPixel = (int) Math.floor(colPixelD);
+
 		if (rotationCounterClockwise == 0)
 			return getPixelMatrix()[rowPixel][colPixel];
 		if (rotationCounterClockwise == 90)
