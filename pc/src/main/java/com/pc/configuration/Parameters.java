@@ -30,7 +30,7 @@ public class Parameters {
 	public static String encryptionMode = "AES/CBC/NoPadding";
 	public static int encodingColorLevels = 64;
 	public static int pixelsInModule = 10;
-	public static int modulesInMargin = 15;
+	public static int modulesInMargin = 4;
 
 //	static {
 //		InputStream inputStream = null;

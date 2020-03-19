@@ -32,7 +32,7 @@ public class DisplayDecoder {
 		Position pos = new Position(imageSampler.getModulesInMargin(), imageSampler.getModulesInMargin() + MODULES_IN_POS_DET_DIM);
 		imageSampler.setIV1(decodeData(imageSampler, Parameters.ivLength, pos, true));
 		imageSampler.setIV1Checksum(decodeData(imageSampler, CHECKSUM_LENGTH, pos, true));
-		int imageDataLength = FlowUtils.computeMaxEncodedLength(imageSampler.getModulesInDim());
+		int imageDataLength = FlowUtils.computeMaxEncodedLength(imageSampler.getModulesInDim(), imageSampler.getModulesInMargin());
 		imageSampler.setDecodedData(decodeData(imageSampler, imageDataLength, pos, false));
 		imageSampler.setIV2(decodeData(imageSampler, Parameters.ivLength, pos, true));
 		imageSampler.setIV2Checksum(decodeData(imageSampler, CHECKSUM_LENGTH, pos, true));
@@ -143,13 +143,13 @@ public class DisplayDecoder {
 		//int rowPixel = pos.rowModule * imageSampler.getModuleSize();
 		//int colPixel = pos.colModule * imageSampler.getModuleSize();
 		double rowPixel = (0.5 + pos.rowModule) * imageSampler.getModuleSize(); //  (imageSampler.getModuleSize() / 2) + (pos.rowModule * imageSampler.getModuleSize())
-		double colPixel = (1.5 + pos.colModule) * imageSampler.getModuleSize();
+		double colPixel = (0.5 + pos.colModule) * imageSampler.getModuleSize();
 		int currPixelSample = imageSampler.getPixel(rowPixel, colPixel);
 		int[] RGB = new int[3];
 
-		RGB[0] = (currPixelSample >>> 16) & 0xFF; //red
+		RGB[0] = (currPixelSample) & 0xFF; //red
 		RGB[1] = (currPixelSample >>> 8) & 0xFF; //green
-		RGB[2] = currPixelSample & 0xFF; //blue
+		RGB[2] = (currPixelSample >>> 16) & 0xFF; //blue
 
 		pos.colModule++;
 		imageSampler.checkForColumnEnd(pos);

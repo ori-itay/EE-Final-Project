@@ -58,19 +58,19 @@ public class FlowUtils {
         int dim = (int) Math.ceil(Math.sqrt(modulesForEncoding)) + 2*(MODULES_IN_POS_DET_DIM+Parameters.modulesInMargin); // initial guess
         int maxEncodedLength;
 
-        while(computeMaxEncodedLength(dim) > dataLength)
+        while(computeMaxEncodedLength(dim, Parameters.modulesInMargin) > dataLength)
             dim--;
-        while((maxEncodedLength=computeMaxEncodedLength(dim)) < dataLength)
+        while((maxEncodedLength=computeMaxEncodedLength(dim, Parameters.modulesInMargin)) < dataLength)
             dim++;
 
         MODULES_IN_ENCODED_IMAGE_DIM = dim;
         return maxEncodedLength;
     }
 
-    public static int computeMaxEncodedLength(int dim) {
+    public static int computeMaxEncodedLength(int dim, int effectiveModulesInMargin) {
         //metadata (i.e iv+checksum) is encoded "three times" - once in each channel (RGB)
         int maxBitsToEncode = ENCODING_BIT_GROUP_SIZE*(dim*dim
-                - 4*Parameters.modulesInMargin*(dim -Parameters.modulesInMargin)
+                - 4*effectiveModulesInMargin*(dim -effectiveModulesInMargin)
                 - MODULES_IN_POS_DET_DIM*MODULES_IN_POS_DET_DIM*NUM_OF_POSITION_DETECTORS)
                 -2*CHANNELS*BITS_IN_BYTE*(Parameters.ivLength+CHECKSUM_LENGTH);
 

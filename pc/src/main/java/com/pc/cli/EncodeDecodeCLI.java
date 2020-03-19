@@ -111,7 +111,7 @@ public class EncodeDecodeCLI {
 			return null;
 		}
 		byte[] rawData = FlowUtils.convertToBytesUsingGetRGB(image) ;
-		IvParameterSpec iv = Encryptor.generateIv(Parameters.ivLength);
+		IvParameterSpec iv = new IvParameterSpec(new byte[] {1,2,3,4,5,6,7,8,9,10,11,12});//Encryptor.generateIv(Parameters.ivLength);
 		byte[] checksumIV = Checksum.computeChecksum(iv.getIV());
 		SecretKeySpec skeySpec = new SecretKeySpec(const_key, Parameters.encryptionAlgorithm);
 		byte[] generatedXorBytes = EncryptorDecryptor.generateXorBytes(skeySpec, iv);
