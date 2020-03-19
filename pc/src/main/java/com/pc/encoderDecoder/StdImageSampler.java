@@ -115,32 +115,32 @@ public class StdImageSampler implements ImageSamplerInf{
 	
 
 	public void checkForColumnEnd(Position pos) {
-		imageCheckForColumnEnd(pos, modulesInDim);
+		imageCheckForColumnEnd(pos, modulesInDim, this.modulesInMargin);
 	}
-	
-	static void imageCheckForColumnEnd(Position pos, int imageDim) {
+
+	static void imageCheckForColumnEnd(Position pos, int imageDim, int effectiveModulesInMargin) {
 		
-		if(pos.colModule == (imageDim - Parameters.modulesInMargin - MODULES_IN_POS_DET_DIM) ) {
+		if(pos.colModule == (imageDim - effectiveModulesInMargin - MODULES_IN_POS_DET_DIM) ) {
 			//end of row (last column) in rows of top position detectors (except for the last top one)
-			if(pos.rowModule + 1 < Parameters.modulesInMargin + MODULES_IN_POS_DET_DIM) {
+			if(pos.rowModule + 1 < effectiveModulesInMargin + MODULES_IN_POS_DET_DIM) {
 				//next row is in row of position detector
-				pos.colModule = (Parameters.modulesInMargin + MODULES_IN_POS_DET_DIM);
+				pos.colModule = (effectiveModulesInMargin + MODULES_IN_POS_DET_DIM);
 				pos.rowModule++;
 			}
-			else if (pos.rowModule + 1 == (Parameters.modulesInMargin + MODULES_IN_POS_DET_DIM) ) {
+			else if (pos.rowModule + 1 == (effectiveModulesInMargin + MODULES_IN_POS_DET_DIM) ) {
 				//end of column when in last row of top position detector
-				pos.colModule = Parameters.modulesInMargin;
+				pos.colModule = effectiveModulesInMargin;
 				pos.rowModule++;
 			}
 		}
 		//end of row (last column) in rows without position detector on right
-		else if(pos.colModule == (imageDim - Parameters.modulesInMargin) ) {
+		else if(pos.colModule == (imageDim - effectiveModulesInMargin) ) {
 			//next row is with position detector
-			if(pos.rowModule + 1 >= (imageDim - Parameters.modulesInMargin - MODULES_IN_POS_DET_DIM)) 
-				pos.colModule = Parameters.modulesInMargin + MODULES_IN_POS_DET_DIM;
+			if(pos.rowModule + 1 >= (imageDim - effectiveModulesInMargin - MODULES_IN_POS_DET_DIM))
+				pos.colModule = effectiveModulesInMargin + MODULES_IN_POS_DET_DIM;
 			//next row is without position detector
 			else 
-				pos.colModule = Parameters.modulesInMargin;
+				pos.colModule = effectiveModulesInMargin;
 			pos.rowModule++;
 		}
 

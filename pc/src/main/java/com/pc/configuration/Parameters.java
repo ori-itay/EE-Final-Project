@@ -29,8 +29,8 @@ public class Parameters {
 	public static String encryptionAlgorithm = "AES";
 	public static String encryptionMode = "AES/CBC/NoPadding";
 	public static int encodingColorLevels = 64;
-	public static int pixelsInModule = 5;
-	public static int modulesInMargin = 2;
+	public static int pixelsInModule = 10;
+	public static int modulesInMargin = 15;
 
 //	static {
 //		InputStream inputStream = null;

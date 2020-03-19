@@ -24,6 +24,8 @@ public class DisplayEncoder {
 		Position pos = new Position(Parameters.modulesInMargin, Parameters.modulesInMargin + MODULES_IN_POS_DET_DIM);
 		encodeData(g, IV, pos, true); //encode IV first time
 		encodeData(g, ivchecksum, pos, true); //encode IV checksum first time
+		System.out.println(Arrays.toString(IV));
+		System.out.println(Arrays.toString(ivchecksum));
 		encodeData(g, binaryData, pos, false); 	//encode actual picture data
 		encodeData(g, IV, pos, true); //encode IV second time
 		encodeData(g, ivchecksum, pos, true); //encode IV checksum second time
@@ -119,7 +121,7 @@ public class DisplayEncoder {
 		g.fillRect(pos.colModule * Parameters.pixelsInModule, pos.rowModule * Parameters.pixelsInModule,
                 Parameters.pixelsInModule, Parameters.pixelsInModule);
 		pos.colModule++;
-		RotatedImageSampler.imageCheckForColumnEnd(pos, MODULES_IN_ENCODED_IMAGE_DIM);
+		RotatedImageSampler.imageCheckForColumnEnd(pos, MODULES_IN_ENCODED_IMAGE_DIM, Parameters.modulesInMargin);
 	}
 
 

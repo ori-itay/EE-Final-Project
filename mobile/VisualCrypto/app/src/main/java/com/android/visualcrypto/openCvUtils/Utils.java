@@ -24,7 +24,7 @@ public class Utils {
 
     // DistortedImage * H = UnDistortedImage
     public static double getModuleStride(double minPixelStride, Mat inverseH, Mat capturedImg) {
-        double startingPoint = minPixelStride / 2.0;
+        double startingPoint = 0;
         double undistortedLocX = startingPoint;
         double undistortedLocY = startingPoint;
 

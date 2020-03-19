@@ -24,7 +24,6 @@ import androidx.core.content.FileProvider;
 
 import com.android.visualcrypto.cameraUtils.CameraRotationFix;
 import com.android.visualcrypto.flow.Flow;
-import com.android.visualcrypto.openCvUtils.DistortedImageSampler;
 import com.google.zxing.NotFoundException;
 import com.pc.configuration.Constants;
 import com.pc.encoderDecoder.RotatedImageSampler;
@@ -32,9 +31,6 @@ import com.pc.encoderDecoder.RotatedImageSampler;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
 import org.opencv.core.Mat;
-import org.opencv.core.MatOfPoint2f;
-import org.opencv.imgcodecs.Imgcodecs;
-import org.opencv.utils.Converters;
 
 import java.io.File;
 import java.io.IOException;
@@ -215,7 +211,7 @@ public class MainActivity extends AppCompatActivity {
 //                return;
 //            }
 
-            InputStream encodedStream = getAssets().open( "samplerTest.jpg");
+            InputStream encodedStream = getAssets().open( "encodedImage.jpg");
             // TODO: handle ENCODED STREAM FAILURE CHECK
             Bitmap encodedBitmap = BitmapFactory.decodeStream(encodedStream);
             Mat capturedImage = new Mat();

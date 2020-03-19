@@ -5,7 +5,6 @@ import android.util.Log;
 import com.pc.encoderDecoder.StdImageSampler;
 
 import org.opencv.calib3d.Calib3d;
-import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint2f;
