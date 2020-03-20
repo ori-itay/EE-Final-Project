@@ -13,7 +13,7 @@ public class DisplayEncoder {
 	public static BufferedImage encodeBytes(byte[] binaryData, byte[] IV, byte[] ivchecksum) throws Exception {
 		//allocate space including white margins
 		BufferedImage image = new BufferedImage(MODULES_IN_ENCODED_IMAGE_DIM*Parameters.pixelsInModule,
-				MODULES_IN_ENCODED_IMAGE_DIM*Parameters.pixelsInModule, BufferedImage.TYPE_INT_ARGB);
+				MODULES_IN_ENCODED_IMAGE_DIM*Parameters.pixelsInModule, BufferedImage.TYPE_INT_RGB);
 		// Clear the background with white
 		Graphics2D g = (Graphics2D) image.getGraphics();
 		g.setBackground(Color.WHITE);
