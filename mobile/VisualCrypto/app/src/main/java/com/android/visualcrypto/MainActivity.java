@@ -33,6 +33,7 @@ import org.opencv.android.Utils;
 import org.opencv.core.Mat;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
@@ -61,7 +62,7 @@ public class MainActivity extends AppCompatActivity {
         }
         setContentView(R.layout.activity_main);
         getPermissions(); // gets camera and write permissions
-        //showEncodedImage();
+        showEncodedImage();
         Button captureImageBTN = this.findViewById(R.id.captureImageBTN);
         captureImageBTN.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -153,16 +154,16 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showEncodedImage() {
-        String path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/encodedImage.png";
-        //File imgFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "encodedImage.png");
-//        if (!imgFile.exists()) {
-//            showAlert("Couldn't find 'encodedImage.png' in Downloads");
-//            return;
-//        }
-        Bitmap bp = BitmapFactory.decodeFile(path);
-        ImageView iView = findViewById(R.id.decodedImgId);
-        iView.setImageBitmap(bp);
+        InputStream encodedStream;
+        try {
+            encodedStream = getAssets().open( "encodedimage.jpg");
+            Bitmap encodedBitmap = BitmapFactory.decodeStream(encodedStream);
 
+            ImageView iView = findViewById(R.id.decodedImgId);
+            iView.setImageBitmap(encodedBitmap);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void test(View v) throws IOException, NotFoundException {
@@ -201,38 +202,29 @@ public class MainActivity extends AppCompatActivity {
         try {
             long startTime = System.nanoTime();
 
-            //File imgFile;
-            //RotatedImageSampler rotatedImageSampler;
-            //int[][] pixelArr;
-            /* Display decoded image */
-//            imgFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "encodedImage.png");
-//            if (!imgFile.exists()) {
-//                showAlert("Couldn't find 'encodedImage.png' in Downloads");
-//                return;
-//            }
-
-            InputStream encodedStream = getAssets().open( "encodedImage.jpg");
-            // TODO: handle ENCODED STREAM FAILURE CHECK
+            InputStream encodedStream = getAssets().open( "encodedimage.jpg");
             Bitmap encodedBitmap = BitmapFactory.decodeStream(encodedStream);
+
             Mat capturedImage = new Mat();
             Utils.bitmapToMat(encodedBitmap, capturedImage);
-            Bitmap resBitmap = Flow.executeAndroidFlow(capturedImage, encodedBitmap);
+
+            Bitmap resBitmap = Flow.executeAndroidFlow(capturedImage, encodedBitmap, this);
             if (resBitmap == null) {
-                showAlert("Error: resBitmap returned null");
+                //showAlert("Error: resBitmap returned null");
                 return;
             }
 
             /* display the image */
             ImageView iView = findViewById(R.id.decodedImgId);
-            Log.d("iviewparameters", String.format("width: %d, height: %d", iView.getWidth(), iView.getHeight()));
             iView.setImageBitmap(Bitmap.createScaledBitmap(resBitmap, iView.getWidth(), iView.getHeight(), false));
+            Log.d("iviewparameters", String.format("width: %d, height: %d", iView.getWidth(), iView.getHeight()));
 
             Log.d("performance", String.format("took: %s", System.nanoTime() - startTime));
 
             /* display configuration information */
             //showConfigurationInfo(rotatedImageSampler, height, width);
         } catch (InvalidAlgorithmParameterException | NoSuchAlgorithmException | InvalidKeyException | NoSuchPaddingException | IOException e) {
-            showAlert("Exception in decodeImage: " + e.getCause());
+            showAlert("Exception in decodeImage: " + e);
             Log.e("decodeImage", "decodeFile exception", e);
         }
     }
@@ -248,7 +240,7 @@ public class MainActivity extends AppCompatActivity {
         imageWidthText.setText("Image Width: " + width);
     }
 
-    private void showAlert(String msg) {
+    public void showAlert(String msg) {
         AlertDialog alertDialog = new AlertDialog.Builder(MainActivity.this).create();
         alertDialog.setTitle("Alert");
         alertDialog.setMessage(msg);

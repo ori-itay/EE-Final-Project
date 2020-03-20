@@ -1,5 +1,6 @@
 package com.android.visualcrypto.flow;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 
 import com.android.visualcrypto.MainActivity;
@@ -22,11 +23,15 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
-public class Flow {
+public class Flow{
 
-    public static Bitmap executeAndroidFlow(Mat capturedImg, Bitmap encodedBitmap) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidAlgorithmParameterException, InvalidKeyException {
-        DistortedImageSampler distortedImageSampler = new DistortedImageSampler(capturedImg);
-        //RotatedImageSampler rotatedImageSampler;
+    public static Bitmap executeAndroidFlow(Mat capturedImg, Bitmap encodedBitmap, Context context) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidAlgorithmParameterException, InvalidKeyException {
+        DistortedImageSampler distortedImageSampler = new DistortedImageSampler(capturedImg, context);
+
+        if (distortedImageSampler.initParameters() != 0) {
+            return null;
+        }
+
         int[][] pixelArr;
 
         pixelArr = MainActivity.get2DPixelArray(encodedBitmap);
@@ -37,7 +42,7 @@ public class Flow {
         /* get iv */
         byte[] iv = IvFetcher.getIV(distortedImageSampler);
         if (iv == null) {
-            //showAlert("Cannot decode the image: IV checksums are wrong!");
+            ((MainActivity) context).showAlert("Cannot decode the image: IV checksums are wrong!");
             return null;
         }
         IvParameterSpec ivSpec = new IvParameterSpec(iv);
@@ -59,10 +64,10 @@ public class Flow {
         int height = dimensionsFetcher.getHeight();
 
         if (width == 0 || height == 0) {
-            //showAlert("Cannot decode the image: Dimensions checksum are wrong!");
+            ((MainActivity) context).showAlert("Cannot decode the image: Dimensions checksum are wrong!");
             return null;
         } else if (width > Constants.MAX_IMAGE_DIMENSION_SIZE || height > Constants.MAX_IMAGE_DIMENSION_SIZE) {
-            //showAlert("Error: image dimension larger than " + Constants.MAX_IMAGE_DIMENSION_SIZE);
+            ((MainActivity) context).showAlert("Error: image dimension larger than " + Constants.MAX_IMAGE_DIMENSION_SIZE);
             return null;
         }
 
