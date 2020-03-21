@@ -24,6 +24,7 @@ import androidx.core.content.FileProvider;
 
 import com.android.visualcrypto.cameraUtils.CameraRotationFix;
 import com.android.visualcrypto.flow.Flow;
+import com.android.visualcrypto.openCvUtils.DistortedImageSampler;
 import com.google.zxing.NotFoundException;
 import com.pc.configuration.Constants;
 import com.pc.encoderDecoder.RotatedImageSampler;
@@ -33,7 +34,6 @@ import org.opencv.android.Utils;
 import org.opencv.core.Mat;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
@@ -156,7 +156,7 @@ public class MainActivity extends AppCompatActivity {
     private void showEncodedImage() {
         InputStream encodedStream;
         try {
-            encodedStream = getAssets().open( "encodedimage.jpg");
+            encodedStream = getAssets().open( "encodedImage.jpg");
             Bitmap encodedBitmap = BitmapFactory.decodeStream(encodedStream);
 
             ImageView iView = findViewById(R.id.decodedImgId);
@@ -167,9 +167,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void test(View v) throws IOException, NotFoundException {
+
         InputStream is = this.getAssets().open("realQR.jpg");
         Bitmap b = BitmapFactory.decodeStream(is);
 
+        Mat capturedImage = new Mat();
+        Utils.bitmapToMat(b, capturedImage);
+        DistortedImageSampler sampler = new DistortedImageSampler(capturedImage, this);
+        boolean found = sampler.detect(capturedImage);
         int[] intArray = new int[b.getWidth()*b.getHeight()];
         //copy pixel data from the Bitmap into the 'intArray' array
         b.getPixels(intArray, 0, b.getWidth(), 0, 0, b.getWidth(), b.getHeight());
@@ -202,7 +207,7 @@ public class MainActivity extends AppCompatActivity {
         try {
             long startTime = System.nanoTime();
 
-            InputStream encodedStream = getAssets().open( "encodedimage.jpg");
+            InputStream encodedStream = getAssets().open( "capturedTest.jpeg");
             Bitmap encodedBitmap = BitmapFactory.decodeStream(encodedStream);
 
             Mat capturedImage = new Mat();

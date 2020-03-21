@@ -7,7 +7,7 @@ import org.opencv.core.Point;
 
 public class Utils {
 
-    private static double calcDistance(Point a, Point b) {
+    public static double calcDistance(Point a, Point b) {
         double distance;
 
         double temp = Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2)*1.0;
