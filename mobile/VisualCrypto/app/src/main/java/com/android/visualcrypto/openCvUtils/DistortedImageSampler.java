@@ -64,7 +64,7 @@ public class DistortedImageSampler extends StdImageSampler {
         double minPixelStride = 1 / getMaxDistance(pts[0], pts[1], pts[2], pts[3]);
 
         this.setModuleSize(getModuleStride(minPixelStride, inverseH, DistortedImageSampler.distortedImage));
-        int effectiveModulesInDim = (int) Math.round(1.0 / this.getModuleSize()); //TODO: double test = this.getModuleSize() / minPixelStride;
+        int effectiveModulesInDim = (int) Math.round(1.0 / this.getModuleSize());
         this.setModulesInDim(effectiveModulesInDim);
 
         return 0;
@@ -78,12 +78,14 @@ public class DistortedImageSampler extends StdImageSampler {
         unDistortedImageMatCord.put(0,2, 1);
         double[] channels = getPixelChannels(unDistortedImageMatCord, DistortedImageSampler.inverseH, DistortedImageSampler.distortedImage);
         double[] threshholdedChannels = thresholdChannels(channels);
-        int pixelValue = (int) (Math.round(channels[0])) | (int) (Math.round(channels[1]) << 8) | (int) (Math.round(channels[2]) << 16);
+        int pixelValue = (int) (Math.round(threshholdedChannels[0])) |
+                (int) (Math.round(threshholdedChannels[1]) << 8) |
+                (int) (Math.round(threshholdedChannels[2]) << 16);
         return pixelValue;
     }
 
     private double[] thresholdChannels(double[] channels) {
-        double thChannels[] = new double[3];
+        double[] thChannels = new double[3];
         int q;
         int thLevel = 255 / Parameters.encodingColorLevels;
         for (int i = 0; i<channels.length; i++){

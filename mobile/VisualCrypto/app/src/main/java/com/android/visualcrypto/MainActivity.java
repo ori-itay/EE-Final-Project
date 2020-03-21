@@ -33,6 +33,7 @@ import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
 import org.opencv.core.Mat;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -179,6 +180,35 @@ public class MainActivity extends AppCompatActivity {
         //copy pixel data from the Bitmap into the 'intArray' array
         b.getPixels(intArray, 0, b.getWidth(), 0, 0, b.getWidth(), b.getHeight());
 
+
+        /*zbar - scanner returns 0....
+                 //implementation 'me.dm7.barcodescanner:zbar:1.8.4'
+		static {
+            System.loadLibrary("iconv");
+        }
+        InputStream encodedStream;
+        try {
+            encodedStream = getAssets().open( "realQR.jpg");
+            Bitmap b = BitmapFactory.decodeStream(encodedStream);
+            Image qr = new Image(b.getWidth(), b.getHeight(), "Y800");
+            byte[] bytes = convertBitmapToByteArray(b);
+            qr.setData(bytes);
+            ImageScanner scanner = new ImageScanner();
+            scanner.setConfig(0, Config.ENABLE, 0);
+            scanner.setConfig(Symbol.QRCODE, Config.ENABLE, 1);
+            int res = scanner.scanImage(qr);
+            if (res!=0) {
+                SymbolSet syms = scanner.getResults();
+                for (Symbol sym: syms) {
+                    int a = 4;
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        * */
+
         /*zxing code - maybe for next stage
         LuminanceSource source = new RGBLuminanceSource(b.getWidth(), b.getHeight(),intArray);
         BinaryBitmap bitmap = new BinaryBitmap(new HybridBinarizer(source));
@@ -207,7 +237,7 @@ public class MainActivity extends AppCompatActivity {
         try {
             long startTime = System.nanoTime();
 
-            InputStream encodedStream = getAssets().open( "capturedTest.jpeg");
+            InputStream encodedStream = getAssets().open( "capturedTest.jpg");
             Bitmap encodedBitmap = BitmapFactory.decodeStream(encodedStream);
 
             Mat capturedImage = new Mat();
@@ -215,7 +245,6 @@ public class MainActivity extends AppCompatActivity {
 
             Bitmap resBitmap = Flow.executeAndroidFlow(capturedImage, encodedBitmap, this);
             if (resBitmap == null) {
-                //showAlert("Error: resBitmap returned null");
                 return;
             }
 
@@ -270,11 +299,8 @@ public class MainActivity extends AppCompatActivity {
 
         for (int row = 0; row < width; row++) {
             if (height >= 0) {
-                System.arraycopy(pixels, row * width, twoDimPixels[row], 0, height); // TODO: debug correctness!!
+                System.arraycopy(pixels, row * width, twoDimPixels[row], 0, height);
             }
-//            for (int col = 0 ; col < height; col++){
-//                twoDimPixels[row][col] = pixels[row * width + col];
-//            }
         }
         return twoDimPixels;
     }
@@ -319,21 +345,19 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
-    // TODO: remove me and learn how to call findViewByID from another class!!!!
-//    public void homographicTransform(MatOfPoint2f coordinates) {
-//        //Mat capturedImg = Imgcodecs.imread(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/encodedImage.jpg");
-//
-//
-//        //Imgproc.warpPerspective(img1, img1_warp, H, new Size(1,1));
-//       // Imgcodecs.imwrite(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/homographicImage.png", img1_warp);
-//
-//    }
 
 
     private Bitmap convertMatToBitmap(Mat mat) {
         Bitmap bp = Bitmap.createBitmap(mat.cols(), mat.rows(), Bitmap.Config.ARGB_8888);
         Utils.matToBitmap(mat, bp);
         return bp;
+    }
+
+    private byte[] convertBitmapToByteArray(Bitmap bp) {
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        bp.compress(Bitmap.CompressFormat.JPEG, 100, stream);
+        byte[] byteArray = stream.toByteArray();
+        return byteArray;
     }
 
 }
