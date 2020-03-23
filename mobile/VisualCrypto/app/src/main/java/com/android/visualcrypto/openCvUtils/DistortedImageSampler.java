@@ -1,6 +1,7 @@
 package com.android.visualcrypto.openCvUtils;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.util.Log;
 
 import com.android.visualcrypto.MainActivity;
@@ -15,6 +16,7 @@ import org.opencv.core.Point;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.objdetect.QRCodeDetector;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.android.visualcrypto.openCvUtils.Utils.getMaxDistance;
@@ -30,7 +32,7 @@ public class DistortedImageSampler extends StdImageSampler {
     private Context context;
 
     MatOfPoint2f possibleCenters = new MatOfPoint2f();
-    List<Float> estimatedModuleSize;
+    List<Float> estimatedModuleSize = new ArrayList<>();
 
 
     public DistortedImageSampler(Mat distortedImage, Context context) {
@@ -50,7 +52,8 @@ public class DistortedImageSampler extends StdImageSampler {
             ((MainActivity) this.context).showAlert("Couldn't detect QR position detectors");
             return 1;
         }
-        //MatOfPoint2f corners1 = new MatOfPoint2f(new Point(10,10), new Point(1170,10), new Point(1170,1170) ,new Point(10,1170));
+        corners1 = new MatOfPoint2f(new Point(100,605), new Point(135,3417) ,new Point(2930,3400), new Point(2925,618));
+        //corners1 = new MatOfPoint2f(new Point(10,10), new Point(1170,10), new Point(1170,1170) ,new Point(10,1170));
 //        MatOfPoint2f test = new MatOfPoint2f();
 //
 //        MatOfPoint2f corners1 = new MatOfPoint2f(new Point(1170,10), new Point(1170,1170), new Point(10,1170), new Point(10,10));
@@ -78,21 +81,20 @@ public class DistortedImageSampler extends StdImageSampler {
         unDistortedImageMatCord.put(0,2, 1);
         double[] channels = getPixelChannels(unDistortedImageMatCord, DistortedImageSampler.inverseH, DistortedImageSampler.distortedImage);
         double[] threshholdedChannels = thresholdChannels(channels);
-        int pixelValue = (int) (Math.round(threshholdedChannels[0])) |
-                (int) (Math.round(threshholdedChannels[1]) << 8) |
-                (int) (Math.round(threshholdedChannels[2]) << 16);
+        int pixelValue = (int) (Math.round(threshholdedChannels[0])) | (int) (Math.round(threshholdedChannels[1]) << 8) | (int) (Math.round(threshholdedChannels[2]) << 16);
         return pixelValue;
     }
 
     private double[] thresholdChannels(double[] channels) {
-        double[] thChannels = new double[3];
+        double threshholdedChannels[] = new double[3];
         int q;
         int thLevel = 255 / Parameters.encodingColorLevels;
-        for (int i = 0; i<channels.length; i++){
+        int colorStride = 255 / (Parameters.encodingColorLevels-1);
+        for (int i = 0; i<threshholdedChannels.length; i++){
             q = Math.floorDiv((int)Math.round(channels[i]), thLevel);
-            thChannels[i] = q*thLevel;
+            threshholdedChannels[i] = q*colorStride;
         }
-        return thChannels;
+        return threshholdedChannels;
     }
 
 
@@ -100,7 +102,17 @@ public class DistortedImageSampler extends StdImageSampler {
         Mat imgBW = new Mat();
         cvtColor(img, imgBW, Imgproc.COLOR_BGR2GRAY);
         adaptiveThreshold(imgBW, imgBW, 255, Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C , Imgproc.THRESH_BINARY, 51, 0);
-        return find(imgBW);
+        Bitmap bp = MainActivity.convertMatToBitmap(imgBW);
+        /*File f = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "out.png");
+        OutputStream os = new BufferedOutputStream(new FileOutputStream(f));
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, os);
+        os.close();*/
+        boolean found = find(imgBW);
+        double x3 = this.possibleCenters.toArray()[2].x +
+                (this.possibleCenters.toArray()[1].x - this.possibleCenters.toArray()[0].x);
+        double y3 = this.possibleCenters.toArray()[2].y +
+                (this.possibleCenters.toArray()[1].y - this.possibleCenters.toArray()[0].y);
+        return found;
     }
 
     private boolean find(Mat img) {
@@ -449,8 +461,8 @@ public class DistortedImageSampler extends StdImageSampler {
         return checkRatio(crossCheckStateCount)?center:Float.NaN;
     }
 
-    private float centerFromEnd(int[] stateCount, int col) {
-        return (float) 0.0;
+    private float centerFromEnd(int[] stateCount, int end) {
+        return (float)(end-stateCount[4]-stateCount[3])-(float)stateCount[2]/2.0f;
     }
 
     private boolean checkRatio(int[] stateCount) {

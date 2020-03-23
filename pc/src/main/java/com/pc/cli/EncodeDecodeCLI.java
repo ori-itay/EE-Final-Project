@@ -51,12 +51,12 @@ public class EncodeDecodeCLI {
     			
     			if(splitedCommand[0].toLowerCase().equals("encode")){
 					BufferedImage encodedImage = executeEncodingProccess(splitedCommand[1], const_key);
-    				ImageIO.write(encodedImage, "jpeg", new File(splitedCommand[2]));
+    				ImageIO.write(encodedImage, "png", new File(splitedCommand[2]));
     				System.out.println("Encoded data was written to "+ splitedCommand[2]);
     			}
 //    			else if(splitedCommand[0].toLowerCase().equals("decode")) {
 ////					BufferedImage decodedImage = executeDecodingProccess(splitedCommand[1], const_key);
-////					ImageIO.write(decodedImage, "jpg", new File(splitedCommand[2]));
+////					ImageIO.write(decodedImage, "png", new File(splitedCommand[2]));
 ////					System.out.println("Decoded image was written to "+ splitedCommand[2]);
 ////
 ////    			}
@@ -110,9 +110,7 @@ public class EncodeDecodeCLI {
 			System.out.println("Entered input filepath has error.\n");
 			return null;
 		}
-		BufferedImage newBufferedImage = new BufferedImage(image.getWidth(),
-				image.getHeight(), BufferedImage.TYPE_INT_RGB);
-		byte[] rawData = FlowUtils.convertToBytesUsingGetRGB(newBufferedImage) ;
+		byte[] rawData = FlowUtils.convertToBytesUsingGetRGB(image) ;
 		IvParameterSpec iv = new IvParameterSpec(new byte[] {1,2,3,4,5,6,7,8,9,10,11,12});//Encryptor.generateIv(Parameters.ivLength);
 		byte[] checksumIV = Checksum.computeChecksum(iv.getIV());
 		SecretKeySpec skeySpec = new SecretKeySpec(const_key, Parameters.encryptionAlgorithm);

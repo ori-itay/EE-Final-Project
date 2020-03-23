@@ -169,7 +169,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void test(View v) throws IOException, NotFoundException {
 
-        InputStream is = this.getAssets().open("realQR.jpg");
+        InputStream is = this.getAssets().open("rotatedQR.jpg");
         Bitmap b = BitmapFactory.decodeStream(is);
 
         Mat capturedImage = new Mat();
@@ -347,7 +347,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    private Bitmap convertMatToBitmap(Mat mat) {
+    public static Bitmap convertMatToBitmap(Mat mat) {
         Bitmap bp = Bitmap.createBitmap(mat.cols(), mat.rows(), Bitmap.Config.ARGB_8888);
         Utils.matToBitmap(mat, bp);
         return bp;
