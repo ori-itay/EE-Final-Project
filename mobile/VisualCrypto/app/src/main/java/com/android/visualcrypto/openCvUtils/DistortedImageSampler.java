@@ -32,7 +32,7 @@ public class DistortedImageSampler extends StdImageSampler {
     private Context context;
 
     MatOfPoint2f possibleCenters = new MatOfPoint2f();
-    List<Float> estimatedModuleSize = new ArrayList<>();
+    List<Double> estimatedModuleSize = new ArrayList<>();
 
 
     public DistortedImageSampler(Mat distortedImage, Context context) {
@@ -44,33 +44,51 @@ public class DistortedImageSampler extends StdImageSampler {
         this.setModulesInMargin(0);
 
 
-        QRCodeDetector detector = new QRCodeDetector();
-        MatOfPoint2f corners1 = new MatOfPoint2f();
-        boolean foundCorners = detector.detect(distortedImage, corners1);
+//        QRCodeDetector detector = new QRCodeDetector();
+//        MatOfPoint2f corners1 = new MatOfPoint2f();
+        //boolean foundCorners = detector.detect(distortedImage, corners1);
+        boolean foundCorners = this.detect(distortedImage);
         if (!foundCorners) {
             Log.d("DistortedImageSampler", "Couldn't detect QR position detectors");
             ((MainActivity) this.context).showAlert("Couldn't detect QR position detectors");
             return 1;
         }
-        corners1 = new MatOfPoint2f(new Point(100,605), new Point(135,3417) ,new Point(2930,3400), new Point(2925,618));
+        //corners1 = new MatOfPoint2f(new Point(100,605), new Point(135,3417) ,new Point(2930,3400), new Point(2925,618));
         //corners1 = new MatOfPoint2f(new Point(10,10), new Point(1170,10), new Point(1170,1170) ,new Point(10,1170));
 //        MatOfPoint2f test = new MatOfPoint2f();
 //
 //        MatOfPoint2f corners1 = new MatOfPoint2f(new Point(1170,10), new Point(1170,1170), new Point(10,1170), new Point(10,10));
         MatOfPoint2f corners2 = new MatOfPoint2f(new Point(0,0), new Point(1,0), new Point(1,1), new Point(0,1));
         Mat H;
-        H = Calib3d.findHomography(corners1, corners2);
+        H = Calib3d.findHomography(possibleCenters, corners2);
         Mat inverseH = H.inv();
 
         DistortedImageSampler.inverseH = inverseH;
-        Point[] pts = corners1.toArray();
-        double minPixelStride = 1 / getMaxDistance(pts[0], pts[1], pts[2], pts[3]);
+
+        Point[] pts = possibleCenters.toArray();
+        Point leftUpperCorner = getCornerFromCenter(pts[0]); //TODO: implement getCornerFromCenter
+        Point rightUpperCorner = getCornerFromCenter(pts[1]);
+        Point leftLowerCorner = getCornerFromCenter(pts[2]);
+        find fourth corner ;
+
+        double minPixelStride = 1 / getMaxDistance(leftUpperCorner, rightUpperCorner, leftLowerCorner, fourth corner);
+
+        //double minPixelStride = 1 / getMaxDistance(pts[0], pts[1], pts[2], pts[3]);
+
+        //double maxDistanceBetweenCenters = getMaxDistance(pts[0], pts[1], pts[2], pts[3]);
+        //int modulesBetweenCenters = (int) Math.round(maxDistanceBetweenCenters /  estimatedModuleSize.get(0));
+        // this.setModuleSize((double) 1 / modulesBetweenCenters );
 
         this.setModuleSize(getModuleStride(minPixelStride, inverseH, DistortedImageSampler.distortedImage));
         int effectiveModulesInDim = (int) Math.round(1.0 / this.getModuleSize());
         this.setModulesInDim(effectiveModulesInDim);
+        //this.setModulesInDim(modulesBetweenCenters );
 
         return 0;
+    }
+
+    private Point getCornerFromCenter(Point pt) {
+        return null;
     }
 
     @Override
@@ -112,6 +130,12 @@ public class DistortedImageSampler extends StdImageSampler {
                 (this.possibleCenters.toArray()[1].x - this.possibleCenters.toArray()[0].x);
         double y3 = this.possibleCenters.toArray()[2].y +
                 (this.possibleCenters.toArray()[1].y - this.possibleCenters.toArray()[0].y);
+        List<Point> temp = possibleCenters.toList();
+        List<Point> centers = new ArrayList<>();
+
+        centers.add(temp.get(0));centers.add(temp.get(1)); centers.add(new Point(x3, y3)); centers.add(temp.get(2));
+        //possibleCenters.push_back(new MatOfPoint2f(new Point(x3, y3)));
+        possibleCenters.fromList(centers);
         return found;
     }
 
@@ -228,7 +252,7 @@ public class DistortedImageSampler extends StdImageSampler {
 
 
         Point ptNew = new Point(centerCol, centerRow); // was: Point2f ptNew(centerCol, centerRow);
-        float newEstimatedModuleSize = stateCountTotal / 7.0f;
+        double newEstimatedModuleSize = stateCountTotal / 7.0D;
         boolean found = false;
         int idx = 0;
 

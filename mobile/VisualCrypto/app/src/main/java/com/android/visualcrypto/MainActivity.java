@@ -168,18 +168,19 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void test(View v) throws IOException, NotFoundException {
+//
+//        InputStream is = this.getAssets().open("realQR.jpg");
+//        Bitmap b = BitmapFactory.decodeStream(is);
+//
+//        Mat capturedImage = new Mat();
+//        Utils.bitmapToMat(b, capturedImage);
+//        DistortedImageSampler sampler = new DistortedImageSampler(capturedImage, this);
+//        boolean found = sampler.detect(capturedImage);
+//        int[] intArray = new int[b.getWidth()*b.getHeight()];
+//        //copy pixel data from the Bitmap into the 'intArray' array
+//        b.getPixels(intArray, 0, b.getWidth(), 0, 0, b.getWidth(), b.getHeight());
 
-        InputStream is = this.getAssets().open("rotatedQR.jpg");
-        Bitmap b = BitmapFactory.decodeStream(is);
-
-        Mat capturedImage = new Mat();
-        Utils.bitmapToMat(b, capturedImage);
-        DistortedImageSampler sampler = new DistortedImageSampler(capturedImage, this);
-        boolean found = sampler.detect(capturedImage);
-        int[] intArray = new int[b.getWidth()*b.getHeight()];
-        //copy pixel data from the Bitmap into the 'intArray' array
-        b.getPixels(intArray, 0, b.getWidth(), 0, 0, b.getWidth(), b.getHeight());
-
+        //Flow.executeAndroidFlow(capturedImage, )
 
         /*zbar - scanner returns 0....
                  //implementation 'me.dm7.barcodescanner:zbar:1.8.4'
@@ -237,7 +238,7 @@ public class MainActivity extends AppCompatActivity {
         try {
             long startTime = System.nanoTime();
 
-            InputStream encodedStream = getAssets().open( "capturedTest.jpg");
+            InputStream encodedStream = getAssets().open( "newDetector.jpg");
             Bitmap encodedBitmap = BitmapFactory.decodeStream(encodedStream);
 
             Mat capturedImage = new Mat();

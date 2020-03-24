@@ -65,9 +65,9 @@ public class Utils {
         double x = distortedImageMatCord.get(0,0)[0];
         double y = distortedImageMatCord.get(1,0)[0];
         double z = distortedImageMatCord.get(2,0)[0];
-        x = (double) x / z;
-        y = (double) y / z;
-        z = (double) z / z;
+        x = x / z;
+        y = y / z;
+        z = z / z;
 
         int indexRow = (int) (Math.round(x));
         int indexCol = (int) (Math.round(y));
