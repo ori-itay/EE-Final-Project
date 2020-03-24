@@ -9,6 +9,7 @@ import com.pc.configuration.Parameters;
 import com.pc.encoderDecoder.StdImageSampler;
 
 import org.opencv.calib3d.Calib3d;
+import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint2f;
@@ -66,9 +67,9 @@ public class DistortedImageSampler extends StdImageSampler {
         DistortedImageSampler.inverseH = inverseH;
 
         Point[] pts = possibleCenters.toArray();
-        Point leftUpperCorner = getCornerFromCenter(pts[0]); //TODO: implement getCornerFromCenter
-        Point rightUpperCorner = getCornerFromCenter(pts[1]);
-        Point leftLowerCorner = getCornerFromCenter(pts[2]);
+        Point leftUpperCorner = getCornerFromCenter(pts[0], inverseH, SOMESTRIDE,true,true); //TODO: implement getCornerFromCenter
+        Point rightUpperCorner = getCornerFromCenter(pts[1], inverseH, SOMESTRIDE, false, true);
+        Point leftLowerCorner = getCornerFromCenter(pts[2], inverseH, SOMESTRIDE,true, false);
         find fourth corner ;
 
         double minPixelStride = 1 / getMaxDistance(leftUpperCorner, rightUpperCorner, leftLowerCorner, fourth corner);
@@ -87,8 +88,34 @@ public class DistortedImageSampler extends StdImageSampler {
         return 0;
     }
 
-    private Point getCornerFromCenter(Point pt) {
-        return null;
+    private Point getCornerFromCenter(Point pt, Mat inverseH, double stride, boolean left, boolean upper) {
+        Mat unDistortedImageMatCord = new Mat(1, 3, CvType.CV_64F);
+        unDistortedImageMatCord.put(0,2, 1);
+        if (left) {
+            unDistortedImageMatCord.put(0,0, -3.5*stride);
+        } else {
+            unDistortedImageMatCord.put(0,0, 3.5*stride);
+        }
+
+        if (upper) {
+            unDistortedImageMatCord.put(0,1, -3.5*stride);
+        } else {
+            unDistortedImageMatCord.put(0,1, 3.5*stride);
+        }
+
+        Mat distortedImageMatCord = new Mat();
+        Core.gemm(inverseH, unDistortedImageMatCord.t() , 1.0, new Mat(), 0, distortedImageMatCord, 0);
+        double x = distortedImageMatCord.get(0,0)[0];
+        double y = distortedImageMatCord.get(1,0)[0];
+        double z = distortedImageMatCord.get(2,0)[0];
+        x = x / z;
+        y = y / z;
+        z = z / z;
+
+        int indexRow = (int) (Math.round(x));
+        int indexCol = (int) (Math.round(y));
+
+        return new Point(indexRow, indexCol);
     }
 
     @Override
