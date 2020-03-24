@@ -25,7 +25,7 @@ import androidx.core.content.FileProvider;
 import com.android.visualcrypto.cameraUtils.CameraRotationFix;
 import com.android.visualcrypto.flow.Flow;
 import com.android.visualcrypto.openCvUtils.DistortedImageSampler;
-import com.google.zxing.NotFoundException;
+//import com.google.zxing.NotFoundException;
 import com.pc.configuration.Constants;
 import com.pc.encoderDecoder.RotatedImageSampler;
 
@@ -167,7 +167,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void test(View v) throws IOException, NotFoundException {
+    public void test(View v) throws IOException {
 //
 //        InputStream is = this.getAssets().open("realQR.jpg");
 //        Bitmap b = BitmapFactory.decodeStream(is);
@@ -238,7 +238,7 @@ public class MainActivity extends AppCompatActivity {
         try {
             long startTime = System.nanoTime();
 
-            InputStream encodedStream = getAssets().open( "newDetector.jpg");
+            InputStream encodedStream = getAssets().open( "boof_200_200_1.jpg");
             Bitmap encodedBitmap = BitmapFactory.decodeStream(encodedStream);
 
             Mat capturedImage = new Mat();

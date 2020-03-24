@@ -26,7 +26,7 @@ import javax.crypto.spec.SecretKeySpec;
 public class Flow{
 
     public static Bitmap executeAndroidFlow(Mat capturedImg, Bitmap encodedBitmap, Context context) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidAlgorithmParameterException, InvalidKeyException {
-        DistortedImageSampler distortedImageSampler = new DistortedImageSampler(capturedImg, context);
+        DistortedImageSampler distortedImageSampler = new DistortedImageSampler(capturedImg, encodedBitmap, context);
 
         if (distortedImageSampler.initParameters() != 0) {
             return null;

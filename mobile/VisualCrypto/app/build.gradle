@@ -20,6 +20,15 @@ android {
             debuggable true
         }
     }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+configurations {
+    all*.exclude group: "xmlpull", module: "xmlpull"
+    all*.exclude group: "org.apache.commons", module: "commons-compress"
+    all*.exclude group: "com.thoughtworks.xstream", module: "commons-compress"
 }
 
 dependencies {
@@ -36,5 +45,7 @@ dependencies {
     // Optional -- Hamcrest library
     androidTestImplementation 'org.hamcrest:hamcrest-library:1.3'
 	implementation 'com.journeyapps:zxing-android-embedded:3.0.2@aar'
-    implementation 'com.google.zxing:core:3.2.0'
+    //implementation 'com.google.zxing:core:3.2.0'
+    implementation 'org.boofcv:boofcv-core:0.35'
+    implementation 'org.boofcv:boofcv-android:0.35'
 }
