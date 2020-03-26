@@ -75,12 +75,12 @@ public class DistortedImageSampler extends StdImageSampler {
         List<PositionPatternNode> pointsQueue = detector.getDetectPositionPatterns().getPositionPatterns().toList();
         if (pointsQueue.size() == 3) {
             //pointsQueue.get(0).
-            //Point2D_F64 boofPt0 = pointsQueue.get(0).square.get(3); // PT0         PT1
-            Point2D_F64 boofPt0 = pointsQueue.get(0).square.get(2);
-            //Point2D_F64 boofPt1 = pointsQueue.get(1).square.get(0); //PT3          PT2
-            Point2D_F64 boofPt1 = pointsQueue.get(1).square.get(3);
-            //Point2D_F64 boofPt3 = pointsQueue.get(2).square.get(2);
-            Point2D_F64 boofPt3 = pointsQueue.get(2).square.get(1);
+            Point2D_F64 boofPt0 = pointsQueue.get(0).square.get(3); // PT0         PT1
+            //Point2D_F64 boofPt0 = pointsQueue.get(0).square.get(2);
+            Point2D_F64 boofPt1 = pointsQueue.get(1).square.get(0); //PT3          PT2
+            //Point2D_F64 boofPt1 = pointsQueue.get(1).square.get(3);
+            Point2D_F64 boofPt3 = pointsQueue.get(2).square.get(2);
+            //Point2D_F64 boofPt3 = pointsQueue.get(2).square.get(1);
 
             pts[0] = new Point(boofPt0.x, boofPt0.y);
             pts[1] = new Point(boofPt1.x, boofPt1.y);

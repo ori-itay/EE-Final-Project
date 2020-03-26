@@ -239,8 +239,8 @@ public class MainActivity extends AppCompatActivity {
         try {
             long startTime = System.nanoTime();
 
-            InputStream encodedStream = getAssets().open( "TEMP_20200326_104823_5772294774834804994.jpg");
-            File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) +"/TEMP_20200326_104823_5772294774834804994.jpg");
+            InputStream encodedStream = getAssets().open( "captured50_50_2levels.jpg");
+            File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) +"/captured50_50_2levels.jpg");
 
             Bitmap encodedBitmap = BitmapFactory.decodeStream(encodedStream);
             Bitmap rotatedBitmap = CameraRotationFix.fixRotation(encodedBitmap, file.getAbsolutePath());

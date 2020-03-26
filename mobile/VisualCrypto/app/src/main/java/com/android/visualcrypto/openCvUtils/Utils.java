@@ -35,6 +35,7 @@ public class Utils {
         boolean firstBlackFound = false;
         double undistortedModuleDimension = 0.0;
 
+        //int BLACK_THRESHOLD = 163;
         int BLACK_THRESHOLD = 80;
 
         while(undistortedLocX < 1 && undistortedLocY < 1){
@@ -71,7 +72,7 @@ public class Utils {
 
         int indexRow = (int) (Math.round(x));
         int indexCol = (int) (Math.round(y));
-        double[] channels = capturedImg.get(indexRow, indexCol);
+        double[] channels = capturedImg.get(indexCol, indexRow);
         return channels;
     }
 }
