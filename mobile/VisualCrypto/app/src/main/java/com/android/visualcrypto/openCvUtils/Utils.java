@@ -35,7 +35,7 @@ public class Utils {
         boolean firstBlackFound = false;
         double undistortedModuleDimension = 0.0;
 
-        int BLACK_THRESHOLD = 127;
+        int BLACK_THRESHOLD = 80;
 
         while(undistortedLocX < 1 && undistortedLocY < 1){
             double[] channels = getPixelChannels(unDistortedImageMatCord, inverseH,  capturedImg);

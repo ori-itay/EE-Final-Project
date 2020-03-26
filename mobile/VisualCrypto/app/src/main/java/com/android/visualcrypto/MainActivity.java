@@ -117,7 +117,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
-
+    Bitmap rotatedBp;
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -137,6 +137,7 @@ public class MainActivity extends AppCompatActivity {
                     Bitmap bmap = MediaStore.Images.Media.getBitmap(getContentResolver(), Uri.fromFile(file));
                     if (bmap != null) {
                         Bitmap rotatedBitmap = CameraRotationFix.fixRotation(bmap, file.getAbsolutePath());
+                        this.rotatedBp = rotatedBitmap;
                         ImageView iView = findViewById(R.id.decodedImgId);
                         iView.setImageBitmap(rotatedBitmap);
                     }
@@ -144,10 +145,10 @@ public class MainActivity extends AppCompatActivity {
                     e.printStackTrace();
                 } finally {
                     if (file.exists()) {
-                        boolean res = file.delete();
-                        if (!res) {
+                        //boolean res = file.delete();
+                        //if (!res) {
                             Log.d("Cleaning", "Unable to delete captured photo");
-                        }
+                       // }
                     }
                 }
             }
@@ -238,13 +239,16 @@ public class MainActivity extends AppCompatActivity {
         try {
             long startTime = System.nanoTime();
 
-            InputStream encodedStream = getAssets().open( "capturedEncoded1.jpeg");
+            InputStream encodedStream = getAssets().open( "TEMP_20200326_104823_5772294774834804994.jpg");
+            File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) +"/TEMP_20200326_104823_5772294774834804994.jpg");
+
             Bitmap encodedBitmap = BitmapFactory.decodeStream(encodedStream);
-
+            Bitmap rotatedBitmap = CameraRotationFix.fixRotation(encodedBitmap, file.getAbsolutePath());
             Mat capturedImage = new Mat();
-            Utils.bitmapToMat(encodedBitmap, capturedImage);
-
-            Bitmap resBitmap = Flow.executeAndroidFlow(capturedImage, encodedBitmap, this);
+            //Utils.bitmapToMat(encodedBitmap, capturedImage);
+            Utils.bitmapToMat(rotatedBitmap, capturedImage);
+            Bitmap resBitmap = Flow.executeAndroidFlow(capturedImage, rotatedBitmap, this);
+            //Bitmap resBitmap = Flow.executeAndroidFlow(capturedImage, encodedBitmap, this);
             if (resBitmap == null) {
                 return;
             }
@@ -258,7 +262,7 @@ public class MainActivity extends AppCompatActivity {
 
             /* display configuration information */
             //showConfigurationInfo(rotatedImageSampler, height, width);
-        } catch (InvalidAlgorithmParameterException | NoSuchAlgorithmException | InvalidKeyException | NoSuchPaddingException | IOException e) {
+        } catch (InvalidAlgorithmParameterException | NoSuchAlgorithmException | InvalidKeyException | NoSuchPaddingException  | IOException e) {
             showAlert("Exception in decodeImage: " + e);
             Log.e("decodeImage", "decodeFile exception", e);
         }
