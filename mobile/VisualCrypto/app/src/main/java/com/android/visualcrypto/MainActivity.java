@@ -24,8 +24,6 @@ import androidx.core.content.FileProvider;
 
 import com.android.visualcrypto.cameraUtils.CameraRotationFix;
 import com.android.visualcrypto.flow.Flow;
-import com.android.visualcrypto.openCvUtils.DistortedImageSampler;
-//import com.google.zxing.NotFoundException;
 import com.pc.configuration.Constants;
 import com.pc.encoderDecoder.RotatedImageSampler;
 
@@ -45,6 +43,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import javax.crypto.NoSuchPaddingException;
+
+//import com.google.zxing.NotFoundException;
 
 //import static com.android.visualcrypto.openCvUtils.ImageTransformer.homographicTransform;
 
@@ -238,7 +238,7 @@ public class MainActivity extends AppCompatActivity {
         try {
             long startTime = System.nanoTime();
 
-            InputStream encodedStream = getAssets().open( "boof_200_200_1.jpg");
+            InputStream encodedStream = getAssets().open( "capturedEncoded1.jpeg");
             Bitmap encodedBitmap = BitmapFactory.decodeStream(encodedStream);
 
             Mat capturedImage = new Mat();
@@ -295,14 +295,29 @@ public class MainActivity extends AppCompatActivity {
         int height = bMap.getHeight();
         Log.d("parameters: ", "Width,Height: " + width + ", " + height);
         int[] pixels = new int[width * height];
-        twoDimPixels = new int[width][height];
+        twoDimPixels = new int[height][width];
         bMap.getPixels(pixels, 0, width, 0, 0, width, height);
 
-        for (int row = 0; row < width; row++) {
-            if (height >= 0) {
-                System.arraycopy(pixels, row * width, twoDimPixels[row], 0, height);
+//        for (int row = 0; row < height; row++) {
+//            if (height >= 0) {
+//                System.arraycopy(pixels, row * width, twoDimPixels[row], 0, width);
+//            }
+//        }
+//        twoDimPixels = new int[width][height];
+//        bMap.getPixels(pixels, 0, width, 0, 0, width, height);
+//
+//        for (int row = 0; row < height; row++) {
+//            if (height >= 0) {
+//                System.arraycopy(pixels, row * width, twoDimPixels[row], 0, height);
+//            }
+//        }
+
+        for (int row = 0 ; row < height; row++){
+            for (int col = 0 ; col < width; col++){
+                twoDimPixels[row][col] = pixels[row * width + col];
             }
         }
+
         return twoDimPixels;
     }
 

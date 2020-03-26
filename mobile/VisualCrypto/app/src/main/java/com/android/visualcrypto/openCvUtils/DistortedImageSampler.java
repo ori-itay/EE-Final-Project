@@ -8,15 +8,12 @@ import com.android.visualcrypto.MainActivity;
 import com.pc.configuration.Parameters;
 import com.pc.encoderDecoder.StdImageSampler;
 
-import org.ddogleg.struct.FastQueueList;
 import org.opencv.calib3d.Calib3d;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
-import org.opencv.imgproc.Imgproc;
-import org.opencv.objdetect.QRCodeDetector;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,8 +31,6 @@ import static boofcv.android.ConvertBitmap.bitmapToGray;
 import static com.android.visualcrypto.openCvUtils.Utils.getMaxDistance;
 import static com.android.visualcrypto.openCvUtils.Utils.getModuleStride;
 import static com.android.visualcrypto.openCvUtils.Utils.getPixelChannels;
-import static org.opencv.imgproc.Imgproc.adaptiveThreshold;
-import static org.opencv.imgproc.Imgproc.cvtColor;
 
 public class DistortedImageSampler extends StdImageSampler {
     private static Mat distortedImage;
@@ -80,15 +75,19 @@ public class DistortedImageSampler extends StdImageSampler {
         List<PositionPatternNode> pointsQueue = detector.getDetectPositionPatterns().getPositionPatterns().toList();
         if (pointsQueue.size() == 3) {
             //pointsQueue.get(0).
-            Point2D_F64 boofPt0 = pointsQueue.get(0).square.get(3);
-            Point2D_F64 boofPt1 = pointsQueue.get(1).square.get(0);
-            Point2D_F64 boofPt3 = pointsQueue.get(2).square.get(2);
+            //Point2D_F64 boofPt0 = pointsQueue.get(0).square.get(3); // PT0         PT1
+            Point2D_F64 boofPt0 = pointsQueue.get(0).square.get(2);
+            //Point2D_F64 boofPt1 = pointsQueue.get(1).square.get(0); //PT3          PT2
+            Point2D_F64 boofPt1 = pointsQueue.get(1).square.get(3);
+            //Point2D_F64 boofPt3 = pointsQueue.get(2).square.get(2);
+            Point2D_F64 boofPt3 = pointsQueue.get(2).square.get(1);
 
             pts[0] = new Point(boofPt0.x, boofPt0.y);
             pts[1] = new Point(boofPt1.x, boofPt1.y);
-
-            pts[2] = new Point(, ); // TODO: fill here the measurement to find the forth corner
             pts[3] = new Point(boofPt3.x, boofPt3.y);
+            double x3 = pts[3].x + (pts[1].x - pts[0].x);
+            double y3 = pts[3].y + (pts[1].y - pts[0].y);
+            pts[2] = new Point(x3, y3);
 
         } else if (failures.size() == 0 && detections.size() == 0) {
             Log.d("DistortedImageSampler", "Couldn't detect QR position detectors");
@@ -194,16 +193,15 @@ public class DistortedImageSampler extends StdImageSampler {
     }
 
     private double[] thresholdChannels(double[] channels) {
+
         double threshholdedChannels[] = new double[3];
-        int q;
-        int thLevel = 255 / Parameters.encodingColorLevels;
-        int colorStride = 255 / (Parameters.encodingColorLevels - 1);
+        int levels = 255 / (Parameters.encodingColorLevels-1);
         for (int i = 0; i < threshholdedChannels.length; i++) {
-            q = Math.floorDiv((int) Math.round(channels[i]), thLevel);
-            threshholdedChannels[i] = q * colorStride;
+            threshholdedChannels[i] = Math.round(channels[i]/levels) * levels;
         }
         return threshholdedChannels;
     }
+
 
 
 //    public boolean detect(Mat img){
