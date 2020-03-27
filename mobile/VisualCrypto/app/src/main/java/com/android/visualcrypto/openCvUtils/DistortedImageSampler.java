@@ -13,6 +13,7 @@ import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
+import org.opencv.imgproc.Imgproc;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,10 +28,14 @@ import georegression.struct.point.Point2D_F64;
 import georegression.struct.shapes.Polygon2D_F64;
 
 import static boofcv.android.ConvertBitmap.bitmapToGray;
+import static com.android.visualcrypto.openCvUtils.Utils.calcDistance;
 import static com.android.visualcrypto.openCvUtils.Utils.getMaxDistance;
 import static com.android.visualcrypto.openCvUtils.Utils.getModuleStride;
 import static com.android.visualcrypto.openCvUtils.Utils.getPixelChannels;
+
 import static com.android.visualcrypto.openCvUtils.Utils.thresholdAndNormalizeChannels;
+import static org.opencv.imgproc.Imgproc.cvtColor;
+
 
 public class DistortedImageSampler extends StdImageSampler {
     private static Mat distortedImage;
@@ -78,12 +83,12 @@ public class DistortedImageSampler extends StdImageSampler {
         List<PositionPatternNode> pointsQueue = detector.getDetectPositionPatterns().getPositionPatterns().toList();
         if (pointsQueue.size() == 3) {
             //pointsQueue.get(0).
-            //Point2D_F64 boofPt0 = pointsQueue.get(0).square.get(3); // PT0         PT1
-            Point2D_F64 boofPt0 = pointsQueue.get(0).square.get(2);
-            //Point2D_F64 boofPt1 = pointsQueue.get(1).square.get(0); //PT3          PT2
-            Point2D_F64 boofPt1 = pointsQueue.get(1).square.get(3);
-            //Point2D_F64 boofPt3 = pointsQueue.get(2).square.get(2);
-            Point2D_F64 boofPt3 = pointsQueue.get(2).square.get(1);
+            Point2D_F64 boofPt0 = pointsQueue.get(0).square.get(3); // PT0         PT1
+            //Point2D_F64 boofPt0 = pointsQueue.get(0).square.get(2);
+            Point2D_F64 boofPt1 = pointsQueue.get(1).square.get(0); //PT3          PT2
+            //Point2D_F64 boofPt1 = pointsQueue.get(1).square.get(3);
+            Point2D_F64 boofPt3 = pointsQueue.get(2).square.get(2);
+            //Point2D_F64 boofPt3 = pointsQueue.get(2).square.get(1);
 
             pts[0] = new Point(boofPt0.x, boofPt0.y);
             pts[1] = new Point(boofPt1.x, boofPt1.y);
@@ -112,7 +117,7 @@ public class DistortedImageSampler extends StdImageSampler {
 //        MatOfPoint2f test = new MatOfPoint2f();
 //
 //        MatOfPoint2f corners1 = new MatOfPoint2f(new Point(1170,10), new Point(1170,1170), new Point(10,1170), new Point(10,10));
-        MatOfPoint2f corners1 = new MatOfPoint2f(pts[0], pts[1], pts[2], pts[3]);
+        MatOfPoint2f corners1 = new MatOfPoint2f(pts[0], pts[1], pts[2], pts[3]); // pts[2] = new Point(3802, 3308) , for captured_179modulesindum.kpg (actually 175)
         MatOfPoint2f corners2 = new MatOfPoint2f(new Point(0, 0), new Point(1, 0), new Point(1, 1), new Point(0, 1));
         Mat H;
         H = Calib3d.findHomography(corners1, corners2); // possibleCenters
@@ -127,19 +132,47 @@ public class DistortedImageSampler extends StdImageSampler {
 //        find fourth corner ;
 //
 //        double minPixelStride = 1 / getMaxDistance(leftUpperCorner, rightUpperCorner, leftLowerCorner, fourth corner);
-
-        double minPixelStride = 1 / getMaxDistance(pts[0], pts[1], pts[2], pts[3]);
-
         //double maxDistanceBetweenCenters = getMaxDistance(pts[0], pts[1], pts[2], pts[3]);
         //int modulesBetweenCenters = (int) Math.round(maxDistanceBetweenCenters /  estimatedModuleSize.get(0));
         // this.setModuleSize((double) 1 / modulesBetweenCenters );
-
-        this.setModuleSize(getModuleStride(minPixelStride, inverseH, DistortedImageSampler.distortedImage));
-        int effectiveModulesInDim = (int) Math.round(1.0 / this.getModuleSize());
-        this.setModulesInDim(effectiveModulesInDim);
         //this.setModulesInDim(modulesBetweenCenters );
 
+        double minPixelStride = 1 / getMaxDistance(pts[0], pts[1], pts[2], pts[3]);
+        Imgproc.cvtColor(DistortedImageSampler.distortedImage, DistortedImageSampler.distortedImage, Imgproc.COLOR_RGB2GRAY);
+        //this.setModuleSize(getModuleStride(minPixelStride, inverseH, DistortedImageSampler.distortedImage));
+        Point leftLowerOfPts0 = new Point(pointsQueue.get(0).square.vertexes.get(2).x, pointsQueue.get(0).square.vertexes.get(2).y);
+        this.setModuleSize(testItaySize(pts[0], leftLowerOfPts0, H));
+        int effectiveModulesInDim = (int) Math.floor(1.0 / this.getModuleSize());
+        this.setModulesInDim(effectiveModulesInDim);
+
         return 0;
+    }
+
+    private double testItaySize(Point upperLeft, Point lowerLeft,   Mat H) {
+        Mat upperPoint = new Mat(1, 3, CvType.CV_64F);
+
+        upperPoint.put(0, 0, upperLeft.x);
+        upperPoint.put(0, 1, upperLeft.y);
+        upperPoint.put(0, 2, 1);
+
+
+        Mat undistortedUpperPoint = new Mat();
+        Core.gemm(H, upperPoint.t(), 1.0, new Mat(), 0, undistortedUpperPoint, 0);
+
+        double xUpper = undistortedUpperPoint.get(0,0)[0];
+        double yUpper = undistortedUpperPoint.get(1,0)[0];
+        double zUpper = undistortedUpperPoint.get(2,0)[0];
+
+        upperPoint.put(0, 0, lowerLeft.x);
+        upperPoint.put(0, 1, lowerLeft.y);
+        undistortedUpperPoint = new Mat();
+        Core.gemm(H, upperPoint.t(), 1.0, new Mat(), 0, undistortedUpperPoint, 0);
+        double xLower = undistortedUpperPoint.get(0,0)[0];
+        double yLower = undistortedUpperPoint.get(1,0)[0];
+        double zLower = undistortedUpperPoint.get(2,0)[0];
+
+
+        return calcDistance(new Point(xUpper/zUpper, yUpper/zUpper), new Point(xLower/zLower, yLower/zLower)) / 7D;
     }
 
     private void findMinMaxPixelVals() {

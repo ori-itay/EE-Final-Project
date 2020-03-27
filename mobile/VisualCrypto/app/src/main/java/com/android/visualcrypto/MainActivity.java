@@ -169,6 +169,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void test(View v) throws IOException {
+
+
+
 //
 //        InputStream is = this.getAssets().open("realQR.jpg");
 //        Bitmap b = BitmapFactory.decodeStream(is);
@@ -239,8 +242,8 @@ public class MainActivity extends AppCompatActivity {
         try {
             long startTime = System.nanoTime();
 
-            InputStream encodedStream = getAssets().open( "capturedEncoded50_50_2levels.jpg");
-            File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) +"/capturedEncoded50_50_2levels.jpg");
+            InputStream encodedStream = getAssets().open( "captured_179modulesindim.jpg");
+            File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) +"/captured_179modulesindim.jpg");
 
             Bitmap encodedBitmap = BitmapFactory.decodeStream(encodedStream);
             Bitmap rotatedBitmap = CameraRotationFix.fixRotation(encodedBitmap, file.getAbsolutePath());

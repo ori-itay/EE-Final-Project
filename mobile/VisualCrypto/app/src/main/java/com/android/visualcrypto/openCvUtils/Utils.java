@@ -34,49 +34,118 @@ public class Utils {
         double undistortedLocY = startingPoint;
 
         Mat unDistortedImageMatCord = new Mat(1, 3, CvType.CV_64F);
-        unDistortedImageMatCord.put(0,0, undistortedLocX);
-        unDistortedImageMatCord.put(0,1,undistortedLocY);
-        unDistortedImageMatCord.put(0,2, 1);
+        unDistortedImageMatCord.put(0, 0, undistortedLocX);
+        unDistortedImageMatCord.put(0, 1, undistortedLocY);
+        unDistortedImageMatCord.put(0, 2, 1);
         boolean firstBlackFound = false;
         double undistortedModuleDimension = 0.0;
 
-        //int BLACK_THRESHOLD = 163;
         int BLACK_THRESHOLD = 80;
 
-        while(undistortedLocX < 1 && undistortedLocY < 1){
-            double[] channels = getPixelChannels(unDistortedImageMatCord, inverseH,  capturedImg);
+
+
+
+        int remainingColorSwitches = 5;
+        boolean inBlack = false;
+        boolean inWhite = false;
+        boolean firstRun = true;
+        boolean startCounting = false;
+        //boolean inBlack = true;
+//        double[] channels = getPixelChannels(unDistortedImageMatCord, inverseH,  capturedImg);
+//        double pixel = (int) (channels[0] + channels[1] + channels[2]) / 3.0;
+//        if (pixel > BLACK_THRESHOLD) {
+//            inWhite = true;
+//            inBlack = false;
+//            remainingColorSwitches++;
+//        }
+        int pixelsAmountInDiagonal = 0;
+        double MODULES_IN_QR_DIAGONAL = 7D;
+        while (undistortedLocX < 1 && undistortedLocY < 1) {
+//            if (!firstRun) {
+//                channels = getPixelChannels(unDistortedImageMatCord, inverseH,  capturedImg);
+//                pixel = (int) (channels[0] + channels[1] + channels[2]) / 3.0;
+//            }
+//            firstRun = false;
+//
+//
+//
+//            if (inBlack && pixel > BLACK_THRESHOLD) {
+//                inBlack = false;
+//                inWhite = true;
+//                remainingColorSwitches--;
+//            } else if (inWhite && pixel < BLACK_THRESHOLD) {
+//                inWhite = false;
+//                inBlack = true;
+//                remainingColorSwitches--;
+//            }
+//
+//            if (remainingColorSwitches == 0) {
+//                return undistortedModuleDimension / MODULES_IN_QR_DIAGONAL;
+//            }
+//
+//
+//            undistortedLocX += minPixelStride;
+//            undistortedLocY += minPixelStride;
+//            unDistortedImageMatCord.put(0,0, undistortedLocX);
+//            unDistortedImageMatCord.put(0,1, undistortedLocY);
+//            undistortedModuleDimension += minPixelStride;
+            double[] channels = getPixelChannels(unDistortedImageMatCord, inverseH, capturedImg);
             double[] processedChannels = thresholdAndNormalizeChannels(channels);
 
-            double pixel = (int) (channels[0] + channels[1] + channels[2]) / 3.0;
-            if (pixel < BLACK_THRESHOLD && !firstBlackFound){ // first black after whites!
-                firstBlackFound = true;
+            //double pixel = (int) (channels[0] + channels[1] + channels[2]) / 3.0;
+            double pixel = channels[0]; //TODO: remove me if not using grayscale
+            if (firstRun && pixel > BLACK_THRESHOLD) { // includes
+                //undistortedModuleDimension += minPixelStride; // a posteriori
+                firstRun = false;
+                inWhite = true;
+            } else if (firstRun && pixel < BLACK_THRESHOLD) {
+                firstRun = false;
+                inBlack = true;
+                startCounting = true;
             }
-            else if(pixel < BLACK_THRESHOLD && firstBlackFound){ // still black after first black was found
-                undistortedModuleDimension += minPixelStride;
+
+            if (startCounting && inBlack && pixel > BLACK_THRESHOLD) {
+                inBlack = false;
+                inWhite = true;
+                remainingColorSwitches--;
+            } else if (inWhite && pixel < BLACK_THRESHOLD) {
+                inWhite = false;
+                inBlack = true;
+                if (!startCounting) {
+                    startCounting = true;
+                } else {
+                    remainingColorSwitches--;
+                }
             }
-            else if(pixel >= BLACK_THRESHOLD && firstBlackFound){ // first white after first black was found
-                undistortedModuleDimension += minPixelStride;
-                return undistortedModuleDimension;
+            pixelsAmountInDiagonal++;
+            if (remainingColorSwitches == 0) {
+                //return undistortedModuleDimension / MODULES_IN_QR_DIAGONAL;
+                return (pixelsAmountInDiagonal / MODULES_IN_QR_DIAGONAL) * minPixelStride;
             }
+
             undistortedLocX += minPixelStride;
             undistortedLocY += minPixelStride;
-            unDistortedImageMatCord.put(0,0, undistortedLocX);
-            unDistortedImageMatCord.put(0,1, undistortedLocY);
+            unDistortedImageMatCord.put(0, 0, undistortedLocX);
+            unDistortedImageMatCord.put(0, 1, undistortedLocY);
+            if (startCounting) {
+                undistortedModuleDimension += minPixelStride;
+            }
         }
         return 0.0;
     }
 
-    public static double[] thresholdAndNormalizeChannels(double[] channels) {
+        public static double[] thresholdAndNormalizeChannels ( double[] channels){
 
-        double normalizedChannel;
-        double processedChannels[] = new double[3];
-        int levels = 255 / (Parameters.encodingColorLevels-1);
-        for (int i = 0; i < processedChannels.length; i++) {
-            normalizedChannel = ((channels[i] - minPixelVal[i]) * 255.0 / (maxPixelVal[i] - minPixelVal[i]));
-            processedChannels[i] = Math.round(normalizedChannel/levels) * levels;
+            double normalizedChannel;
+            double processedChannels[] = new double[3];
+            int levels = 255 / (Parameters.encodingColorLevels - 1);
+            for (int i = 0; i < processedChannels.length; i++) {
+                normalizedChannel = ((channels[i] - minPixelVal[i]) * 255.0 / (maxPixelVal[i] - minPixelVal[i]));
+                processedChannels[i] = Math.round(normalizedChannel / levels) * levels;
+            }
+            return processedChannels;
         }
-        return processedChannels;
-    }
+
 
     public static double[] getPixelChannels(Mat unDistortedImageMatCord, Mat inverseH, Mat capturedImg) {
         Mat distortedImageMatCord = new Mat();
