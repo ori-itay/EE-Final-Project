@@ -3,7 +3,9 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.util.Arrays;
+import java.util.Random;
 
+import com.pc.configuration.Constants;
 import com.pc.configuration.Parameters;
 
 import static com.pc.configuration.Constants.*;
@@ -27,6 +29,13 @@ public class DisplayEncoder {
 		encodeData(g, binaryData, pos, false); 	//encode actual picture data
 		encodeData(g, IV, pos, true); //encode IV second time
 		encodeData(g, ivchecksum, pos, true); //encode IV checksum second time
+		Random ran = new Random();
+		byte x = (byte) ran.nextInt(256);
+		while(pos.rowModule<MODULES_IN_ENCODED_IMAGE_DIM - Parameters.modulesInMargin){
+			encodeBlock(x, x, x, g, pos);
+			StdImageSampler.imageCheckForColumnEnd(pos,MODULES_IN_ENCODED_IMAGE_DIM, Parameters.modulesInMargin);
+			x = (byte) ran.nextInt(256);;
+		}
 
 		return image;
 	}

@@ -1,9 +1,14 @@
 package com.android.visualcrypto.openCvUtils;
 
+import com.pc.configuration.Parameters;
+
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
+
+import static com.android.visualcrypto.openCvUtils.DistortedImageSampler.maxPixelVal;
+import static com.android.visualcrypto.openCvUtils.DistortedImageSampler.minPixelVal;
 
 public class Utils {
 
@@ -40,6 +45,7 @@ public class Utils {
 
         while(undistortedLocX < 1 && undistortedLocY < 1){
             double[] channels = getPixelChannels(unDistortedImageMatCord, inverseH,  capturedImg);
+            double[] processedChannels = thresholdAndNormalizeChannels(channels);
 
             double pixel = (int) (channels[0] + channels[1] + channels[2]) / 3.0;
             if (pixel < BLACK_THRESHOLD && !firstBlackFound){ // first black after whites!
@@ -58,6 +64,18 @@ public class Utils {
             unDistortedImageMatCord.put(0,1, undistortedLocY);
         }
         return 0.0;
+    }
+
+    public static double[] thresholdAndNormalizeChannels(double[] channels) {
+
+        double normalizedChannel;
+        double processedChannels[] = new double[3];
+        int levels = 255 / (Parameters.encodingColorLevels-1);
+        for (int i = 0; i < processedChannels.length; i++) {
+            normalizedChannel = ((channels[i] - minPixelVal[i]) * 255.0 / (maxPixelVal[i] - minPixelVal[i]));
+            processedChannels[i] = Math.round(normalizedChannel/levels) * levels;
+        }
+        return processedChannels;
     }
 
     public static double[] getPixelChannels(Mat unDistortedImageMatCord, Mat inverseH, Mat capturedImg) {

@@ -5,7 +5,6 @@ import android.graphics.Bitmap;
 import android.util.Log;
 
 import com.android.visualcrypto.MainActivity;
-import com.pc.configuration.Parameters;
 import com.pc.encoderDecoder.StdImageSampler;
 
 import org.opencv.calib3d.Calib3d;
@@ -31,11 +30,14 @@ import static boofcv.android.ConvertBitmap.bitmapToGray;
 import static com.android.visualcrypto.openCvUtils.Utils.getMaxDistance;
 import static com.android.visualcrypto.openCvUtils.Utils.getModuleStride;
 import static com.android.visualcrypto.openCvUtils.Utils.getPixelChannels;
+import static com.android.visualcrypto.openCvUtils.Utils.thresholdAndNormalizeChannels;
 
 public class DistortedImageSampler extends StdImageSampler {
     private static Mat distortedImage;
     private static Mat inverseH;
     private static Bitmap distortedBitmap;
+    public static double[] minPixelVal = new double[3];
+    public static double[] maxPixelVal = new double[3];
 
     private Context context;
 
@@ -44,13 +46,14 @@ public class DistortedImageSampler extends StdImageSampler {
 
 
     public DistortedImageSampler(Mat distortedImage, Bitmap distortedBitmap, Context context) {
-        DistortedImageSampler.distortedImage = distortedImage;
+                DistortedImageSampler.distortedImage = distortedImage;
         DistortedImageSampler.distortedBitmap = distortedBitmap;
         this.context = context;
     }
 
     public int initParameters() {
         this.setModulesInMargin(0);
+        findMinMaxPixelVals();
         GrayU8 gray = bitmapToGray(DistortedImageSampler.distortedBitmap, (GrayU8) null, null);
         ConfigQrCode config = new ConfigQrCode();
         QrCodePreciseDetector<GrayU8> detector = FactoryFiducial.qrcode(config, GrayU8.class);
@@ -75,12 +78,12 @@ public class DistortedImageSampler extends StdImageSampler {
         List<PositionPatternNode> pointsQueue = detector.getDetectPositionPatterns().getPositionPatterns().toList();
         if (pointsQueue.size() == 3) {
             //pointsQueue.get(0).
-            Point2D_F64 boofPt0 = pointsQueue.get(0).square.get(3); // PT0         PT1
-            //Point2D_F64 boofPt0 = pointsQueue.get(0).square.get(2);
-            Point2D_F64 boofPt1 = pointsQueue.get(1).square.get(0); //PT3          PT2
-            //Point2D_F64 boofPt1 = pointsQueue.get(1).square.get(3);
-            Point2D_F64 boofPt3 = pointsQueue.get(2).square.get(2);
-            //Point2D_F64 boofPt3 = pointsQueue.get(2).square.get(1);
+            //Point2D_F64 boofPt0 = pointsQueue.get(0).square.get(3); // PT0         PT1
+            Point2D_F64 boofPt0 = pointsQueue.get(0).square.get(2);
+            //Point2D_F64 boofPt1 = pointsQueue.get(1).square.get(0); //PT3          PT2
+            Point2D_F64 boofPt1 = pointsQueue.get(1).square.get(3);
+            //Point2D_F64 boofPt3 = pointsQueue.get(2).square.get(2);
+            Point2D_F64 boofPt3 = pointsQueue.get(2).square.get(1);
 
             pts[0] = new Point(boofPt0.x, boofPt0.y);
             pts[1] = new Point(boofPt1.x, boofPt1.y);
@@ -139,6 +142,23 @@ public class DistortedImageSampler extends StdImageSampler {
         return 0;
     }
 
+    private void findMinMaxPixelVals() {
+        double[] channels;
+        for(int row = 0; row<distortedImage.height(); row++){
+            for(int col = 0; col<distortedImage.width(); col++){
+                channels = distortedImage.get(row,col);
+                for(int ch = 0; ch<3; ch++){
+                    if(channels[ch]>maxPixelVal[ch]){
+                        maxPixelVal[ch] = channels[ch];
+                    }
+                    if(channels[ch]<minPixelVal[ch]){
+                        minPixelVal[ch] = channels[ch];
+                    }
+                }
+            }
+        }
+    }
+
     private void convertBoofToOpenPoints(Polygon2D_F64 polygon, Point[] pts) {
         Point2D_F64 boofPoint0 = polygon.get(0);
         Point2D_F64 boofPoint1 = polygon.get(1);
@@ -187,20 +207,13 @@ public class DistortedImageSampler extends StdImageSampler {
         unDistortedImageMatCord.put(0, 1, colLoc);
         unDistortedImageMatCord.put(0, 2, 1);
         double[] channels = getPixelChannels(unDistortedImageMatCord, DistortedImageSampler.inverseH, DistortedImageSampler.distortedImage);
-        double[] threshholdedChannels = thresholdChannels(channels);
-        int pixelValue = (int) (Math.round(threshholdedChannels[0])) | (int) (Math.round(threshholdedChannels[1]) << 8) | (int) (Math.round(threshholdedChannels[2]) << 16);
+        double[] processedChannels = thresholdAndNormalizeChannels(channels);
+        int pixelValue = (int) (Math.round(processedChannels[0])) |
+                (int) (Math.round(processedChannels[1]) << 8) | (int) (Math.round(processedChannels[2]) << 16);
         return pixelValue;
     }
 
-    private double[] thresholdChannels(double[] channels) {
 
-        double threshholdedChannels[] = new double[3];
-        int levels = 255 / (Parameters.encodingColorLevels-1);
-        for (int i = 0; i < threshholdedChannels.length; i++) {
-            threshholdedChannels[i] = Math.round(channels[i]/levels) * levels;
-        }
-        return threshholdedChannels;
-    }
 
 
 

@@ -11,6 +11,9 @@ public class StdImageSampler implements ImageSamplerInf{
 	public StdImageSampler() {
 	}
 
+	public static void imageCheckForColumnEnd(Position pos, int modulesInEncodedImageDim) {
+	}
+
 	public int[][] getPixelMatrix() {
 		return pixelMatrix;
 	}
