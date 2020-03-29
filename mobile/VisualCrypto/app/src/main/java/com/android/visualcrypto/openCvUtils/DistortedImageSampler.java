@@ -2,6 +2,7 @@ package com.android.visualcrypto.openCvUtils;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.os.Environment;
 import android.util.Log;
 
 import com.android.visualcrypto.MainActivity;
@@ -14,6 +15,11 @@ import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
 
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -53,7 +59,7 @@ public class DistortedImageSampler extends StdImageSampler {
         this.context = context;
     }
 
-    public int initParameters() {
+    public int initParameters() throws IOException {
         this.setModulesInMargin(0);
         findMinMaxPixelVals();
 
@@ -67,19 +73,23 @@ public class DistortedImageSampler extends StdImageSampler {
                 wrapped = ByteBuffer.allocate(4);
                 wrapped.put(ALPHA_VALUE);
                 channels = distortedBitmap.getPixel(col, row);
-                byte a = (byte) ((channels & 0xFF000000) >> 24);
-                byte normA = a;
-                byte r = (byte) ((channels & 0x00FF0000) >> 16);
-                byte normR = (byte) ((r - minPixelVal[0]) * 255.0 / (maxPixelVal[0] - minPixelVal[0]));
-                byte g = (byte) ((channels & 0x0000FF00) >> 18);
-                byte normG = (byte) ((g - minPixelVal[1]) * 255.0 / (maxPixelVal[1] - minPixelVal[1]));;
-                byte b = (byte) (channels & 0x000000FF);
-                byte normB = (byte) ((b - minPixelVal[2]) * 255.0 / (maxPixelVal[2] - minPixelVal[2]));;
+                int a = (channels & 0xFF000000) >> 24;
+                int normA = a;
+                int r = (channels & 0x00FF0000) >> 16;
+                int normR = (int) ((r - minPixelVal[0]) * 255.0 / (maxPixelVal[0] - minPixelVal[0]));
+                int g = (channels & 0x0000FF00) >> 18;
+                int normG = (int) ((g - minPixelVal[1]) * 255.0 / (maxPixelVal[1] - minPixelVal[1]));;
+                int b = channels & 0x000000FF;
+                int normB = (int) ((b - minPixelVal[2]) * 255.0 / (maxPixelVal[2] - minPixelVal[2]));;
                 normalizedChannel = normA<<24 | normR<<16 | normG<<8 | normB;
                 normalized.setPixel(col, row, normalizedChannel);
             }
         }
         DistortedImageSampler.distortedBitmap = normalized;
+        File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) +"/normalized_captured50_50_2levels_10pixInModule.jpg");
+        OutputStream os = new BufferedOutputStream(new FileOutputStream(file));
+        distortedBitmap.compress(Bitmap.CompressFormat.JPEG, 100, os);
+        os.close();
 
 
         GrayU8 gray = bitmapToGray(DistortedImageSampler.distortedBitmap, (GrayU8) null, null);
@@ -140,6 +150,7 @@ public class DistortedImageSampler extends StdImageSampler {
 //        MatOfPoint2f test = new MatOfPoint2f();
 //
 //        MatOfPoint2f corners1 = new MatOfPoint2f(new Point(1170,10), new Point(1170,1170), new Point(10,1170), new Point(10,10));
+        pts[2] = new Point(3724,2920);
         MatOfPoint2f corners1 = new MatOfPoint2f(pts[0], pts[1], pts[2], pts[3]); // pts[2] = new Point(3802, 3308) , for captured_179modulesindum.kpg (actually 175)
         //MatOfPoint2f corners2 = new MatOfPoint2f(new Point(0, 0), new Point(1, 0), new Point(1, 1), new Point(0, 1));
         MatOfPoint2f corners2 = new MatOfPoint2f(new Point(0, 0), new Point(1, 0), new Point(1, 1), new Point(0, 1));
@@ -169,7 +180,8 @@ public class DistortedImageSampler extends StdImageSampler {
         this.setModuleSize(testItaySize(pts[0], leftLowerOfPts0, H, grayscale));
         int effectiveModulesInDim = (int) Math.floor(1.0 / this.getModuleSize());
         this.setModulesInDim(effectiveModulesInDim);
-
+        Log.d("ModulesInDim", "modules in dim: "+Float.toString(this.getModulesInDim()));
+        Log.d("ModulesInDim", "left lower: "+leftLowerOfPts0.x+","+leftLowerOfPts0.y);
         return 0;
     }
 
