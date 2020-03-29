@@ -29,12 +29,16 @@ public class DisplayEncoder {
 		encodeData(g, binaryData, pos, false); 	//encode actual picture data
 		encodeData(g, IV, pos, true); //encode IV second time
 		encodeData(g, ivchecksum, pos, true); //encode IV checksum second time
-		Random ran = new Random();
-		byte x = (byte) ran.nextInt(256);
+		boolean x= true;
 		while(pos.rowModule<MODULES_IN_ENCODED_IMAGE_DIM - Parameters.modulesInMargin){
-			encodeBlock(x, x, x, g, pos);
+			if(x) {
+				encodeBlock((byte) 0, (byte) 0, (byte) 0, g, pos);
+			}
+			else {
+				encodeBlock((byte) 1, (byte) 1, (byte) 1, g, pos);
+			}
 			StdImageSampler.imageCheckForColumnEnd(pos,MODULES_IN_ENCODED_IMAGE_DIM, Parameters.modulesInMargin);
-			x = (byte) ran.nextInt(256);;
+			x= !x;
 		}
 
 		return image;
