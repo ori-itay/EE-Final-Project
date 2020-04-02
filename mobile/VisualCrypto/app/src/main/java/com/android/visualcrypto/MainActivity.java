@@ -6,6 +6,10 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.hardware.Camera;
+import android.hardware.camera2.CameraCaptureSession;
+import android.hardware.camera2.CaptureRequest;
+import android.hardware.camera2.TotalCaptureResult;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -16,6 +20,7 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -30,13 +35,19 @@ import com.pc.encoderDecoder.RotatedImageSampler;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
 import org.opencv.core.Core;
+import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.imgproc.Imgproc;
+import org.opencv.utils.Converters;
 
+import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
@@ -45,6 +56,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.logging.Logger;
 
 import javax.crypto.NoSuchPaddingException;
 
@@ -101,6 +113,8 @@ public class MainActivity extends AppCompatActivity {
         currentPhotoPath = image.getAbsolutePath();
         return image;
     }
+
+
 
     private void takePicture() {
         Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
@@ -173,8 +187,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void test(View v) throws IOException {
-
-
 
 //
 //        InputStream is = this.getAssets().open("realQR.jpg");
@@ -255,16 +267,29 @@ public class MainActivity extends AppCompatActivity {
             //Utils.bitmapToMat(encodedBitmap, capturedImage);
             Utils.bitmapToMat(rotatedBitmap, capturedImage);
 
+            Mat res = SimplestColorBalance(capturedImage, 10);
+
+            Utils.matToBitmap(res, encodedBitmap);
+            bitmapToFile(encodedBitmap);
+            Log.d("testing","wrote output.jpg");
             // Applying color
-            //Imgproc.cvtColor(capturedImage, capturedImage, Imgproc.COLOR_BGR2YCrCb);
-            Imgproc.cvtColor(capturedImage, capturedImage, Imgproc.COLOR_BGR2GRAY);
+            Imgproc.cvtColor(capturedImage, capturedImage, Imgproc.COLOR_BGR2YCrCb);
+            //Imgproc.cvtColor(capturedImage, capturedImage, Imgproc.COLOR_BGR2GRAY);
             List<Mat> channels = new ArrayList<Mat>();
 
             // Splitting the channels
             Core.split(capturedImage, channels);
 
             // Equalizing the histogram of the image
+            Mat cop = channels.get(0).clone();
             Imgproc.equalizeHist(channels.get(0), channels.get(0));
+//            for (int i=0;i<channels.get(0).width();i++){
+//                for (int j=0;j<channels.get(0).height();j++){
+//                    if (cop.get(i,j) == channels.get(0).get(i,j)){
+//                        showAlert("equals:" + i + ", " + j);
+//                    }
+//                }
+//            }
             Core.merge(channels, capturedImage);
             //Imgproc.cvtColor(capturedImage, capturedImage, Imgproc.COLOR_YCrCb2BGR);
             Utils.matToBitmap(capturedImage,rotatedBitmap);
@@ -289,6 +314,41 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    public static Mat SimplestColorBalance(Mat img, int percent) {
+        if (percent <= 0)
+            percent = 5;
+        img.convertTo(img, CvType.CV_32F);
+        List<Mat> channels = new ArrayList<>();
+        int rows = img.rows(); // number of rows of image
+        int cols = img.cols(); // number of columns of image
+        int chnls = img.channels(); //  number of channels of image
+        double halfPercent = percent / 200.0;
+        if (chnls == 3) Core.split(img, channels);
+        else channels.add(img);
+        List<Mat> results = new ArrayList<>();
+        for (int i = 0; i < chnls; i++) {
+            // find the low and high precentile values (based on the input percentile)
+            Mat flat = new Mat();
+            channels.get(i).reshape(1, 1).copyTo(flat);
+            Core.sort(flat, flat, Core.SORT_ASCENDING);
+            double lowVal = flat.get(0, (int) Math.floor(flat.cols() * halfPercent))[0];
+            double topVal = flat.get(0, (int) Math.ceil(flat.cols() * (1.0 - halfPercent)))[0];
+            // saturate below the low percentile and above the high percentile
+            Mat channel = channels.get(i);
+            for (int m = 0; m < rows; m++) {
+                for (int n = 0; n < cols; n++) {
+                    if (channel.get(m, n)[0] < lowVal) channel.put(m, n, lowVal);
+                    if (channel.get(m, n)[0] > topVal) channel.put(m, n, topVal);
+                }
+            }
+            Core.normalize(channel, channel, 0.0, 255.0 / 2, Core.NORM_MINMAX);
+            channel.convertTo(channel, CvType.CV_32F);
+            results.add(channel);
+        }
+        Mat outval = new Mat();
+        Core.merge(results, outval);
+        return outval;
+    }
     private void showConfigurationInfo(RotatedImageSampler rotatedImageSampler, int height, int width) {
         TextView moduleSizeText = (TextView) findViewById(R.id.moduleSizeCfg);
         moduleSizeText.setText("Pixels in module dimension: " + rotatedImageSampler.getModuleSize());
@@ -346,6 +406,12 @@ public class MainActivity extends AppCompatActivity {
         return twoDimPixels;
     }
 
+    public static void bitmapToFile(Bitmap bp) throws IOException {
+        File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "output.jpg");
+        OutputStream os = new BufferedOutputStream(new FileOutputStream(file));
+        bp.compress(Bitmap.CompressFormat.JPEG, 100, os);
+        os.close();
+    }
     public static void setBitmapPixels(Bitmap bmp, byte[] imageBytes, int width, int height) {
         final byte ALPHA_VALUE = (byte) 0xff;
         final int METADATA_LENGTH = 5;
