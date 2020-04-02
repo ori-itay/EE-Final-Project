@@ -29,7 +29,9 @@ import com.pc.encoderDecoder.RotatedImageSampler;
 
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
+import org.opencv.core.Core;
 import org.opencv.core.Mat;
+import org.opencv.imgproc.Imgproc;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -40,7 +42,9 @@ import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import javax.crypto.NoSuchPaddingException;
 
@@ -250,6 +254,20 @@ public class MainActivity extends AppCompatActivity {
             Mat capturedImage = new Mat();
             //Utils.bitmapToMat(encodedBitmap, capturedImage);
             Utils.bitmapToMat(rotatedBitmap, capturedImage);
+
+            // Applying color
+            //Imgproc.cvtColor(capturedImage, capturedImage, Imgproc.COLOR_BGR2YCrCb);
+            Imgproc.cvtColor(capturedImage, capturedImage, Imgproc.COLOR_BGR2GRAY);
+            List<Mat> channels = new ArrayList<Mat>();
+
+            // Splitting the channels
+            Core.split(capturedImage, channels);
+
+            // Equalizing the histogram of the image
+            Imgproc.equalizeHist(channels.get(0), channels.get(0));
+            Core.merge(channels, capturedImage);
+            //Imgproc.cvtColor(capturedImage, capturedImage, Imgproc.COLOR_YCrCb2BGR);
+            Utils.matToBitmap(capturedImage,rotatedBitmap);
             Bitmap resBitmap = Flow.executeAndroidFlow(capturedImage, rotatedBitmap, this);
             //Bitmap resBitmap = Flow.executeAndroidFlow(capturedImage, encodedBitmap, this);
             if (resBitmap == null) {

@@ -20,7 +20,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -66,18 +65,15 @@ public class DistortedImageSampler extends StdImageSampler {
 
         Bitmap normalized = Bitmap.createBitmap(distortedBitmap.getWidth(), distortedBitmap.getHeight(), Bitmap.Config.ARGB_8888);
         int channels, normalizedChannel;
-        ByteBuffer wrapped;
         final byte ALPHA_VALUE = (byte) 0xff;
         for(int row = 0; row< distortedBitmap.getHeight(); row++){
             for(int col = 0; col<distortedBitmap.getWidth(); col++){
-                wrapped = ByteBuffer.allocate(4);
-                wrapped.put(ALPHA_VALUE);
                 channels = distortedBitmap.getPixel(col, row);
-                int a = (channels & 0xFF000000) >> 24;
+                int a = (channels & 0xFF000000) >>> 24;
                 int normA = a;
-                int r = (channels & 0x00FF0000) >> 16;
+                int r = (channels & 0x00FF0000) >>> 16;
                 int normR = (int) ((r - minPixelVal[0]) * 255.0 / (maxPixelVal[0] - minPixelVal[0]));
-                int g = (channels & 0x0000FF00) >> 18;
+                int g = (channels & 0x0000FF00) >>> 8;
                 int normG = (int) ((g - minPixelVal[1]) * 255.0 / (maxPixelVal[1] - minPixelVal[1]));;
                 int b = channels & 0x000000FF;
                 int normB = (int) ((b - minPixelVal[2]) * 255.0 / (maxPixelVal[2] - minPixelVal[2]));;
