@@ -37,6 +37,7 @@ import org.opencv.android.Utils;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.utils.Converters;
 
@@ -267,22 +268,26 @@ public class MainActivity extends AppCompatActivity {
             //Utils.bitmapToMat(encodedBitmap, capturedImage);
             Utils.bitmapToMat(rotatedBitmap, capturedImage);
 
-            Mat res = SimplestColorBalance(capturedImage, 10);
-
-            Utils.matToBitmap(res, encodedBitmap);
-            bitmapToFile(encodedBitmap);
+            Mat res = SimplestColorBalance(capturedImage, 1);
+            if (res.width() == 0|| res.height() == 0){
+                throw new RuntimeException("res is null");
+            }
+            //Utils.matToBitmap(res, encodedBitmap);
+            //bitmapToFile(encodedBitmap);
+            Imgcodecs.imwrite(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/output.jpg" ,res);
+            Thread.sleep(1000);
             Log.d("testing","wrote output.jpg");
             // Applying color
-            Imgproc.cvtColor(capturedImage, capturedImage, Imgproc.COLOR_BGR2YCrCb);
-            //Imgproc.cvtColor(capturedImage, capturedImage, Imgproc.COLOR_BGR2GRAY);
-            List<Mat> channels = new ArrayList<Mat>();
-
-            // Splitting the channels
-            Core.split(capturedImage, channels);
-
-            // Equalizing the histogram of the image
-            Mat cop = channels.get(0).clone();
-            Imgproc.equalizeHist(channels.get(0), channels.get(0));
+//            Imgproc.cvtColor(capturedImage, capturedImage, Imgproc.COLOR_BGR2YCrCb);
+//            //Imgproc.cvtColor(capturedImage, capturedImage, Imgproc.COLOR_BGR2GRAY);
+//            List<Mat> channels = new ArrayList<Mat>();
+//
+//            // Splitting the channels
+//            Core.split(capturedImage, channels);
+//
+//            // Equalizing the histogram of the image
+//            Mat cop = channels.get(0).clone();
+//            Imgproc.equalizeHist(channels.get(0), channels.get(0));
 //            for (int i=0;i<channels.get(0).width();i++){
 //                for (int j=0;j<channels.get(0).height();j++){
 //                    if (cop.get(i,j) == channels.get(0).get(i,j)){
@@ -290,9 +295,9 @@ public class MainActivity extends AppCompatActivity {
 //                    }
 //                }
 //            }
-            Core.merge(channels, capturedImage);
-            //Imgproc.cvtColor(capturedImage, capturedImage, Imgproc.COLOR_YCrCb2BGR);
-            Utils.matToBitmap(capturedImage,rotatedBitmap);
+//            Core.merge(channels, capturedImage);
+//            //Imgproc.cvtColor(capturedImage, capturedImage, Imgproc.COLOR_YCrCb2BGR);
+//            Utils.matToBitmap(capturedImage,rotatedBitmap);
             Bitmap resBitmap = Flow.executeAndroidFlow(capturedImage, rotatedBitmap, this);
             //Bitmap resBitmap = Flow.executeAndroidFlow(capturedImage, encodedBitmap, this);
             if (resBitmap == null) {
@@ -311,6 +316,8 @@ public class MainActivity extends AppCompatActivity {
         } catch (InvalidAlgorithmParameterException | NoSuchAlgorithmException | InvalidKeyException | NoSuchPaddingException  | IOException e) {
             showAlert("Exception in decodeImage: " + e);
             Log.e("decodeImage", "decodeFile exception", e);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
     }
 
@@ -323,7 +330,7 @@ public class MainActivity extends AppCompatActivity {
         int cols = img.cols(); // number of columns of image
         int chnls = img.channels(); //  number of channels of image
         double halfPercent = percent / 200.0;
-        if (chnls == 3) Core.split(img, channels);
+        if (chnls >= 3) Core.split(img, channels);
         else channels.add(img);
         List<Mat> results = new ArrayList<>();
         for (int i = 0; i < chnls; i++) {
