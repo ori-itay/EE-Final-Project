@@ -28,7 +28,6 @@ import georegression.struct.point.Point2D_F64;
 import georegression.struct.shapes.Polygon2D_F64;
 
 import static boofcv.android.ConvertBitmap.bitmapToGray;
-import static com.android.visualcrypto.openCvUtils.Utils.calcDistance;
 import static com.android.visualcrypto.openCvUtils.Utils.getMaxDistance;
 import static com.android.visualcrypto.openCvUtils.Utils.getPixelChannels;
 import static com.android.visualcrypto.openCvUtils.Utils.thresholdAndNormalizeChannels;
@@ -141,7 +140,7 @@ public class DistortedImageSampler extends StdImageSampler {
 //        MatOfPoint2f test = new MatOfPoint2f();
 //
 //        MatOfPoint2f corners1 = new MatOfPoint2f(new Point(1170,10), new Point(1170,1170), new Point(10,1170), new Point(10,10));
-        pts[2] = new Point(3724,2920);
+        pts[2] = new Point(3330,2940);
         MatOfPoint2f corners1 = new MatOfPoint2f(pts[0], pts[1], pts[2], pts[3]); // pts[2] = new Point(3802, 3308) , for captured_179modulesindum.kpg (actually 175)
         //MatOfPoint2f corners2 = new MatOfPoint2f(new Point(0, 0), new Point(1, 0), new Point(1, 1), new Point(0, 1));
         MatOfPoint2f corners2 = new MatOfPoint2f(new Point(0, 0), new Point(1, 0), new Point(1, 1), new Point(0, 1));
@@ -167,7 +166,8 @@ public class DistortedImageSampler extends StdImageSampler {
         Mat grayscale = new Mat();
         //Imgproc.cvtColor(DistortedImageSampler.distortedImage, grayscale, Imgproc.COLOR_RGB2GRAY);
         //this.setModuleSize(getModuleStride(minPixelStride, inverseH, DistortedImageSampler.distortedImage));
-        Point leftLowerOfPts0 = new Point(pointsQueue.get(0).square.vertexes.get(0).x, pointsQueue.get(0).square.vertexes.get(0).y);
+        //Point leftLowerOfPts0 = new Point(pointsQueue.get(0).square.vertexes.get(0).x, pointsQueue.get(0).square.vertexes.get(0).y);
+        Point leftLowerOfPts0 = new Point(2160,1758);
         this.setModuleSize(testItaySize(pts[0], leftLowerOfPts0, H, grayscale));
         int effectiveModulesInDim = (int) Math.floor(1.0 / this.getModuleSize());
         this.setModulesInDim(effectiveModulesInDim);
@@ -201,8 +201,8 @@ public class DistortedImageSampler extends StdImageSampler {
         double yLower = undistortedUpperPoint.get(1,0)[0] / zLower;
 
         //return calcDistance(new Point(xLower, yLower), new Point(xUpper, yUpper)) / 7D;
-       // return ((xLower-xUpper)*(xLower-xUpper)+(yLower-yUpper)*(yLower-yUpper))/49.0;
-        return calcDistance(new Point(xUpper, yUpper), new Point(xLower, yLower)) / 7D;
+        return Math.sqrt(((xLower-xUpper)*(xLower-xUpper)+(yLower-yUpper)*(yLower-yUpper))/20000.0);
+        //return calcDistance(new Point(xUpper, yUpper), new Point(xLower, yLower)) / 7D;
 
     }
 
