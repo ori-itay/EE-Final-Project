@@ -6,10 +6,6 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.hardware.Camera;
-import android.hardware.camera2.CameraCaptureSession;
-import android.hardware.camera2.CaptureRequest;
-import android.hardware.camera2.TotalCaptureResult;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -20,7 +16,6 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -37,14 +32,10 @@ import org.opencv.android.Utils;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
-import org.opencv.imgcodecs.Imgcodecs;
-import org.opencv.imgproc.Imgproc;
-import org.opencv.utils.Converters;
 
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -57,7 +48,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.logging.Logger;
 
 import javax.crypto.NoSuchPaddingException;
 
@@ -259,15 +249,15 @@ public class MainActivity extends AppCompatActivity {
         try {
             long startTime = System.nanoTime();
 
-            InputStream encodedStream = getAssets().open( "captured50_50_2levels_10pixInModule.jpg");
-            File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) +"/captured50_50_2levels_10pixInModule.jpg");
+            InputStream encodedStream = getAssets().open( "captured50_50_2levels_10pixInModule_alignmentPattern.jpg");
+            File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) +"/captured50_50_2levels_10pixInModule_alignmentPattern.jpg");
 
             Bitmap encodedBitmap = BitmapFactory.decodeStream(encodedStream);
             Bitmap rotatedBitmap = CameraRotationFix.fixRotation(encodedBitmap, file.getAbsolutePath());
             Mat capturedImage = new Mat();
             //Utils.bitmapToMat(encodedBitmap, capturedImage);
             Utils.bitmapToMat(rotatedBitmap, capturedImage);
-
+            /*
             Mat res = SimplestColorBalance(capturedImage, 1);
             if (res.width() == 0|| res.height() == 0){
                 throw new RuntimeException("res is null");
@@ -275,8 +265,7 @@ public class MainActivity extends AppCompatActivity {
             //Utils.matToBitmap(res, encodedBitmap);
             //bitmapToFile(encodedBitmap);
             Imgcodecs.imwrite(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/output.jpg" ,res);
-            Thread.sleep(1000);
-            Log.d("testing","wrote output.jpg");
+            */
             // Applying color
 //            Imgproc.cvtColor(capturedImage, capturedImage, Imgproc.COLOR_BGR2YCrCb);
 //            //Imgproc.cvtColor(capturedImage, capturedImage, Imgproc.COLOR_BGR2GRAY);
@@ -316,8 +305,6 @@ public class MainActivity extends AppCompatActivity {
         } catch (InvalidAlgorithmParameterException | NoSuchAlgorithmException | InvalidKeyException | NoSuchPaddingException  | IOException e) {
             showAlert("Exception in decodeImage: " + e);
             Log.e("decodeImage", "decodeFile exception", e);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
         }
     }
 
@@ -344,8 +331,10 @@ public class MainActivity extends AppCompatActivity {
             Mat channel = channels.get(i);
             for (int m = 0; m < rows; m++) {
                 for (int n = 0; n < cols; n++) {
-                    if (channel.get(m, n)[0] < lowVal) channel.put(m, n, lowVal);
-                    if (channel.get(m, n)[0] > topVal) channel.put(m, n, topVal);
+                    if (channel.get(m, n)[0] < lowVal)
+                        channel.put(m, n, lowVal);
+                    if (channel.get(m, n)[0] > topVal)
+                        channel.put(m, n, topVal);
                 }
             }
             Core.normalize(channel, channel, 0.0, 255.0 / 2, Core.NORM_MINMAX);

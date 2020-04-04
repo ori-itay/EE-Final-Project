@@ -23,22 +23,25 @@ public class DisplayEncoder {
 		g.setColor(Color.BLACK);
 		//create position detector
 		createPositionDetectors(g);
+		createAlignmentPattern(g);
 		Position pos = new Position(Parameters.modulesInMargin, Parameters.modulesInMargin + MODULES_IN_POS_DET_DIM);
 		encodeData(g, IV, pos, true); //encode IV first time
 		encodeData(g, ivchecksum, pos, true); //encode IV checksum first time
 		encodeData(g, binaryData, pos, false); 	//encode actual picture data
 		encodeData(g, IV, pos, true); //encode IV second time
 		encodeData(g, ivchecksum, pos, true); //encode IV checksum second time
-		boolean x= true;
+		//pad till end
+		//boolean x= true;
 		while(pos.rowModule<MODULES_IN_ENCODED_IMAGE_DIM - Parameters.modulesInMargin){
-			if(x) {
+			/*if(x) {
 				encodeBlock((byte) 0, (byte) 0, (byte) 0, g, pos);
 			}
 			else {
 				encodeBlock((byte) 1, (byte) 1, (byte) 1, g, pos);
-			}
+			}*/
+			encodeBlock((byte) 0, (byte) 0, (byte) 0, g, pos);
 			StdImageSampler.imageCheckForColumnEnd(pos,MODULES_IN_ENCODED_IMAGE_DIM, Parameters.modulesInMargin);
-			x= !x;
+			//x= !x;
 		}
 
 		return image;
@@ -132,6 +135,12 @@ public class DisplayEncoder {
 		g.fillRect(pos.colModule * Parameters.pixelsInModule, pos.rowModule * Parameters.pixelsInModule,
                 Parameters.pixelsInModule, Parameters.pixelsInModule);
 		pos.colModule++;
+		//skip alignment pattern
+		if(pos.colModule >= ALIGNMENT_PATTERN_UPPER_LEFT_MODULE && pos.rowModule >= ALIGNMENT_PATTERN_UPPER_LEFT_MODULE
+		&& pos.colModule < ALIGNMENT_PATTERN_UPPER_LEFT_MODULE + MODULES_IN_ALIGNMENT_PATTERN_DIM
+				&& pos.rowModule < ALIGNMENT_PATTERN_UPPER_LEFT_MODULE + MODULES_IN_ALIGNMENT_PATTERN_DIM ){
+			pos.colModule+=  MODULES_IN_ALIGNMENT_PATTERN_DIM;
+		}
 		RotatedImageSampler.imageCheckForColumnEnd(pos, MODULES_IN_ENCODED_IMAGE_DIM, Parameters.modulesInMargin);
 	}
 
@@ -164,6 +173,21 @@ public class DisplayEncoder {
 					g.fillRect(colBottomLeft + colModuleOffset * Parameters.pixelsInModule,
 							rowBottomLeft + rowModuleOffset * Parameters.pixelsInModule, Parameters.pixelsInModule, Parameters.pixelsInModule);
 				}
+			}
+		}
+	}
+
+	private static void createAlignmentPattern(Graphics2D g) {
+		for(int rowModuleDiff = 0; rowModuleDiff < MODULES_IN_ALIGNMENT_PATTERN_DIM; rowModuleDiff++){
+			for(int colModuleDiff = 0; colModuleDiff < MODULES_IN_ALIGNMENT_PATTERN_DIM; colModuleDiff++) {
+				if(colModuleDiff > 0 && colModuleDiff < MODULES_IN_ALIGNMENT_PATTERN_DIM - 1 &&
+						rowModuleDiff > 0 && rowModuleDiff < MODULES_IN_ALIGNMENT_PATTERN_DIM - 1 &&
+						(rowModuleDiff != 2 || colModuleDiff != 2)){
+					continue;
+				}
+				g.fillRect((ALIGNMENT_PATTERN_UPPER_LEFT_MODULE + colModuleDiff) * Parameters.pixelsInModule,
+						(ALIGNMENT_PATTERN_UPPER_LEFT_MODULE + rowModuleDiff) * Parameters.pixelsInModule,
+						Parameters.pixelsInModule, Parameters.pixelsInModule);
 			}
 		}
 	}

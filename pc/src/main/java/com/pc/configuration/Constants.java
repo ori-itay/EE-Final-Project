@@ -10,7 +10,11 @@ public class Constants {
 	public static final int IMAGE_DIMS_ENCODING_LENGTH = 2 * IMAGE_DIMENSION_ENCODING_LENGTH;
 	public static final int MAX_IMAGE_DIMENSION_SIZE = 1000;
 	public static final int MAX_ENCODED_LENGTH_BYTES = MAX_IMAGE_DIMENSION_SIZE*MAX_IMAGE_DIMENSION_SIZE*4;
-	public static final int MODULES_IN_POS_DET_DIM = 8; //maybe change to 8 due to white margins from inside of position detector and draw them in position detector creation
+	public static final int MODULES_IN_POS_DET_DIM = 8;
+	public static final int MODULES_IN_ALIGNMENT_PATTERN_DIM = 5;
+	public static final int MODULES_FROM_UPPER_LEFT_TO_ALIGNMENT_BOTTOM_RIGHT = 100;
+	public static final int ALIGNMENT_PATTERN_UPPER_LEFT_MODULE = Parameters.modulesInMargin +
+			MODULES_FROM_UPPER_LEFT_TO_ALIGNMENT_BOTTOM_RIGHT - MODULES_IN_ALIGNMENT_PATTERN_DIM;
 
 	/* Encoding - some are not final because derived from encodingColorLevels */
 	public static int MODULES_IN_ENCODED_IMAGE_DIM;

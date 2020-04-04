@@ -71,7 +71,8 @@ public class FlowUtils {
         //metadata (i.e iv+checksum) is encoded "three times" - once in each channel (RGB)
         int maxBitsToEncode = ENCODING_BIT_GROUP_SIZE*(dim*dim
                 - 4*effectiveModulesInMargin*(dim -effectiveModulesInMargin)
-                - MODULES_IN_POS_DET_DIM*MODULES_IN_POS_DET_DIM*NUM_OF_POSITION_DETECTORS)
+                - MODULES_IN_POS_DET_DIM*MODULES_IN_POS_DET_DIM*NUM_OF_POSITION_DETECTORS
+                - MODULES_IN_ALIGNMENT_PATTERN_DIM*MODULES_IN_ALIGNMENT_PATTERN_DIM)
                 -2*CHANNELS*BITS_IN_BYTE*(Parameters.ivLength+CHECKSUM_LENGTH);
 
         return Math.floorDiv(CHANNELS*maxBitsToEncode, BITS_IN_BYTE);

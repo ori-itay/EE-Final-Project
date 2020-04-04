@@ -153,6 +153,12 @@ public class DisplayDecoder {
 		RGB[2] = (currPixelSample >>> 16) & 0xFF; //blue
 
 		pos.colModule++;
+		//skip alignment pattern
+		if(pos.colModule >= ALIGNMENT_PATTERN_UPPER_LEFT_MODULE && pos.rowModule >= ALIGNMENT_PATTERN_UPPER_LEFT_MODULE
+				&& pos.colModule < ALIGNMENT_PATTERN_UPPER_LEFT_MODULE + MODULES_IN_ALIGNMENT_PATTERN_DIM
+				&& pos.rowModule < ALIGNMENT_PATTERN_UPPER_LEFT_MODULE + MODULES_IN_ALIGNMENT_PATTERN_DIM ){
+			pos.colModule+=  MODULES_IN_ALIGNMENT_PATTERN_DIM;
+		}
 		imageSampler.checkForColumnEnd(pos);
 
 		return RGB;

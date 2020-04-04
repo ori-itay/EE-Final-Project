@@ -2,7 +2,6 @@ package com.android.visualcrypto.openCvUtils;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.os.Environment;
 import android.util.Log;
 
 import com.android.visualcrypto.MainActivity;
@@ -15,11 +14,7 @@ import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
 
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -62,7 +57,7 @@ public class DistortedImageSampler extends StdImageSampler {
         this.setModulesInMargin(0);
         findMinMaxPixelVals();
 
-
+/*
         Bitmap normalized = Bitmap.createBitmap(distortedBitmap.getWidth(), distortedBitmap.getHeight(), Bitmap.Config.ARGB_8888);
         int channels, normalizedChannel;
         final byte ALPHA_VALUE = (byte) 0xff;
@@ -86,7 +81,7 @@ public class DistortedImageSampler extends StdImageSampler {
         OutputStream os = new BufferedOutputStream(new FileOutputStream(file));
         distortedBitmap.compress(Bitmap.CompressFormat.JPEG, 100, os);
         os.close();
-
+    */
 
         GrayU8 gray = bitmapToGray(DistortedImageSampler.distortedBitmap, (GrayU8) null, null);
         ConfigQrCode config = new ConfigQrCode();
