@@ -2,7 +2,6 @@ package com.android.visualcrypto.openCvUtils;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.Color;
 import android.util.Log;
 
 import androidx.core.util.Pair;
@@ -21,18 +20,13 @@ import org.opencv.imgproc.Imgproc;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Queue;
-import java.util.Set;
 
 import boofcv.abst.fiducial.QrCodePreciseDetector;
 import boofcv.alg.fiducial.qrcode.PositionPatternNode;
 import boofcv.alg.fiducial.qrcode.QrCode;
 import boofcv.factory.fiducial.ConfigQrCode;
 import boofcv.factory.fiducial.FactoryFiducial;
-import boofcv.factory.filter.binary.ConfigThreshold;
 import boofcv.struct.image.GrayU8;
 import georegression.struct.point.Point2D_F64;
 import georegression.struct.shapes.Polygon2D_F64;
@@ -41,7 +35,7 @@ import static boofcv.android.ConvertBitmap.bitmapToGray;
 import static com.android.visualcrypto.openCvUtils.Utils.getMaxDistance;
 import static com.android.visualcrypto.openCvUtils.Utils.getPixelChannels;
 import static com.android.visualcrypto.openCvUtils.Utils.thresholdAndNormalizeChannels;
-import static java.lang.Thread.yield;
+import static org.opencv.imgproc.Imgproc.ADAPTIVE_THRESH_MEAN_C;
 
 
 public class DistortedImageSampler extends StdImageSampler {
@@ -65,8 +59,11 @@ public class DistortedImageSampler extends StdImageSampler {
 
     public int initParameters() throws IOException {
         this.setModulesInMargin(0);
-
-        Pair<Point, Mat> bla = findPatch(blackAndWhite, scanFromCorner(blackAndWhite.size()), false, false);
+        Mat bw = new Mat();
+        Imgproc.cvtColor(DistortedImageSampler.distortedImage, bw, Imgproc.COLOR_BGR2GRAY);
+        Imgproc.adaptiveThreshold(bw, bw, 255, ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY, 15, 40);
+        Imgproc.cvtColor(bw, bw, Imgproc.THRESH_BINARY);
+        List<Pair<Integer, Integer>> bla = findCorner(bw, 0, false, false);
 
 
 
@@ -288,8 +285,29 @@ public class DistortedImageSampler extends StdImageSampler {
 
     }
 
+    private static int d, row;
+    private static List<Pair> pts = new ArrayList<>();
+    private Pair scan(int height, int width) {
+        if(d >= height + width - 1){
+            return null;
+        }
+        int startRow = Math.max(0, d- (width-1));
+        int endRow = Math.min(d, height -1);
+        row = startRow;
+        for (int row = startRow; row < endRow +1 ; row++){
+            int col = d - row;
+            return new Pair(row, col);
+        }
 
-    private List<Pair> scan(int height, int width) {
+        if(row >= endRow + 1){
+            return null;
+        }
+        int col = d - row;
+        pts.add(new Pair(row, col));
+        d++;
+        row++;
+        return pts;
+
         List<Pair> pts = new ArrayList<>();
         for (int d = 0; d< height+width+1; d++) {
             int startRow = Math.max(0, d- (width-1));
