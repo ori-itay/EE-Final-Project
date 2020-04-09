@@ -140,8 +140,8 @@ public class Utils {
             double processedChannels[] = new double[3];
             int levels = 255 / (Parameters.encodingColorLevels - 1);
             for (int i = 0; i < processedChannels.length; i++) {
-                normalizedChannel = ((channels[i] - minPixelVal[i]) * 255.0 / (maxPixelVal[i] - minPixelVal[i]));
-                processedChannels[i] = Math.round(normalizedChannel / levels) * levels;
+                //normalizedChannel = ((channels[i] - minPixelVal[i]) * 255.0 / (maxPixelVal[i] - minPixelVal[i]));
+                processedChannels[i] = Math.round(channels[i] / levels) * levels;
             }
             return processedChannels;
         }

@@ -2,7 +2,10 @@ package com.android.visualcrypto.openCvUtils;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.util.Log;
+
+import androidx.core.util.Pair;
 
 import com.android.visualcrypto.MainActivity;
 import com.pc.encoderDecoder.StdImageSampler;
@@ -13,16 +16,23 @@ import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
+import org.opencv.core.Size;
+import org.opencv.imgproc.Imgproc;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
+import java.util.Set;
 
 import boofcv.abst.fiducial.QrCodePreciseDetector;
 import boofcv.alg.fiducial.qrcode.PositionPatternNode;
 import boofcv.alg.fiducial.qrcode.QrCode;
 import boofcv.factory.fiducial.ConfigQrCode;
 import boofcv.factory.fiducial.FactoryFiducial;
+import boofcv.factory.filter.binary.ConfigThreshold;
 import boofcv.struct.image.GrayU8;
 import georegression.struct.point.Point2D_F64;
 import georegression.struct.shapes.Polygon2D_F64;
@@ -31,6 +41,7 @@ import static boofcv.android.ConvertBitmap.bitmapToGray;
 import static com.android.visualcrypto.openCvUtils.Utils.getMaxDistance;
 import static com.android.visualcrypto.openCvUtils.Utils.getPixelChannels;
 import static com.android.visualcrypto.openCvUtils.Utils.thresholdAndNormalizeChannels;
+import static java.lang.Thread.yield;
 
 
 public class DistortedImageSampler extends StdImageSampler {
@@ -54,7 +65,14 @@ public class DistortedImageSampler extends StdImageSampler {
 
     public int initParameters() throws IOException {
         this.setModulesInMargin(0);
-        findMinMaxPixelVals();
+
+        Pair<Point, Mat> bla = findPatch(blackAndWhite, scanFromCorner(blackAndWhite.size()), false, false);
+
+
+
+
+
+        //findMinMaxPixelVals();
 
 /*
         Bitmap normalized = Bitmap.createBitmap(distortedBitmap.getWidth(), distortedBitmap.getHeight(), Bitmap.Config.ARGB_8888);
@@ -81,9 +99,20 @@ public class DistortedImageSampler extends StdImageSampler {
         distortedBitmap.compress(Bitmap.CompressFormat.JPEG, 100, os);
         os.close();
     */
-
+//        Imgproc.threshold(DistortedImageSampler.distortedImage, DistortedImageSampler.distortedImage, 75, 255, Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C);
+//        Bitmap shit  = MainActivity.convertMatToBitmap(DistortedImageSampler.distortedImage);
+        // GrayU8 gray = bitmapToGray(shit, (GrayU8) null, null);
         GrayU8 gray = bitmapToGray(DistortedImageSampler.distortedBitmap, (GrayU8) null, null);
+
         ConfigQrCode config = new ConfigQrCode();
+        config.threshold.fixedThreshold =75D;
+        config.threshold.thresholdFromLocalBlocks = true;
+        config.polygon.detector.canTouchBorder=true;
+        config.polygon.refineContour=true;
+
+//        ConfigThreshold thre = new ConfigThreshold();
+//        thre.thresholdFromLocalBlocks = true;
+//        config.threshold.fixedThreshold(75D);
         QrCodePreciseDetector<GrayU8> detector = FactoryFiducial.qrcode(config, GrayU8.class);
         detector.process(gray);
 
@@ -140,7 +169,7 @@ public class DistortedImageSampler extends StdImageSampler {
 //        MatOfPoint2f test = new MatOfPoint2f();
 //
 //        MatOfPoint2f corners1 = new MatOfPoint2f(new Point(1170,10), new Point(1170,1170), new Point(10,1170), new Point(10,10));
-        pts[2] = new Point(3330,2940);
+        pts[2] = new Point(3323,2915);
         MatOfPoint2f corners1 = new MatOfPoint2f(pts[0], pts[1], pts[2], pts[3]); // pts[2] = new Point(3802, 3308) , for captured_179modulesindum.kpg (actually 175)
         //MatOfPoint2f corners2 = new MatOfPoint2f(new Point(0, 0), new Point(1, 0), new Point(1, 1), new Point(0, 1));
         MatOfPoint2f corners2 = new MatOfPoint2f(new Point(0, 0), new Point(1, 0), new Point(1, 1), new Point(0, 1));
@@ -167,7 +196,7 @@ public class DistortedImageSampler extends StdImageSampler {
         //Imgproc.cvtColor(DistortedImageSampler.distortedImage, grayscale, Imgproc.COLOR_RGB2GRAY);
         //this.setModuleSize(getModuleStride(minPixelStride, inverseH, DistortedImageSampler.distortedImage));
         //Point leftLowerOfPts0 = new Point(pointsQueue.get(0).square.vertexes.get(0).x, pointsQueue.get(0).square.vertexes.get(0).y);
-        Point leftLowerOfPts0 = new Point(2160,1758);
+        Point leftLowerOfPts0 = new Point(2124,1691);
         this.setModuleSize(testItaySize(pts[0], leftLowerOfPts0, H, grayscale));
         int effectiveModulesInDim = (int) Math.floor(1.0 / this.getModuleSize());
         this.setModulesInDim(effectiveModulesInDim);
@@ -175,6 +204,126 @@ public class DistortedImageSampler extends StdImageSampler {
         Log.d("ModulesInDim", "left lower: "+leftLowerOfPts0.x+","+leftLowerOfPts0.y);
         return 0;
     }
+
+
+//    private List<Point> scanInDiagonal(int size) {
+//        List<Point> pts = new ArrayList<>();
+//        for (int start_row = 0; start_row < size - 1; start_row++) {
+//            for (int col = 0; col < start_row +1; col++) {
+//                pts.add(new Point(start_row-col, col));
+//            }
+//        }
+//        for (int col = 0; col <size; col++) {
+//            for (int row = size-1; row >=0; row--) {
+//                pts.add(new Point(row-col, col));
+//            }
+//        }
+//        return pts;
+//    }
+//
+//    private List<Point> scanFromCorner(int size, boolean top, boolean left) {
+//        List<Point> pts = new ArrayList<>();
+//        for (Point pt : scanInDiagonal(size)) {
+//            int y = (int) pt.x;
+//            int x = (int) pt.y;
+//            if (!top) {
+//                y = size - y - 1;
+//            }
+//            if (!left) {
+//                x = size - x - 1;
+//            }
+//            pts.add(new Point(y, x));
+//        }
+//        return pts;
+//    }
+//
+//    private Mat findSame(Mat img, int x0, int y0) {
+//        Mat result = new Mat(new Size(10, 3), CvType.CV_32F); // TODO: potential problematic line
+//        List<Pair> pendingCheck = new ArrayList<>();
+//        pendingCheck.add(new Pair<>(x0, y0));
+//        Set<Pair> checked = new HashSet<>();
+//        while (!pendingCheck.isEmpty()) {
+//            Pair pt = pendingCheck.get(0); pendingCheck.remove(0);
+//            int x = (int) pt.first; int y = (int) pt.second;
+//            if (x < 0 || y < 0 || x>=img.cols() || y>= img.width()) { // TODO: potential problematic line
+//                continue;
+//            }
+//            if (checked.contains(pt)) {
+//                continue;
+//            }
+//
+//            checked.add(pt);
+//
+//            if (img.get(y,x)[0] == img.get(y0, x0)[0]) {
+//                result.put(y, x, 1);
+//                pendingCheck.add(new Pair<>(x+1, y));
+//                pendingCheck.add(new Pair<>(x-1, y));
+//                pendingCheck.add(new Pair<>(x, y+1));
+//                pendingCheck.add(new Pair<>(x, y-1));
+//            }
+//        }
+//        return result;
+//    }
+//
+//    private Pair findPatch(Mat img, List<Point> indices) {
+//        for (Point pt : indices) {
+//            int y = (int) pt.x;
+//            int x = (int) pt.y;
+//            if (img.get(y,x)[0] == 0) { // TODO: img needs to be black and white...  0 is black
+//                return new Pair<>(pt, findSame(img, y, x));
+//            }
+//        }
+//        return null;
+//    }
+
+    private List<Pair<Integer, Integer>> findCorner(Mat img, int val, boolean top, boolean left) {
+        List<Pair<Integer, Integer>> pts = new ArrayList<>();
+        for (Pair p : scanDiagonalFromCorner(img.size(), top, left)) {
+            if (img.get((int) p.first, (int) p.second)[0] == val) {
+                pts.add(p);
+            }
+        }
+
+        return pts;
+
+    }
+
+
+    private List<Pair> scan(int height, int width) {
+        List<Pair> pts = new ArrayList<>();
+        for (int d = 0; d< height+width+1; d++) {
+            int startRow = Math.max(0, d- (width-1));
+            int endRow = Math.min(d, height -1);
+            for (int row = startRow; row < endRow +1; row++) {
+                int col = d - row;
+                pts.add(new Pair(row, col));
+            }
+        }
+        return pts;
+    }
+
+    private List<Pair> scanDiagonalFromCorner(Size size, boolean top, boolean left) {
+        List<Pair> pts = new ArrayList<>();
+        int height = (int) size.height; int width = (int) size.width;
+        List<Pair> scan = scan(height, width);
+        for (Pair p : scan) {
+            int row, col;
+            row = (int) p.first;
+            col = (int) p.second;
+
+            if (!top) {
+                row = height - (int) p.first - 1;
+            }
+            if (!left) {
+                col = width - (int) p.second - 1;
+            }
+            Pair pair = new Pair(row, col);
+            pts.add(pair);
+        }
+        return pts;
+    }
+
+
 
     private double testItaySize(Point upperLeft, Point lowerLeft, Mat H, Mat grayscale) {
         Mat upperPoint = new Mat(1, 3, CvType.CV_64F);
