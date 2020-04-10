@@ -56,7 +56,7 @@ public class Utils {
         double MODULES_IN_QR_DIAGONAL = 7D;
         while (undistortedLocX < 1 && undistortedLocY < 1) {
 //            if (!firstRun) {
-//                channels = getPixelChannels(unDistortedImageMatCord, inverseH,  capturedImg);
+//      4          channels = getPixelChannels(unDistortedImageMatCord, inverseH,  capturedImg);
 //                pixel = (int) (channels[0] + channels[1] + channels[2]) / 3.0;
 //            }
 //            firstRun = false;
@@ -165,68 +165,169 @@ public class Utils {
         return channels;
     }
 
-
-
-    public static Point findAlignmentBottomRight(double estimatedModuleSize, Mat inverseH, Mat capturedImg) {
+    /* for pixel stride */
+    public static Point findAlignmentBottomRight(double estimatedModuleSize, double pixelStride, Mat inverseH, Mat capturedImg) {
         double startingPoint = 90*estimatedModuleSize;
-        double undistortedLocX = startingPoint;
-        double undistortedLocY = startingPoint;
+        double undistortedLoc = startingPoint;
 
         Mat unDistortedImageMatCord1 = new Mat(1, 3, CvType.CV_64F);
-        unDistortedImageMatCord1.put(0, 0, undistortedLocX);
-        unDistortedImageMatCord1.put(0, 1, undistortedLocY);
+        unDistortedImageMatCord1.put(0, 0, undistortedLoc);
+        unDistortedImageMatCord1.put(0, 1, undistortedLoc);
         unDistortedImageMatCord1.put(0, 2, 1);
-        Mat unDistortedImageMatCord2 = unDistortedImageMatCord1.clone();
-        Mat unDistortedImageMatCord3 = unDistortedImageMatCord1.clone();
-        Mat unDistortedImageMatCord4 = unDistortedImageMatCord1.clone();
-        Mat unDistortedImageMatCord5 = unDistortedImageMatCord1.clone();
+        double[] channels = getPixelChannels(unDistortedImageMatCord1, inverseH, capturedImg);
 
-        unDistortedImageMatCord2.put(0, 0, startingPoint + estimatedModuleSize);
-        unDistortedImageMatCord2.put(0, 1, startingPoint + estimatedModuleSize);
-        unDistortedImageMatCord3.put(0, 0, startingPoint + 2*estimatedModuleSize);
-        unDistortedImageMatCord3.put(0, 1, startingPoint + 2*estimatedModuleSize);
-        unDistortedImageMatCord4.put(0, 0, startingPoint + 3*estimatedModuleSize);
-        unDistortedImageMatCord4.put(0, 1, startingPoint + 3*estimatedModuleSize);
-        unDistortedImageMatCord5.put(0, 0, startingPoint + 4*estimatedModuleSize);
-        unDistortedImageMatCord5.put(0, 1, startingPoint + 4*estimatedModuleSize);
-        undistortedLocX = undistortedLocY =  startingPoint + 4*estimatedModuleSize;
-
-        double[] channels1 = getPixelChannels(unDistortedImageMatCord1, inverseH, capturedImg);
-        double[] channels2 = getPixelChannels(unDistortedImageMatCord2, inverseH, capturedImg);
-        double[] channels3 = getPixelChannels(unDistortedImageMatCord3, inverseH, capturedImg);
-        double[] channels4 = getPixelChannels(unDistortedImageMatCord4, inverseH, capturedImg);
-        double[] channels5 = getPixelChannels(unDistortedImageMatCord5, inverseH, capturedImg);
-
-        while (undistortedLocX < 1 && undistortedLocY < 1) {
-
-            if ( isBlack(channels1) && isWhite(channels2) && isBlack(channels3) && isWhite(channels4) && isBlack(channels5)) {
-                return undistortedToDistortedIndexes(unDistortedImageMatCord5, inverseH); //getDistortedIndex(undistortedLocX, undistortedLocY);
+        while (undistortedLoc < 1) {
+            while (!isBlack(channels)) {
+                undistortedLoc+= pixelStride;
+                channels = getNewPixel(unDistortedImageMatCord1, undistortedLoc, inverseH, capturedImg);
             }
-            channels1 = channels2;
-            channels2 = channels3;
-            channels3 = channels4;
-            channels4 = channels5;
 
-            undistortedLocX += estimatedModuleSize;
-            undistortedLocY += estimatedModuleSize;
-            unDistortedImageMatCord5.put(0, 0, undistortedLocX);
-            unDistortedImageMatCord5.put(0, 1, undistortedLocY);
-
-            channels5 = getPixelChannels(unDistortedImageMatCord5, inverseH, capturedImg);
+            Point endOfPattern = isStartOfPattern(undistortedLoc, pixelStride, inverseH, capturedImg);
+            if (endOfPattern != null) {
+                return endOfPattern;
+            } else {
+                undistortedLoc+= pixelStride;
+                channels = getNewPixel(unDistortedImageMatCord1, undistortedLoc, inverseH, capturedImg);
+            }
         }
         return null;
+    }
+
+    private static Point isStartOfPattern(double undistortedLoc, double pixelStride, Mat inverseH, Mat capturedImg) {
+        Mat unDistortedImageMatCord = new Mat(1, 3, CvType.CV_64F);
+        unDistortedImageMatCord.put(0, 2, 1);
+        double[] channels = getNewPixel(unDistortedImageMatCord, undistortedLoc, inverseH, capturedImg);
+
+        int blackAndWhiteChangeCounter = 0;
+        while (true) {
+            while (isBlack(channels)) {
+                undistortedLoc += pixelStride;
+                channels = getNewPixel(unDistortedImageMatCord, undistortedLoc, inverseH, capturedImg);
+            }
+
+            if (!isWhite(channels)) {
+                if (blackAndWhiteChangeCounter == 4) {
+                    return new Point(undistortedLoc, undistortedLoc);
+                } else {
+                    return null;
+                }
+            }
+            blackAndWhiteChangeCounter++;
+
+            while (isWhite(channels)) {
+                undistortedLoc += pixelStride;
+                channels = getNewPixel(unDistortedImageMatCord, undistortedLoc, inverseH, capturedImg);
+            }
+
+            if (!isBlack(channels)) {
+                return null;
+            }
+
+            blackAndWhiteChangeCounter++;
+        }
+    }
+
+    private static double[] getNewPixel(Mat unDistortedImageMatCord, double undistortedLoc, Mat inverseH, Mat capturedImg) {
+        unDistortedImageMatCord.put(0,0, undistortedLoc);
+        unDistortedImageMatCord.put(0, 1, undistortedLoc);
+        return getPixelChannels(unDistortedImageMatCord, inverseH, capturedImg);
+    }
+
+    /* FOR MODULE STRIDE */
+//    public static Point findAlignmentBottomRight(double estimatedModuleSize, double pixelStride, Mat inverseH, Mat capturedImg) {
+//        double startingPoint = 90*estimatedModuleSize;
+//        double undistortedLocX = startingPoint;
+//        double undistortedLocY = startingPoint;
+//
+//        Mat unDistortedImageMatCord1 = new Mat(1, 3, CvType.CV_64F);
+//        unDistortedImageMatCord1.put(0, 0, undistortedLocX);
+//        unDistortedImageMatCord1.put(0, 1, undistortedLocY);
+//        unDistortedImageMatCord1.put(0, 2, 1);
+//        Mat unDistortedImageMatCord2 = unDistortedImageMatCord1.clone();
+//        Mat unDistortedImageMatCord3 = unDistortedImageMatCord1.clone();
+//        Mat unDistortedImageMatCord4 = unDistortedImageMatCord1.clone();
+//        Mat unDistortedImageMatCord5 = unDistortedImageMatCord1.clone();
+//
+//        unDistortedImageMatCord2.put(0, 0, startingPoint + estimatedModuleSize);
+//        unDistortedImageMatCord2.put(0, 1, startingPoint + estimatedModuleSize);
+//        unDistortedImageMatCord3.put(0, 0, startingPoint + 2*estimatedModuleSize);
+//        unDistortedImageMatCord3.put(0, 1, startingPoint + 2*estimatedModuleSize);
+//        unDistortedImageMatCord4.put(0, 0, startingPoint + 3*estimatedModuleSize);
+//        unDistortedImageMatCord4.put(0, 1, startingPoint + 3*estimatedModuleSize);
+//        unDistortedImageMatCord5.put(0, 0, startingPoint + 4*estimatedModuleSize);
+//        unDistortedImageMatCord5.put(0, 1, startingPoint + 4*estimatedModuleSize);
+//        undistortedLocX = undistortedLocY =  startingPoint + 4*estimatedModuleSize;
+//
+//        double[] channels1 = getPixelChannels(unDistortedImageMatCord1, inverseH, capturedImg);
+//        double[] channels2 = getPixelChannels(unDistortedImageMatCord2, inverseH, capturedImg);
+//        double[] channels3 = getPixelChannels(unDistortedImageMatCord3, inverseH, capturedImg);
+//        double[] channels4 = getPixelChannels(unDistortedImageMatCord4, inverseH, capturedImg);
+//        double[] channels5 = getPixelChannels(unDistortedImageMatCord5, inverseH, capturedImg);
+//
+//        while (undistortedLocX < 1 && undistortedLocY < 1) {
+//
+//            if (isBlack(channels1) && isWhite(channels2) && isBlack(channels3) && isWhite(channels4) && isBlack(channels5)) {
+//                Mat borderIndexUndistorted = findIndexOfBorder(inverseH, pixelStride, capturedImg,
+//                        undistortedLocX-estimatedModuleSize, undistortedLocY-estimatedModuleSize);
+//
+//                //return undistortedToDistortedIndexes(unDistortedImageMatCord5, inverseH); //getDistortedIndex(undistortedLocX, undistortedLocY);
+//                return undistortedToDistortedIndexes(borderIndexUndistorted, inverseH);
+//            }
+//            channels1 = channels2;
+//            channels2 = channels3;
+//            channels3 = channels4;
+//            channels4 = channels5;
+//
+//            undistortedLocX += estimatedModuleSize;
+//            undistortedLocY += estimatedModuleSize;
+//            unDistortedImageMatCord5.put(0, 0, undistortedLocX);
+//            unDistortedImageMatCord5.put(0, 1, undistortedLocY);
+//
+//            channels5 = getPixelChannels(unDistortedImageMatCord5, inverseH, capturedImg);
+//        }
+//        return null;
+//    }
+
+    private static Mat findIndexOfBorder(Mat inverseH, double pixelStride, Mat capturedImg,
+                                           double undistortedLocX, double undistortedLocY) {
+        Mat borderIndexUndistorted = new Mat(1, 3, CvType.CV_64F);
+        borderIndexUndistorted.put(0, 0, undistortedLocX);
+        borderIndexUndistorted.put(0, 1, undistortedLocY);
+        borderIndexUndistorted.put(0, 2, 1);
+
+        double originalLocX = undistortedLocX;
+
+
+        //go rightmost
+        while (isWhite(getPixelChannels(borderIndexUndistorted, inverseH, capturedImg))) {
+            undistortedLocX += pixelStride;
+            borderIndexUndistorted.put(0, 0, undistortedLocX);
+        }
+
+        borderIndexUndistorted.put(0,0, originalLocX); // return to white zone
+        //go downmost
+        while (isWhite(getPixelChannels(borderIndexUndistorted, inverseH, capturedImg))) {
+            undistortedLocY += pixelStride;
+            borderIndexUndistorted.put(0, 1, undistortedLocY);
+        }
+
+        borderIndexUndistorted.put(0,0, undistortedLocX -pixelStride);
+        borderIndexUndistorted.put(0,1, undistortedLocY -pixelStride);
+        return borderIndexUndistorted;
     }
 
     static final int BLACK_THRESHOLD = 50;
     static final int WHITE_THRESHOLD = 120;
     private static boolean isBlack(double[] channels) {
-        double avg = (channels[0]+channels[1]+channels[2])/3;
-        return avg < BLACK_THRESHOLD;
+        //double avg = (channels[0]+channels[1]+channels[2])/3;
+        //return avg < BLACK_THRESHOLD;
+        return channels[0] < BLACK_THRESHOLD && channels[1] < BLACK_THRESHOLD && channels[2] < BLACK_THRESHOLD;
     }
 
     private static boolean isWhite(double[] channels) {
-        double avg = (channels[0]+channels[1]+channels[2])/3;
-        return avg >= WHITE_THRESHOLD;
+//        double avg = (channels[0]+channels[1]+channels[2])/3;
+//        return avg >= WHITE_THRESHOLD;
+        return channels[0] > WHITE_THRESHOLD && channels[1] > WHITE_THRESHOLD && channels[2] > WHITE_THRESHOLD;
     }
 
 

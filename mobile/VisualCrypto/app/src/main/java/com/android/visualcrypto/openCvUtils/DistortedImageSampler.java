@@ -200,9 +200,9 @@ public class DistortedImageSampler extends StdImageSampler {
         //Point leftLowerOfPts0 = new Point(pointsQueue.get(0).square.vertexes.get(0).x, pointsQueue.get(0).square.vertexes.get(0).y);
         double estimatedModuleSize = 1.01*computeModuleSize(pts[0], rightLowerOfPts0, H, Math.sqrt(2*49));
         double normalizedEstimatedModuleSize =  1 / (Math.floor(1.0 / estimatedModuleSize));
-        Point alignmentBottomRight = Utils.findAlignmentBottomRight(normalizedEstimatedModuleSize, inverseH, DistortedImageSampler.distortedImage);
-        alignmentBottomRight = new Point(2362.5, 1691.5);
-        this.setModuleSize(computeModuleSize(pts[0], alignmentBottomRight, H,  Math.sqrt(2*10000)));
+        Point alignmentBottomRight = Utils.findAlignmentBottomRight(normalizedEstimatedModuleSize, minPixelStride, inverseH, DistortedImageSampler.distortedImage);
+        //alignmentBottomRight = new Point(2362.5, 1691.5);
+        this.setModuleSize(computeModuleSize(pts[0], alignmentBottomRight, H,  Math.sqrt(2*99*99)));
         int effectiveModulesInDim = (int) Math.floor(1.0 / this.getModuleSize());
         this.setModulesInDim(effectiveModulesInDim);
         Log.d("ModulesInDim", "modules in dim: "+Float.toString(this.getModulesInDim()));
