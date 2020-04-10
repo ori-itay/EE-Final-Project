@@ -7,9 +7,6 @@ import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
 
-import static com.android.visualcrypto.openCvUtils.DistortedImageSampler.maxPixelVal;
-import static com.android.visualcrypto.openCvUtils.DistortedImageSampler.minPixelVal;
-
 public class Utils {
 
     public static double calcDistance(Point a, Point b) {
@@ -41,9 +38,6 @@ public class Utils {
         double undistortedModuleDimension = 0.0;
 
         int BLACK_THRESHOLD = 80;
-
-
-
 
         int remainingColorSwitches = 5;
         boolean inBlack = false;
@@ -134,20 +128,19 @@ public class Utils {
         return 0.0;
     }
 
-        public static double[] thresholdAndNormalizeChannels ( double[] channels){
+    public static double[] thresholdAndNormalizeChannels ( double[] channels){
 
-            double normalizedChannel;
-            double processedChannels[] = new double[3];
-            int levels = 255 / (Parameters.encodingColorLevels - 1);
-            for (int i = 0; i < processedChannels.length; i++) {
-                //normalizedChannel = ((channels[i] - minPixelVal[i]) * 255.0 / (maxPixelVal[i] - minPixelVal[i]));
-                processedChannels[i] = Math.round(channels[i] / levels) * levels;
-            }
-            return processedChannels;
+        double normalizedChannel;
+        double processedChannels[] = new double[3];
+        int levels = 255 / (Parameters.encodingColorLevels - 1);
+        for (int i = 0; i < processedChannels.length; i++) {
+            //normalizedChannel = ((channels[i] - minPixelVal[i]) * 255.0 / (maxPixelVal[i] - minPixelVal[i]));
+            processedChannels[i] = Math.round(channels[i] / levels) * levels;
         }
+        return processedChannels;
+    }
 
-
-    public static double[] getPixelChannels(Mat unDistortedImageMatCord, Mat inverseH, Mat capturedImg) {
+    private static Point undistortedToDistortedIndexes(Mat unDistortedImageMatCord, Mat inverseH){
         Mat distortedImageMatCord = new Mat();
         Core.gemm(inverseH, unDistortedImageMatCord.t() , 1.0, new Mat(), 0, distortedImageMatCord, 0); // res = inverseH.t() * undistortedImageMatCord
         double x = distortedImageMatCord.get(0,0)[0];
@@ -159,7 +152,82 @@ public class Utils {
 
         int indexRow = (int) (Math.round(x));
         int indexCol = (int) (Math.round(y));
+        return new Point(indexRow, indexCol);
+    }
+
+
+
+    public static double[] getPixelChannels(Mat unDistortedImageMatCord, Mat inverseH, Mat capturedImg) {
+        Point distortedindex = undistortedToDistortedIndexes(unDistortedImageMatCord, inverseH);
+        int indexRow = (int) distortedindex.x;
+        int indexCol = (int) distortedindex.y;
         double[] channels = capturedImg.get(indexCol, indexRow);
         return channels;
     }
+
+
+
+    public static Point findAlignmentBottomRight(double estimatedModuleSize, Mat inverseH, Mat capturedImg) {
+        double startingPoint = 90*estimatedModuleSize;
+        double undistortedLocX = startingPoint;
+        double undistortedLocY = startingPoint;
+
+        Mat unDistortedImageMatCord1 = new Mat(1, 3, CvType.CV_64F);
+        unDistortedImageMatCord1.put(0, 0, undistortedLocX);
+        unDistortedImageMatCord1.put(0, 1, undistortedLocY);
+        unDistortedImageMatCord1.put(0, 2, 1);
+        Mat unDistortedImageMatCord2 = unDistortedImageMatCord1.clone();
+        Mat unDistortedImageMatCord3 = unDistortedImageMatCord1.clone();
+        Mat unDistortedImageMatCord4 = unDistortedImageMatCord1.clone();
+        Mat unDistortedImageMatCord5 = unDistortedImageMatCord1.clone();
+
+        unDistortedImageMatCord2.put(0, 0, startingPoint + estimatedModuleSize);
+        unDistortedImageMatCord2.put(0, 1, startingPoint + estimatedModuleSize);
+        unDistortedImageMatCord3.put(0, 0, startingPoint + 2*estimatedModuleSize);
+        unDistortedImageMatCord3.put(0, 1, startingPoint + 2*estimatedModuleSize);
+        unDistortedImageMatCord4.put(0, 0, startingPoint + 3*estimatedModuleSize);
+        unDistortedImageMatCord4.put(0, 1, startingPoint + 3*estimatedModuleSize);
+        unDistortedImageMatCord5.put(0, 0, startingPoint + 4*estimatedModuleSize);
+        unDistortedImageMatCord5.put(0, 1, startingPoint + 4*estimatedModuleSize);
+        undistortedLocX = undistortedLocY =  startingPoint + 4*estimatedModuleSize;
+
+        double[] channels1 = getPixelChannels(unDistortedImageMatCord1, inverseH, capturedImg);
+        double[] channels2 = getPixelChannels(unDistortedImageMatCord2, inverseH, capturedImg);
+        double[] channels3 = getPixelChannels(unDistortedImageMatCord3, inverseH, capturedImg);
+        double[] channels4 = getPixelChannels(unDistortedImageMatCord4, inverseH, capturedImg);
+        double[] channels5 = getPixelChannels(unDistortedImageMatCord5, inverseH, capturedImg);
+
+        while (undistortedLocX < 1 && undistortedLocY < 1) {
+
+            if ( isBlack(channels1) && isWhite(channels2) && isBlack(channels3) && isWhite(channels4) && isBlack(channels5)) {
+                return undistortedToDistortedIndexes(unDistortedImageMatCord5, inverseH); //getDistortedIndex(undistortedLocX, undistortedLocY);
+            }
+            channels1 = channels2;
+            channels2 = channels3;
+            channels3 = channels4;
+            channels4 = channels5;
+
+            undistortedLocX += estimatedModuleSize;
+            undistortedLocY += estimatedModuleSize;
+            unDistortedImageMatCord5.put(0, 0, undistortedLocX);
+            unDistortedImageMatCord5.put(0, 1, undistortedLocY);
+
+            channels5 = getPixelChannels(unDistortedImageMatCord5, inverseH, capturedImg);
+        }
+        return null;
+    }
+
+    static final int BLACK_THRESHOLD = 50;
+    static final int WHITE_THRESHOLD = 120;
+    private static boolean isBlack(double[] channels) {
+        double avg = (channels[0]+channels[1]+channels[2])/3;
+        return avg < BLACK_THRESHOLD;
+    }
+
+    private static boolean isWhite(double[] channels) {
+        double avg = (channels[0]+channels[1]+channels[2])/3;
+        return avg >= WHITE_THRESHOLD;
+    }
+
+
 }

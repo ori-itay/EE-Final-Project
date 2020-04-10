@@ -179,13 +179,13 @@ public class MainActivity extends AppCompatActivity {
 
     public void test(View v) throws IOException {
 
-//
-//        InputStream is = this.getAssets().open("realQR.jpg");
+
+//        InputStream is = this.getAssets().open("captured50_50_2levels_10pixInModule_alignmentPattern2.jpg");
 //        Bitmap b = BitmapFactory.decodeStream(is);
 //
 //        Mat capturedImage = new Mat();
 //        Utils.bitmapToMat(b, capturedImage);
-//        DistortedImageSampler sampler = new DistortedImageSampler(capturedImage, this);
+//        DistortedImageSampler sampler = new DistortedImageSampler(capturedImage, b, this);
 //        boolean found = sampler.detect(capturedImage);
 //        int[] intArray = new int[b.getWidth()*b.getHeight()];
 //        //copy pixel data from the Bitmap into the 'intArray' array
@@ -249,8 +249,8 @@ public class MainActivity extends AppCompatActivity {
         try {
             long startTime = System.nanoTime();
 
-            InputStream encodedStream = getAssets().open( "captured50_50_2levels_10pixInModule_alignmentPattern2.jpg");
-            File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) +"/captured50_50_2levels_10pixInModule_alignmentPattern2.jpg");
+            InputStream encodedStream = getAssets().open( "captured50_50_2levels_10pixInModule_alignmentPattern4.jpg");
+            File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) +"/captured50_50_2levels_10pixInModule_alignmentPattern4.jpg");
 
             Bitmap encodedBitmap = BitmapFactory.decodeStream(encodedStream);
             Bitmap rotatedBitmap = CameraRotationFix.fixRotation(encodedBitmap, file.getAbsolutePath());
