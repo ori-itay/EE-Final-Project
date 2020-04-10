@@ -43,17 +43,16 @@ import static org.opencv.imgproc.Imgproc.cvtColor;
 
 
 public class DistortedImageSampler extends StdImageSampler {
+    public static double[] minPixelVal = new double[3];
+    public static double[] maxPixelVal = new double[3];
     private static Mat distortedImage;
     private static Mat inverseH;
     private static Bitmap distortedBitmap;
-    public static double[] minPixelVal = new double[3];
-    public static double[] maxPixelVal = new double[3];
-
-    private Context context;
+    private static int d, row;
 
     //MatOfPoint2f possibleCenters = new MatOfPoint2f();
     //List<Double> estimatedModuleSize = new ArrayList<>();
-
+    private Context context;
 
     public DistortedImageSampler(Mat distortedImage, Bitmap distortedBitmap, Context context) {
         DistortedImageSampler.distortedImage = distortedImage;
@@ -67,53 +66,10 @@ public class DistortedImageSampler extends StdImageSampler {
         cvtColor(DistortedImageSampler.distortedImage, bw, Imgproc.COLOR_BGR2GRAY);
         adaptiveThreshold(bw, bw, 255, ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY, 105, 90);
         cvtColor(bw, bw, Imgproc.THRESH_BINARY);
-        Imgcodecs.imwrite(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/bw.jpg" ,bw);
-
-
-
-
-
-        //findMinMaxPixelVals();
-
-/*
-        Bitmap normalized = Bitmap.createBitmap(distortedBitmap.getWidth(), distortedBitmap.getHeight(), Bitmap.Config.ARGB_8888);
-        int channels, normalizedChannel;
-        final byte ALPHA_VALUE = (byte) 0xff;
-        for(int row = 0; row< distortedBitmap.getHeight(); row++){
-            for(int col = 0; col<distortedBitmap.getWidth(); col++){
-                channels = distortedBitmap.getPixel(col, row);
-                int a = (channels & 0xFF000000) >>> 24;
-                int normA = a;
-                int r = (channels & 0x00FF0000) >>> 16;
-                int normR = (int) ((r - minPixelVal[0]) * 255.0 / (maxPixelVal[0] - minPixelVal[0]));
-                int g = (channels & 0x0000FF00) >>> 8;
-                int normG = (int) ((g - minPixelVal[1]) * 255.0 / (maxPixelVal[1] - minPixelVal[1]));;
-                int b = channels & 0x000000FF;
-                int normB = (int) ((b - minPixelVal[2]) * 255.0 / (maxPixelVal[2] - minPixelVal[2]));;
-                normalizedChannel = normA<<24 | normR<<16 | normG<<8 | normB;
-                normalized.setPixel(col, row, normalizedChannel);
-            }
-        }
-        DistortedImageSampler.distortedBitmap = normalized;
-        File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) +"/normalized_captured50_50_2levels_10pixInModule.jpg");
-        OutputStream os = new BufferedOutputStream(new FileOutputStream(file));
-        distortedBitmap.compress(Bitmap.CompressFormat.JPEG, 100, os);
-        os.close();
-    */
-//        Imgproc.threshold(DistortedImageSampler.distortedImage, DistortedImageSampler.distortedImage, 75, 255, Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C);
-//        Bitmap shit  = MainActivity.convertMatToBitmap(DistortedImageSampler.distortedImage);
-        // GrayU8 gray = bitmapToGray(shit, (GrayU8) null, null);
+        Imgcodecs.imwrite(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/bw.jpg", bw);
         GrayU8 gray = bitmapToGray(DistortedImageSampler.distortedBitmap, (GrayU8) null, null);
 
         ConfigQrCode config = new ConfigQrCode();
-        config.threshold.fixedThreshold =75D;
-        config.threshold.thresholdFromLocalBlocks = true;
-        config.polygon.detector.canTouchBorder=true;
-        config.polygon.refineContour=true;
-
-//        ConfigThreshold thre = new ConfigThreshold();
-//        thre.thresholdFromLocalBlocks = true;
-//        config.threshold.fixedThreshold(75D);
         QrCodePreciseDetector<GrayU8> detector = FactoryFiducial.qrcode(config, GrayU8.class);
         detector.process(gray);
 
@@ -156,20 +112,6 @@ public class DistortedImageSampler extends StdImageSampler {
             return 1;
         }
 
-
-//        QRCodeDetector detector = new QRCodeDetector();
-//        MatOfPoint2f corners1 = new MatOfPoint2f();
-        //boolean foundCorners = detector.detect(distortedImage, corners1);
-        //boolean foundCorners = this.detect(distortedImage);
-//        if (!foundCorners) {
-//            Log.d("DistortedImageSampler", "Couldn't detect QR position detectors");
-//            ((MainActivity) this.context).showAlert("Couldn't detect QR position detectors");
-//            return 1;
-//        }
-
-//        MatOfPoint2f test = new MatOfPoint2f();
-//
-//        MatOfPoint2f corners1 = new MatOfPoint2f(new Point(1170,10), new Point(1170,1170), new Point(10,1170), new Point(10,10));
         pts[2] = findCorner(bw, 0, false, false);
         MatOfPoint2f corners1 = new MatOfPoint2f(pts[0], pts[1], pts[2], pts[3]); // pts[2] = new Point(3802, 3308) , for captured_179modulesindum.kpg (actually 175)
         //MatOfPoint2f corners2 = new MatOfPoint2f(new Point(0, 0), new Point(1, 0), new Point(1, 1), new Point(0, 1));
@@ -180,33 +122,25 @@ public class DistortedImageSampler extends StdImageSampler {
 
         DistortedImageSampler.inverseH = inverseH;
 
-//        Point[] pts = possibleCenters.toArray();
-//        Point leftUpperCorner = getCornerFromCenter(pts[0], inverseH, SOMESTRIDE,true,true); //TODO: implement getCornerFromCenter
-//        Point rightUpperCorner = getCornerFromCenter(pts[1], inverseH, SOMESTRIDE, false, true);
-//        Point leftLowerCorner = getCornerFromCenter(pts[2], inverseH, SOMESTRIDE,true, false);
-//        find fourth corner ;
-//
-//        double minPixelStride = 1 / getMaxDistance(leftUpperCorner, rightUpperCorner, leftLowerCorner, fourth corner);
-        //double maxDistanceBetweenCenters = getMaxDistance(pts[0], pts[1], pts[2], pts[3]);
-        //int modulesBetweenCenters = (int) Math.round(maxDistanceBetweenCenters /  estimatedModuleSize.get(0));
-        // this.setModuleSize((double) 1 / modulesBetweenCenters );
-        //this.setModulesInDim(modulesBetweenCenters );
-
         double minPixelStride = 1 / getMaxDistance(pts[0], pts[1], pts[2], pts[3]);
         Mat grayscale = new Mat();
-        //Imgproc.cvtColor(DistortedImageSampler.distortedImage, grayscale, Imgproc.COLOR_RGB2GRAY);
-        //this.setModuleSize(getModuleStride(minPixelStride, inverseH, DistortedImageSampler.distortedImage));
+
         Point rightLowerOfPts0 = new Point(failures.get(0).ppCorner.vertexes.data[2].x, failures.get(0).ppCorner.vertexes.data[2].y);
         //Point leftLowerOfPts0 = new Point(pointsQueue.get(0).square.vertexes.get(0).x, pointsQueue.get(0).square.vertexes.get(0).y);
-        double estimatedModuleSize = 1.01*computeModuleSize(pts[0], rightLowerOfPts0, H, Math.sqrt(2*49));
-        double normalizedEstimatedModuleSize =  1 / (Math.floor(1.0 / estimatedModuleSize));
+        double estimatedModuleSize = 1.01 * computeModuleSize(pts[0], rightLowerOfPts0, H, Math.sqrt(2 * 49));
+        double normalizedEstimatedModuleSize = 1 / (Math.floor(1.0 / estimatedModuleSize));
         Point alignmentBottomRight = Utils.findAlignmentBottomRight(normalizedEstimatedModuleSize, minPixelStride, inverseH, DistortedImageSampler.distortedImage);
         //alignmentBottomRight = new Point(2362.5, 1691.5);
-        this.setModuleSize(computeModuleSize(pts[0], alignmentBottomRight, H,  Math.sqrt(2*99*99)));
+
+        Mat alignmentBottomRightMat = new Mat(1, 3, CvType.CV_64F);
+        alignmentBottomRightMat.put(0, 0, alignmentBottomRight.x, alignmentBottomRight.y, 1);
+        Point distortedPoint = Utils.undistortedToDistortedIndexes(alignmentBottomRightMat, inverseH);
+        this.setModuleSize(computeModuleSize(pts[0], distortedPoint, H, Math.sqrt(2 * 99 * 99)));
         int effectiveModulesInDim = (int) Math.floor(1.0 / this.getModuleSize());
         this.setModulesInDim(effectiveModulesInDim);
-        Log.d("ModulesInDim", "modules in dim: "+Float.toString(this.getModulesInDim()));
-        Log.d("ModulesInDim", "left lower: "+rightLowerOfPts0.x+","+rightLowerOfPts0.y);
+        
+        Log.d("ModulesInDim", "modules in dim: " + Float.toString(this.getModulesInDim()));
+        Log.d("ModulesInDim", "left lower: " + rightLowerOfPts0.x + "," + rightLowerOfPts0.y);
         return 0;
     }
 
@@ -217,18 +151,17 @@ public class DistortedImageSampler extends StdImageSampler {
         return new Point((int) p.second, (int) p.first);
     }
 
-    private static int d, row;
     private Pair scan(int height, int width) {
 
-        int startRow = Math.max(0, d- (width-1));
-        int endRow = Math.min(d, height -1);
-        if(row >= endRow + 1){
+        int startRow = Math.max(0, d - (width - 1));
+        int endRow = Math.min(d, height - 1);
+        if (row >= endRow + 1) {
             row = startRow;
             d++;
         }
         int col = d - row;
 
-        if(d >= height + width - 1){
+        if (d >= height + width - 1) {
             return null;
         }
 
@@ -236,7 +169,8 @@ public class DistortedImageSampler extends StdImageSampler {
     }
 
     private Pair scanDiagonalFromCorner(Size size, boolean top, boolean left) {
-        int height = (int) size.height; int width = (int) size.width;
+        int height = (int) size.height;
+        int width = (int) size.width;
         Pair scan = scan(height, width);
         int row, col;
         row = (int) scan.first;
@@ -251,7 +185,6 @@ public class DistortedImageSampler extends StdImageSampler {
     }
 
 
-
     private double computeModuleSize(Point upperLeft, Point lowerRight, Mat H, double expectedModulesDistance) {
         Mat upperPoint = new Mat(1, 3, CvType.CV_64F);
 
@@ -263,32 +196,32 @@ public class DistortedImageSampler extends StdImageSampler {
         Mat undistortedUpperPoint = new Mat();
         Core.gemm(H, upperPoint.t(), 1.0, new Mat(), 0, undistortedUpperPoint, 0);
 
-        double zUpper = undistortedUpperPoint.get(2,0)[0];
-        double xUpper = undistortedUpperPoint.get(0,0)[0] / zUpper;
-        double yUpper = undistortedUpperPoint.get(1,0)[0] / zUpper;
+        double zUpper = undistortedUpperPoint.get(2, 0)[0];
+        double xUpper = undistortedUpperPoint.get(0, 0)[0] / zUpper;
+        double yUpper = undistortedUpperPoint.get(1, 0)[0] / zUpper;
 
 
         upperPoint.put(0, 0, lowerRight.x);
         upperPoint.put(0, 1, lowerRight.y);
         undistortedUpperPoint = new Mat();
         Core.gemm(H, upperPoint.t(), 1.0, new Mat(), 0, undistortedUpperPoint, 0);
-        double zLower = undistortedUpperPoint.get(2,0)[0];
-        double xLower = undistortedUpperPoint.get(0,0)[0] / zLower;
-        double yLower = undistortedUpperPoint.get(1,0)[0] / zLower;
+        double zLower = undistortedUpperPoint.get(2, 0)[0];
+        double xLower = undistortedUpperPoint.get(0, 0)[0] / zLower;
+        double yLower = undistortedUpperPoint.get(1, 0)[0] / zLower;
 
         return calcDistance(new Point(xLower, yLower), new Point(xUpper, yUpper)) / expectedModulesDistance;
     }
 
     private void findMinMaxPixelVals() {
         double[] channels;
-        for(int row = 0; row<distortedImage.height(); row++){
-            for(int col = 0; col<distortedImage.width(); col++){
-                channels = distortedImage.get(row,col);
-                for(int ch = 0; ch<3; ch++){
-                    if(channels[ch]>maxPixelVal[ch]){
+        for (int row = 0; row < distortedImage.height(); row++) {
+            for (int col = 0; col < distortedImage.width(); col++) {
+                channels = distortedImage.get(row, col);
+                for (int ch = 0; ch < 3; ch++) {
+                    if (channels[ch] > maxPixelVal[ch]) {
                         maxPixelVal[ch] = channels[ch];
                     }
-                    if(channels[ch]<minPixelVal[ch]){
+                    if (channels[ch] < minPixelVal[ch]) {
                         minPixelVal[ch] = channels[ch];
                     }
                 }
@@ -349,9 +282,6 @@ public class DistortedImageSampler extends StdImageSampler {
                 (int) (Math.round(processedChannels[1]) << 8) | (int) (Math.round(processedChannels[2]) << 16);
         return pixelValue;
     }
-
-
-
 
 
 //    public boolean detect(Mat img){

@@ -1,7 +1,6 @@
 package com.android.visualcrypto;
 
 import android.Manifest;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -14,7 +13,6 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.TextView;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -25,7 +23,6 @@ import androidx.core.content.FileProvider;
 import com.android.visualcrypto.cameraUtils.CameraRotationFix;
 import com.android.visualcrypto.flow.Flow;
 import com.pc.configuration.Constants;
-import com.pc.encoderDecoder.RotatedImageSampler;
 
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
@@ -50,10 +47,6 @@ import java.util.Date;
 import java.util.List;
 
 import javax.crypto.NoSuchPaddingException;
-
-//import com.google.zxing.NotFoundException;
-
-//import static com.android.visualcrypto.openCvUtils.ImageTransformer.homographicTransform;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -106,7 +99,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-
     private void takePicture() {
         Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
@@ -126,18 +118,12 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
+
     Bitmap rotatedBp;
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        /* zxing code - continuous scan. maybe for next stage
-        IntentResult scanResult = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);
-        if (scanResult != null) {
-            // handle scan result
-            //here is where you would get the data from the scanResult
-            //and store locally by writing to a file or however you
-            //intend to store it
-        }*/
 
         if (requestCode == CAMERA_REQUEST) {
             if (resultCode == RESULT_OK) {
@@ -156,8 +142,8 @@ public class MainActivity extends AppCompatActivity {
                     if (file.exists()) {
                         //boolean res = file.delete();
                         //if (!res) {
-                            Log.d("Cleaning", "Unable to delete captured photo");
-                       // }
+                        Log.d("Cleaning", "Unable to delete captured photo");
+                        // }
                     }
                 }
             }
@@ -167,7 +153,7 @@ public class MainActivity extends AppCompatActivity {
     private void showEncodedImage() {
         InputStream encodedStream;
         try {
-            encodedStream = getAssets().open( "encodedImage.jpg");
+            encodedStream = getAssets().open("encodedImage.jpg");
             Bitmap encodedBitmap = BitmapFactory.decodeStream(encodedStream);
 
             ImageView iView = findViewById(R.id.decodedImgId);
@@ -193,64 +179,14 @@ public class MainActivity extends AppCompatActivity {
 
         //Flow.executeAndroidFlow(capturedImage, )
 
-        /*zbar - scanner returns 0....
-                 //implementation 'me.dm7.barcodescanner:zbar:1.8.4'
-		static {
-            System.loadLibrary("iconv");
-        }
-        InputStream encodedStream;
-        try {
-            encodedStream = getAssets().open( "realQR.jpg");
-            Bitmap b = BitmapFactory.decodeStream(encodedStream);
-            Image qr = new Image(b.getWidth(), b.getHeight(), "Y800");
-            byte[] bytes = convertBitmapToByteArray(b);
-            qr.setData(bytes);
-            ImageScanner scanner = new ImageScanner();
-            scanner.setConfig(0, Config.ENABLE, 0);
-            scanner.setConfig(Symbol.QRCODE, Config.ENABLE, 1);
-            int res = scanner.scanImage(qr);
-            if (res!=0) {
-                SymbolSet syms = scanner.getResults();
-                for (Symbol sym: syms) {
-                    int a = 4;
-                }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        * */
-
-        /*zxing code - maybe for next stage
-        LuminanceSource source = new RGBLuminanceSource(b.getWidth(), b.getHeight(),intArray);
-        BinaryBitmap bitmap = new BinaryBitmap(new HybridBinarizer(source));
-        Detector d =  new Detector(bitmap.getBlackMatrix());
-        DetectorResult detectorResult = d.detect(false);
-        //DetectorResult detectorResult = new Detector(bitmap.getBlackMatrix()).detect(false);
-        ResultPoint[] points;
-        points = detectorResult.getPoints(); */
-//
-//        //set the rotated image
-//        ImageView vi = findViewById(R.id.decodedImgId);
-//        vi.setImageBitmap(b);
-//
-//        OpenCvSampler sampler = new OpenCvSampler(b);
-//        MatOfPoint2f positions = sampler.getPositionDetectorsLocation();
-
-//        if (positions == null) {
-//            throw new RuntimeException("Didn't find position detectors!");
-//        }
-//        homographicTransform(positions);
-        //homographicTransform(null);
-
     }
 
     private void decodeImage() {
         try {
             long startTime = System.nanoTime();
 
-            InputStream encodedStream = getAssets().open( "captured50_50_2levels_10pixInModule_alignmentPattern1.jpg");
-            File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) +"/captured50_50_2levels_10pixInModule_alignmentPattern1.jpg");
+            InputStream encodedStream = getAssets().open("michalsPhone.jpg");
+            File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/michalsPhone.jpg");
 
             Bitmap encodedBitmap = BitmapFactory.decodeStream(encodedStream);
             Bitmap rotatedBitmap = CameraRotationFix.fixRotation(encodedBitmap, file.getAbsolutePath());
@@ -302,7 +238,7 @@ public class MainActivity extends AppCompatActivity {
 
             /* display configuration information */
             //showConfigurationInfo(rotatedImageSampler, height, width);
-        } catch (InvalidAlgorithmParameterException | NoSuchAlgorithmException | InvalidKeyException | NoSuchPaddingException  | IOException e) {
+        } catch (InvalidAlgorithmParameterException | NoSuchAlgorithmException | InvalidKeyException | NoSuchPaddingException | IOException e) {
             showAlert("Exception in decodeImage: " + e);
             Log.e("decodeImage", "decodeFile exception", e);
         }
@@ -345,27 +281,13 @@ public class MainActivity extends AppCompatActivity {
         Core.merge(results, outval);
         return outval;
     }
-    private void showConfigurationInfo(RotatedImageSampler rotatedImageSampler, int height, int width) {
-        TextView moduleSizeText = (TextView) findViewById(R.id.moduleSizeCfg);
-        moduleSizeText.setText("Pixels in module dimension: " + rotatedImageSampler.getModuleSize());
-
-        TextView imageHeightText = (TextView) findViewById(R.id.imageHeightCfg);
-        imageHeightText.setText("Image Height: " + height);
-
-        TextView imageWidthText = (TextView) findViewById(R.id.imageWidthCfg);
-        imageWidthText.setText("Image Width: " + width);
-    }
 
     public void showAlert(String msg) {
         AlertDialog alertDialog = new AlertDialog.Builder(MainActivity.this).create();
         alertDialog.setTitle("Alert");
         alertDialog.setMessage(msg);
         alertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "OK",
-                new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.dismiss();
-                    }
-                });
+                (dialog, which) -> dialog.dismiss());
         alertDialog.show();
     }
 
@@ -379,22 +301,8 @@ public class MainActivity extends AppCompatActivity {
         twoDimPixels = new int[height][width];
         bMap.getPixels(pixels, 0, width, 0, 0, width, height);
 
-//        for (int row = 0; row < height; row++) {
-//            if (height >= 0) {
-//                System.arraycopy(pixels, row * width, twoDimPixels[row], 0, width);
-//            }
-//        }
-//        twoDimPixels = new int[width][height];
-//        bMap.getPixels(pixels, 0, width, 0, 0, width, height);
-//
-//        for (int row = 0; row < height; row++) {
-//            if (height >= 0) {
-//                System.arraycopy(pixels, row * width, twoDimPixels[row], 0, height);
-//            }
-//        }
-
-        for (int row = 0 ; row < height; row++){
-            for (int col = 0 ; col < width; col++){
+        for (int row = 0; row < height; row++) {
+            for (int col = 0; col < width; col++) {
                 twoDimPixels[row][col] = pixels[row * width + col];
             }
         }
@@ -408,6 +316,7 @@ public class MainActivity extends AppCompatActivity {
         bp.compress(Bitmap.CompressFormat.JPEG, 100, os);
         os.close();
     }
+
     public static void setBitmapPixels(Bitmap bmp, byte[] imageBytes, int width, int height) {
         final byte ALPHA_VALUE = (byte) 0xff;
         final int METADATA_LENGTH = 5;
@@ -465,6 +374,17 @@ public class MainActivity extends AppCompatActivity {
 
 }
 
+
+//    private void showConfigurationInfo(RotatedImageSampler rotatedImageSampler, int height, int width) {
+//        TextView moduleSizeText = (TextView) findViewById(R.id.moduleSizeCfg);
+//        moduleSizeText.setText("Pixels in module dimension: " + rotatedImageSampler.getModuleSize());
+//
+//        TextView imageHeightText = (TextView) findViewById(R.id.imageHeightCfg);
+//        imageHeightText.setText("Image Height: " + height);
+//
+//        TextView imageWidthText = (TextView) findViewById(R.id.imageWidthCfg);
+//        imageWidthText.setText("Image Width: " + width);
+//    }
 
 
 /* Example of setSpan with colors etc
