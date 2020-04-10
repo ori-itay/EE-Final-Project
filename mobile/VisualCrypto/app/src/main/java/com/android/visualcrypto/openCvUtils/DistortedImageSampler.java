@@ -2,6 +2,7 @@ package com.android.visualcrypto.openCvUtils;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.os.Environment;
 import android.util.Log;
 
 import androidx.core.util.Pair;
@@ -16,6 +17,7 @@ import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
 import org.opencv.core.Size;
+import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 
 import java.io.IOException;
@@ -61,9 +63,10 @@ public class DistortedImageSampler extends StdImageSampler {
         this.setModulesInMargin(0);
         Mat bw = new Mat();
         Imgproc.cvtColor(DistortedImageSampler.distortedImage, bw, Imgproc.COLOR_BGR2GRAY);
-        Imgproc.adaptiveThreshold(bw, bw, 255, ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY, 15, 40);
+        Imgproc.adaptiveThreshold(bw, bw, 255, ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY, 105, 90);
         Imgproc.cvtColor(bw, bw, Imgproc.THRESH_BINARY);
-        List<Pair<Integer, Integer>> bla = findCorner(bw, 0, false, false);
+        Imgcodecs.imwrite(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/bw.jpg" ,bw);
+        Pair bla = findCorner(bw, 0, false, false);
 
 
 
@@ -273,72 +276,44 @@ public class DistortedImageSampler extends StdImageSampler {
 //        return null;
 //    }
 
-    private List<Pair<Integer, Integer>> findCorner(Mat img, int val, boolean top, boolean left) {
-        List<Pair<Integer, Integer>> pts = new ArrayList<>();
-        for (Pair p : scanDiagonalFromCorner(img.size(), top, left)) {
-            if (img.get((int) p.first, (int) p.second)[0] == val) {
-                pts.add(p);
-            }
-        }
-
-        return pts;
-
+    private Pair findCorner(Mat img, int val, boolean top, boolean left) {
+        Pair p = scanDiagonalFromCorner(img.size(), top, left);
+        while (img.get((int) p.first, (int) p.second)[0] != val)
+            p = scanDiagonalFromCorner(img.size(), top, left);
+        return p;
     }
 
     private static int d, row;
-    private static List<Pair> pts = new ArrayList<>();
     private Pair scan(int height, int width) {
+
+        int startRow = Math.max(0, d- (width-1));
+        int endRow = Math.min(d, height -1);
+        if(row >= endRow + 1){
+            row = startRow;
+            d++;
+        }
+        int col = d - row;
+
         if(d >= height + width - 1){
             return null;
         }
-        int startRow = Math.max(0, d- (width-1));
-        int endRow = Math.min(d, height -1);
-        row = startRow;
-        for (int row = startRow; row < endRow +1 ; row++){
-            int col = d - row;
-            return new Pair(row, col);
-        }
 
-        if(row >= endRow + 1){
-            return null;
-        }
-        int col = d - row;
-        pts.add(new Pair(row, col));
-        d++;
-        row++;
-        return pts;
-
-        List<Pair> pts = new ArrayList<>();
-        for (int d = 0; d< height+width+1; d++) {
-            int startRow = Math.max(0, d- (width-1));
-            int endRow = Math.min(d, height -1);
-            for (int row = startRow; row < endRow +1; row++) {
-                int col = d - row;
-                pts.add(new Pair(row, col));
-            }
-        }
-        return pts;
+        return new Pair(row++, col);
     }
 
-    private List<Pair> scanDiagonalFromCorner(Size size, boolean top, boolean left) {
-        List<Pair> pts = new ArrayList<>();
+    private Pair scanDiagonalFromCorner(Size size, boolean top, boolean left) {
         int height = (int) size.height; int width = (int) size.width;
-        List<Pair> scan = scan(height, width);
-        for (Pair p : scan) {
-            int row, col;
-            row = (int) p.first;
-            col = (int) p.second;
-
-            if (!top) {
-                row = height - (int) p.first - 1;
-            }
-            if (!left) {
-                col = width - (int) p.second - 1;
-            }
-            Pair pair = new Pair(row, col);
-            pts.add(pair);
+        Pair scan = scan(height, width);
+        int row, col;
+        row = (int) scan.first;
+        col = (int) scan.second;
+        if (!top) {
+            row = height - (int) scan.first - 1;
         }
-        return pts;
+        if (!left) {
+            col = width - (int) scan.second - 1;
+        }
+        return new Pair(row, col);
     }
 
 
