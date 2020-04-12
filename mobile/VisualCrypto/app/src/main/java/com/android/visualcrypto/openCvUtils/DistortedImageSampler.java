@@ -50,6 +50,21 @@ public class DistortedImageSampler extends StdImageSampler {
     private static Bitmap distortedBitmap;
     private static int d, row;
 
+    private static final Mat itaysCamConfigMtx = new Mat(3,3 ,CvType.CV_64F);
+    private static final Mat orisCamConfigMtx = new Mat(3,3 ,CvType.CV_64F);
+    private static final Mat itaysCamConfigDst = new Mat(1,5 ,CvType.CV_64F);
+    private static final Mat orisCamConfigDst = new Mat(1,5 ,CvType.CV_64F);
+
+    static {
+        orisCamConfigDst.put(0,0,   1,2,3,4,5);
+        orisCamConfigMtx.put(0,0, 1, 2, 3,  1, 2, 3,   1, 2, 3);
+
+        itaysCamConfigDst.put(0,0,   1,2,3,4,5);
+        itaysCamConfigMtx.put(0,0, 1, 2, 3,  1, 2, 3,   1, 2, 3);
+    }
+
+
+
     //MatOfPoint2f possibleCenters = new MatOfPoint2f();
     //List<Double> estimatedModuleSize = new ArrayList<>();
     private Context context;
@@ -138,7 +153,7 @@ public class DistortedImageSampler extends StdImageSampler {
         this.setModuleSize(computeModuleSize(pts[0], distortedPoint, H, Math.sqrt(2 * 99 * 99)));
         int effectiveModulesInDim = (int) Math.floor(1.0 / this.getModuleSize());
         this.setModulesInDim(effectiveModulesInDim);
-        
+
         Log.d("ModulesInDim", "modules in dim: " + Float.toString(this.getModulesInDim()));
         Log.d("ModulesInDim", "left lower: " + rightLowerOfPts0.x + "," + rightLowerOfPts0.y);
         return 0;

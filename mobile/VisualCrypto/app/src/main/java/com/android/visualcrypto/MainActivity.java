@@ -5,6 +5,14 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.hardware.camera2.CameraAccessException;
+import android.hardware.camera2.CameraCaptureSession;
+import android.hardware.camera2.CameraCharacteristics;
+import android.hardware.camera2.CameraDevice;
+import android.hardware.camera2.CameraManager;
+import android.hardware.camera2.CaptureRequest;
+import android.media.Image;
+import android.media.ImageReader;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -14,6 +22,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -26,9 +35,12 @@ import com.pc.configuration.Constants;
 
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
+import org.opencv.calib3d.Calib3d;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.imgcodecs.Imgcodecs;
+import org.opencv.imgproc.Imgproc;
 
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
@@ -163,8 +175,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void test(View v) throws IOException {
-
+    public void test(View v) throws IOException, CameraAccessException {
 
 //        InputStream is = this.getAssets().open("captured50_50_2levels_10pixInModule_alignmentPattern2.jpg");
 //        Bitmap b = BitmapFactory.decodeStream(is);
@@ -185,8 +196,8 @@ public class MainActivity extends AppCompatActivity {
         try {
             long startTime = System.nanoTime();
 
-            InputStream encodedStream = getAssets().open("michalsPhone.jpg");
-            File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/michalsPhone.jpg");
+            InputStream encodedStream = getAssets().open("captured50_50_2levels_10pixInModule_alignmentPattern2_calibrated.png");
+            File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/captured50_50_2levels_10pixInModule_alignmentPattern2_calibrated.png");
 
             Bitmap encodedBitmap = BitmapFactory.decodeStream(encodedStream);
             Bitmap rotatedBitmap = CameraRotationFix.fixRotation(encodedBitmap, file.getAbsolutePath());
