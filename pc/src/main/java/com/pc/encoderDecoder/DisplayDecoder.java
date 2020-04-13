@@ -64,7 +64,7 @@ public class DisplayDecoder {
 		int bitsLeftToByte = BITS_IN_BYTE, currByteInd = 0, mask = BIT_GROUP_MASK_OF_ONES,
 				ones_in_mask = ENCODING_BIT_GROUP_SIZE;
 
-		int[] RGB = sampleModule(imageSampler, pos);
+		int[] RGB = sampleModule(imageSampler, pos, isMetadata);
 		// assuming ENCODING_COLOR_LEVELS<255
 		int RChannelValue = RGB[0]/ COLOR_SCALE_DELTA;
 		int GChannelValue = RGB[1]/ COLOR_SCALE_DELTA;
@@ -91,7 +91,7 @@ public class DisplayDecoder {
 			if(mask == 0) { // get next block
 				mask = BIT_GROUP_MASK_OF_ONES;
 				ones_in_mask = ENCODING_BIT_GROUP_SIZE;
-				RGB = sampleModule(imageSampler, pos);
+				RGB = sampleModule(imageSampler, pos, isMetadata);
 				RChannelValue = (byte) (RGB[0]/ COLOR_SCALE_DELTA);
 				GChannelValue = (byte) (RGB[1]/ COLOR_SCALE_DELTA);
 				BChannelValue = (byte) (RGB[2]/ COLOR_SCALE_DELTA);
@@ -138,14 +138,14 @@ public class DisplayDecoder {
 		}
 	}
 
-	private static int[] sampleModule(StdImageSampler imageSampler, Position pos) {
+	private static int[] sampleModule(StdImageSampler imageSampler, Position pos, boolean duplicateChannels) {
 
 		//int rowPixel = pos.rowModule * imageSampler.getModuleSize();
 		//int colPixel = pos.colModule * imageSampler.getModuleSize();
 		double rowPixel = (0.5 + pos.rowModule) * imageSampler.getModuleSize(); //  (imageSampler.getModuleSize() / 2) + (pos.rowModule * imageSampler.getModuleSize())
 		double colPixel = (0.5 + pos.colModule) * imageSampler.getModuleSize();
 		//int currPixelSample = imageSampler.getPixel(rowPixel, colPixel);
-		int currPixelSample = imageSampler.getPixel(colPixel, rowPixel);
+		int currPixelSample = imageSampler.getPixel(colPixel, rowPixel, duplicateChannels);
 		int[] RGB = new int[3];
 
 		RGB[0] = (currPixelSample) & 0xFF; //red

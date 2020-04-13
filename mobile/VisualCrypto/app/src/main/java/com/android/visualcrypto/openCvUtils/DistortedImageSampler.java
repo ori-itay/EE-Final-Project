@@ -14,13 +14,15 @@ import org.opencv.calib3d.Calib3d;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfFloat;
+import org.opencv.core.MatOfInt;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
 import org.opencv.core.Size;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 
-import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import boofcv.abst.fiducial.QrCodePreciseDetector;
@@ -33,34 +35,34 @@ import georegression.struct.point.Point2D_F64;
 import georegression.struct.shapes.Polygon2D_F64;
 
 import static boofcv.android.ConvertBitmap.bitmapToGray;
-import static com.android.visualcrypto.openCvUtils.Utils.calcDistance;
-import static com.android.visualcrypto.openCvUtils.Utils.getMaxDistance;
-import static com.android.visualcrypto.openCvUtils.Utils.getPixelChannels;
-import static com.android.visualcrypto.openCvUtils.Utils.thresholdAndNormalizeChannels;
+import static com.android.visualcrypto.openCvUtils.OpenCvUtils.calcDistance;
+import static com.android.visualcrypto.openCvUtils.OpenCvUtils.getMaxDistance;
+import static com.android.visualcrypto.openCvUtils.OpenCvUtils.getPixelChannels;
+import static com.android.visualcrypto.openCvUtils.OpenCvUtils.thresholdAndNormalizeChannels;
 import static org.opencv.imgproc.Imgproc.ADAPTIVE_THRESH_MEAN_C;
 import static org.opencv.imgproc.Imgproc.adaptiveThreshold;
 import static org.opencv.imgproc.Imgproc.cvtColor;
 
 
 public class DistortedImageSampler extends StdImageSampler {
-    public static double[] minPixelVal = new double[3];
-    public static double[] maxPixelVal = new double[3];
+    private static final double[] minPixelVal = new double[] {-1,-1,-1};
+    private static final double[] maxPixelVal = new double[] {-1,-1,-1};
     private static Mat distortedImage;
     private static Mat inverseH;
     private static Bitmap distortedBitmap;
     private static int d, row;
 
-    private static final Mat itaysCamConfigMtx = new Mat(3,3 ,CvType.CV_64F);
-    private static final Mat orisCamConfigMtx = new Mat(3,3 ,CvType.CV_64F);
-    private static final Mat itaysCamConfigDst = new Mat(1,5 ,CvType.CV_64F);
-    private static final Mat orisCamConfigDst = new Mat(1,5 ,CvType.CV_64F);
+    public static final Mat itaysCamConfigMtx = new Mat(3,3 ,CvType.CV_64F);
+    public static final Mat orisCamConfigMtx = new Mat(3,3 ,CvType.CV_64F);
+    public static final Mat itaysCamConfigDst = new Mat(1,5 ,CvType.CV_64F);
+    public static final Mat orisCamConfigDst = new Mat(1,5 ,CvType.CV_64F);
 
     static {
         orisCamConfigDst.put(0,0,   1,2,3,4,5);
         orisCamConfigMtx.put(0,0, 1, 2, 3,  1, 2, 3,   1, 2, 3);
 
-        itaysCamConfigDst.put(0,0,   1,2,3,4,5);
-        itaysCamConfigMtx.put(0,0, 1, 2, 3,  1, 2, 3,   1, 2, 3);
+        itaysCamConfigDst.put(0,0,   3.60968325e-01, -1.43901162, -2.30152260e-04, -5.11623902e-04 ,1.71109927);
+        itaysCamConfigMtx.put(0,0, 3.19049211e+03, 0, 1.95151504e+03,  0, 3.19034069e+03, 1.52657925e+03, 0, 0, 1);
     }
 
 
@@ -75,7 +77,7 @@ public class DistortedImageSampler extends StdImageSampler {
         this.context = context;
     }
 
-    public int initParameters() throws IOException {
+    public int initParameters() {
         this.setModulesInMargin(0);
         Mat bw = new Mat();
         cvtColor(DistortedImageSampler.distortedImage, bw, Imgproc.COLOR_BGR2GRAY);
@@ -138,18 +140,19 @@ public class DistortedImageSampler extends StdImageSampler {
         DistortedImageSampler.inverseH = inverseH;
 
         double minPixelStride = 1 / getMaxDistance(pts[0], pts[1], pts[2], pts[3]);
-        Mat grayscale = new Mat();
 
+
+        findMinMaxPixelVals(DistortedImageSampler.distortedImage);
         Point rightLowerOfPts0 = new Point(failures.get(0).ppCorner.vertexes.data[2].x, failures.get(0).ppCorner.vertexes.data[2].y);
         //Point leftLowerOfPts0 = new Point(pointsQueue.get(0).square.vertexes.get(0).x, pointsQueue.get(0).square.vertexes.get(0).y);
         double estimatedModuleSize = 1.01 * computeModuleSize(pts[0], rightLowerOfPts0, H, Math.sqrt(2 * 49));
         double normalizedEstimatedModuleSize = 1 / (Math.floor(1.0 / estimatedModuleSize));
-        Point alignmentBottomRight = Utils.findAlignmentBottomRight(normalizedEstimatedModuleSize, minPixelStride, inverseH, DistortedImageSampler.distortedImage);
+        Point alignmentBottomRight = OpenCvUtils.findAlignmentBottomRight(normalizedEstimatedModuleSize, minPixelStride, inverseH, DistortedImageSampler.distortedImage);
         //alignmentBottomRight = new Point(2362.5, 1691.5);
 
         Mat alignmentBottomRightMat = new Mat(1, 3, CvType.CV_64F);
         alignmentBottomRightMat.put(0, 0, alignmentBottomRight.x, alignmentBottomRight.y, 1);
-        Point distortedPoint = Utils.undistortedToDistortedIndexes(alignmentBottomRightMat, inverseH);
+        Point distortedPoint = OpenCvUtils.undistortedToDistortedIndexes(alignmentBottomRightMat, inverseH);
         this.setModuleSize(computeModuleSize(pts[0], distortedPoint, H, Math.sqrt(2 * 99 * 99)));
         int effectiveModulesInDim = (int) Math.floor(1.0 / this.getModuleSize());
         this.setModulesInDim(effectiveModulesInDim);
@@ -227,19 +230,44 @@ public class DistortedImageSampler extends StdImageSampler {
         return calcDistance(new Point(xLower, yLower), new Point(xUpper, yUpper)) / expectedModulesDistance;
     }
 
-    private void findMinMaxPixelVals() {
-        double[] channels;
-        for (int row = 0; row < distortedImage.height(); row++) {
-            for (int col = 0; col < distortedImage.width(); col++) {
-                channels = distortedImage.get(row, col);
-                for (int ch = 0; ch < 3; ch++) {
-                    if (channels[ch] > maxPixelVal[ch]) {
-                        maxPixelVal[ch] = channels[ch];
-                    }
-                    if (channels[ch] < minPixelVal[ch]) {
-                        minPixelVal[ch] = channels[ch];
-                    }
-                }
+    private void findMinMaxPixelVals(Mat capturedImage) {
+        List<Mat> bgrPlanes = new ArrayList<>();
+        Core.split(capturedImage, bgrPlanes);
+
+        int histSize = 256;
+        float[] range = {0, 256}; //the upper boundary is exclusive
+        MatOfFloat histRange = new MatOfFloat(range);
+        boolean accumulate = false;
+        Mat bHist = new Mat(), gHist = new Mat(), rHist = new Mat();
+        Imgproc.calcHist(bgrPlanes, new MatOfInt(0), new Mat(), bHist, new MatOfInt(histSize), histRange, accumulate);
+        Imgproc.calcHist(bgrPlanes, new MatOfInt(1), new Mat(), gHist, new MatOfInt(histSize), histRange, accumulate);
+        Imgproc.calcHist(bgrPlanes, new MatOfInt(2), new Mat(), rHist, new MatOfInt(histSize), histRange, accumulate);
+
+        int countR = 0, countG = 0, countB = 0;
+        int lowPercentile = (int) Math.floor(0*(capturedImage.width()*capturedImage.height()));
+        int highPercentile = (int) Math.floor(0.3*(capturedImage.width()*capturedImage.height()));
+
+        for (int pixelValue = 0; pixelValue < 256; pixelValue++){
+            countR += rHist.get(pixelValue, 0)[0];
+            countG += gHist.get(pixelValue, 0)[0];
+            countB += bHist.get(pixelValue, 0)[0];
+            if(minPixelVal[0] == -1 && countR >= lowPercentile){
+                minPixelVal[0] = pixelValue;
+            }
+            if(maxPixelVal[0] == -1 && countR >= highPercentile){
+                maxPixelVal[0] = pixelValue;
+            }
+            if(minPixelVal[1] == -1 && countG >= lowPercentile){
+                minPixelVal[1] = pixelValue;
+            }
+            if(maxPixelVal[1] == -1 && countG >= highPercentile){
+                maxPixelVal[1] = pixelValue;
+            }
+            if(minPixelVal[2] == -1 && countB >= lowPercentile){
+                minPixelVal[2] = pixelValue;
+            }
+            if(maxPixelVal[2] == -1 && countB >= highPercentile){
+                maxPixelVal[2] = pixelValue;
             }
         }
     }
@@ -255,49 +283,60 @@ public class DistortedImageSampler extends StdImageSampler {
         pts[3] = new Point(boofPoint3.x, boofPoint3.y);
     }
 
-    private Point getCornerFromCenter(Point pt, Mat inverseH, double stride, boolean left, boolean upper) {
-        Mat unDistortedImageMatCord = new Mat(1, 3, CvType.CV_64F);
-        unDistortedImageMatCord.put(0, 2, 1);
-        if (left) {
-            unDistortedImageMatCord.put(0, 0, -3.5 * stride);
-        } else {
-            unDistortedImageMatCord.put(0, 0, 3.5 * stride);
-        }
-
-        if (upper) {
-            unDistortedImageMatCord.put(0, 1, -3.5 * stride);
-        } else {
-            unDistortedImageMatCord.put(0, 1, 3.5 * stride);
-        }
-
-        Mat distortedImageMatCord = new Mat();
-        Core.gemm(inverseH, unDistortedImageMatCord.t(), 1.0, new Mat(), 0, distortedImageMatCord, 0);
-        double x = distortedImageMatCord.get(0, 0)[0];
-        double y = distortedImageMatCord.get(1, 0)[0];
-        double z = distortedImageMatCord.get(2, 0)[0];
-        x = x / z;
-        y = y / z;
-        z = z / z;
-
-        int indexRow = (int) (Math.round(x));
-        int indexCol = (int) (Math.round(y));
-
-        return new Point(indexRow, indexCol);
-    }
-
     @Override
-    public int getPixel(double rowLoc, double colLoc) {
+    public int getPixel(double rowLoc, double colLoc, boolean duplicateChannels) {
         Mat unDistortedImageMatCord = new Mat(1, 3, CvType.CV_64F);
         unDistortedImageMatCord.put(0, 0, rowLoc);
         unDistortedImageMatCord.put(0, 1, colLoc);
         unDistortedImageMatCord.put(0, 2, 1);
         double[] channels = getPixelChannels(unDistortedImageMatCord, DistortedImageSampler.inverseH, DistortedImageSampler.distortedImage);
-        double[] processedChannels = thresholdAndNormalizeChannels(channels);
+        double[] processedChannels = thresholdAndNormalizeChannels(channels, minPixelVal, maxPixelVal);
+
+        // set all values to the majority
+        if (duplicateChannels) {
+            if (channels[0] == channels[1]) {
+                channels[2] = channels[0];
+            } else if (channels[1] == channels[2]) {
+                channels[0] = channels[1];
+            } else if (channels[0] == channels[2]) {
+                channels[1] = channels[0];
+            }
+        }
+
         int pixelValue = (int) (Math.round(processedChannels[0])) |
                 (int) (Math.round(processedChannels[1]) << 8) | (int) (Math.round(processedChannels[2]) << 16);
         return pixelValue;
     }
 
+//    private Point getCornerFromCenter(Point pt, Mat inverseH, double stride, boolean left, boolean upper) {
+//        Mat unDistortedImageMatCord = new Mat(1, 3, CvType.CV_64F);
+//        unDistortedImageMatCord.put(0, 2, 1);
+//        if (left) {
+//            unDistortedImageMatCord.put(0, 0, -3.5 * stride);
+//        } else {
+//            unDistortedImageMatCord.put(0, 0, 3.5 * stride);
+//        }
+//
+//        if (upper) {
+//            unDistortedImageMatCord.put(0, 1, -3.5 * stride);
+//        } else {
+//            unDistortedImageMatCord.put(0, 1, 3.5 * stride);
+//        }
+//
+//        Mat distortedImageMatCord = new Mat();
+//        Core.gemm(inverseH, unDistortedImageMatCord.t(), 1.0, new Mat(), 0, distortedImageMatCord, 0);
+//        double x = distortedImageMatCord.get(0, 0)[0];
+//        double y = distortedImageMatCord.get(1, 0)[0];
+//        double z = distortedImageMatCord.get(2, 0)[0];
+//        x = x / z;
+//        y = y / z;
+//        z = z / z;
+//
+//        int indexRow = (int) (Math.round(x));
+//        int indexCol = (int) (Math.round(y));
+//
+//        return new Point(indexRow, indexCol);
+//    }
 
 //    public boolean detect(Mat img){
 //        Mat imgBW = new Mat();

@@ -4,12 +4,14 @@ import androidx.core.util.Pair;
 
 import com.pc.configuration.Parameters;
 
+import org.opencv.calib3d.Calib3d;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
 
-public class Utils {
+
+public class OpenCvUtils {
 
     private static final int BLACK_THRESHOLD = 50;
     private static final int WHITE_THRESHOLD = 120;
@@ -31,14 +33,15 @@ public class Utils {
         return Math.max(max1, max2);
     }
 
-    public static double[] thresholdAndNormalizeChannels(double[] channels) {
-
+    public static double[] thresholdAndNormalizeChannels(double[] channels, double[] minPixelVal, double[] maxPixelVal) {
         double normalizedChannel;
         double processedChannels[] = new double[3];
         int levels = 255 / (Parameters.encodingColorLevels - 1);
         for (int i = 0; i < processedChannels.length; i++) {
-            //normalizedChannel = ((channels[i] - minPixelVal[i]) * 255.0 / (maxPixelVal[i] - minPixelVal[i]));
-            processedChannels[i] = Math.round(channels[i] / levels) * levels;
+            if (channels[i] < minPixelVal[i]) normalizedChannel = 0;
+            else if (channels[i] > maxPixelVal[i]) normalizedChannel = 255;
+            else normalizedChannel =  ((channels[i] - minPixelVal[i]) * 255.0 / (maxPixelVal[i] - minPixelVal[i]));
+            processedChannels[i] = Math.round(normalizedChannel / levels) * levels;
         }
         return processedChannels;
     }
@@ -190,6 +193,12 @@ public class Utils {
 //        double avg = (channels[0]+channels[1]+channels[2])/3;
 //        return avg >= WHITE_THRESHOLD;
         return channels[0] > WHITE_THRESHOLD && channels[1] > WHITE_THRESHOLD && channels[2] > WHITE_THRESHOLD;
+    }
+
+    public static Mat calibrateImage(Mat capturedImage) {
+        Mat undistored = new Mat();
+        Calib3d.undistort(capturedImage, undistored, DistortedImageSampler.itaysCamConfigMtx, DistortedImageSampler.itaysCamConfigDst);
+        return undistored;
     }
 
 

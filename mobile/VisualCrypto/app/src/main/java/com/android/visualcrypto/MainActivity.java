@@ -31,6 +31,7 @@ import androidx.core.content.FileProvider;
 
 import com.android.visualcrypto.cameraUtils.CameraRotationFix;
 import com.android.visualcrypto.flow.Flow;
+import com.android.visualcrypto.openCvUtils.OpenCvUtils;
 import com.pc.configuration.Constants;
 
 import org.opencv.android.OpenCVLoader;
@@ -39,6 +40,8 @@ import org.opencv.calib3d.Calib3d;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfFloat;
+import org.opencv.core.MatOfInt;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 
@@ -177,11 +180,16 @@ public class MainActivity extends AppCompatActivity {
 
     public void test(View v) throws IOException, CameraAccessException {
 
-//        InputStream is = this.getAssets().open("captured50_50_2levels_10pixInModule_alignmentPattern2.jpg");
-//        Bitmap b = BitmapFactory.decodeStream(is);
-//
-//        Mat capturedImage = new Mat();
-//        Utils.bitmapToMat(b, capturedImage);
+        InputStream is = this.getAssets().open("captured50_50_2levels_10pixInModule_alignmentPattern2.jpg");
+        Bitmap b = BitmapFactory.decodeStream(is);
+
+        Mat capturedImage = new Mat();
+        Utils.bitmapToMat(b, capturedImage);
+
+
+
+
+
 //        DistortedImageSampler sampler = new DistortedImageSampler(capturedImage, b, this);
 //        boolean found = sampler.detect(capturedImage);
 //        int[] intArray = new int[b.getWidth()*b.getHeight()];
@@ -196,46 +204,22 @@ public class MainActivity extends AppCompatActivity {
         try {
             long startTime = System.nanoTime();
 
-            InputStream encodedStream = getAssets().open("captured50_50_2levels_10pixInModule_alignmentPattern2_calibrated.png");
-            File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/captured50_50_2levels_10pixInModule_alignmentPattern2_calibrated.png");
+            InputStream encodedStream = getAssets().open("captured50_50_2levels_10pixInModule_alignmentPattern1.jpg");
+            File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/captured50_50_2levels_10pixInModule_alignmentPattern1.jpg");
 
             Bitmap encodedBitmap = BitmapFactory.decodeStream(encodedStream);
             Bitmap rotatedBitmap = CameraRotationFix.fixRotation(encodedBitmap, file.getAbsolutePath());
+
             Mat capturedImage = new Mat();
-            //Utils.bitmapToMat(encodedBitmap, capturedImage);
             Utils.bitmapToMat(rotatedBitmap, capturedImage);
-            /*
-            Mat res = SimplestColorBalance(capturedImage, 1);
-            if (res.width() == 0|| res.height() == 0){
-                throw new RuntimeException("res is null");
-            }
-            //Utils.matToBitmap(res, encodedBitmap);
-            //bitmapToFile(encodedBitmap);
-            Imgcodecs.imwrite(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/output.jpg" ,res);
-            */
-            // Applying color
-//            Imgproc.cvtColor(capturedImage, capturedImage, Imgproc.COLOR_BGR2YCrCb);
-//            //Imgproc.cvtColor(capturedImage, capturedImage, Imgproc.COLOR_BGR2GRAY);
-//            List<Mat> channels = new ArrayList<Mat>();
-//
-//            // Splitting the channels
-//            Core.split(capturedImage, channels);
-//
-//            // Equalizing the histogram of the image
-//            Mat cop = channels.get(0).clone();
-//            Imgproc.equalizeHist(channels.get(0), channels.get(0));
-//            for (int i=0;i<channels.get(0).width();i++){
-//                for (int j=0;j<channels.get(0).height();j++){
-//                    if (cop.get(i,j) == channels.get(0).get(i,j)){
-//                        showAlert("equals:" + i + ", " + j);
-//                    }
-//                }
-//            }
-//            Core.merge(channels, capturedImage);
-//            //Imgproc.cvtColor(capturedImage, capturedImage, Imgproc.COLOR_YCrCb2BGR);
-//            Utils.matToBitmap(capturedImage,rotatedBitmap);
-            Bitmap resBitmap = Flow.executeAndroidFlow(capturedImage, rotatedBitmap, this);
-            //Bitmap resBitmap = Flow.executeAndroidFlow(capturedImage, encodedBitmap, this);
+
+            Mat afterCalibrationMatrix = OpenCvUtils.calibrateImage(capturedImage);
+            rotatedBitmap = convertMatToBitmap(afterCalibrationMatrix); // update bitmap as well
+
+            Imgcodecs.imwrite(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/caliberatedresult_fromjava.jpg", afterCalibrationMatrix);
+
+            Bitmap resBitmap = Flow.executeAndroidFlow(afterCalibrationMatrix, rotatedBitmap, this);
+
             if (resBitmap == null) {
                 return;
             }
@@ -254,6 +238,8 @@ public class MainActivity extends AppCompatActivity {
             Log.e("decodeImage", "decodeFile exception", e);
         }
     }
+
+
 
     public static Mat SimplestColorBalance(Mat img, int percent) {
         if (percent <= 0)
