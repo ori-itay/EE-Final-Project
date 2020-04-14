@@ -204,8 +204,8 @@ public class MainActivity extends AppCompatActivity {
         try {
             long startTime = System.nanoTime();
 
-            InputStream encodedStream = getAssets().open("captured50_50_2levels_10pixInModule_alignmentPattern1.jpg");
-            File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/captured50_50_2levels_10pixInModule_alignmentPattern1.jpg");
+            InputStream encodedStream = getAssets().open("captured50_50_2levels_10pixInModule_alignmentPattern2.jpg");
+            File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/captured50_50_2levels_10pixInModule_alignmentPattern2.jpg");
 
             Bitmap encodedBitmap = BitmapFactory.decodeStream(encodedStream);
             Bitmap rotatedBitmap = CameraRotationFix.fixRotation(encodedBitmap, file.getAbsolutePath());
@@ -215,6 +215,7 @@ public class MainActivity extends AppCompatActivity {
 
             Mat afterCalibrationMatrix = OpenCvUtils.calibrateImage(capturedImage);
             rotatedBitmap = convertMatToBitmap(afterCalibrationMatrix); // update bitmap as well
+
 
             Imgcodecs.imwrite(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/caliberatedresult_fromjava.jpg", afterCalibrationMatrix);
 

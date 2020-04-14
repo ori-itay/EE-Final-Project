@@ -18,11 +18,13 @@ import org.opencv.core.MatOfFloat;
 import org.opencv.core.MatOfInt;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
+import org.opencv.core.Rect;
 import org.opencv.core.Size;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import boofcv.abst.fiducial.QrCodePreciseDetector;
@@ -79,11 +81,7 @@ public class DistortedImageSampler extends StdImageSampler {
 
     public int initParameters() {
         this.setModulesInMargin(0);
-        Mat bw = new Mat();
-        cvtColor(DistortedImageSampler.distortedImage, bw, Imgproc.COLOR_BGR2GRAY);
-        adaptiveThreshold(bw, bw, 255, ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY, 105, 90);
-        cvtColor(bw, bw, Imgproc.THRESH_BINARY);
-        Imgcodecs.imwrite(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/bw.jpg", bw);
+
         GrayU8 gray = bitmapToGray(DistortedImageSampler.distortedBitmap, (GrayU8) null, null);
 
         ConfigQrCode config = new ConfigQrCode();
@@ -104,8 +102,8 @@ public class DistortedImageSampler extends StdImageSampler {
             QrCode boofCorners = detections.get(0);
             Polygon2D_F64 polygon = boofCorners.bounds;
             convertBoofToOpenPoints(polygon, pts);
-
         }
+
         List<PositionPatternNode> pointsQueue = detector.getDetectPositionPatterns().getPositionPatterns().toList();
         if (failures.size() != 1 && detections.size() != 1 && pointsQueue.size() == 3) {
             //pointsQueue.get(0).
@@ -129,12 +127,38 @@ public class DistortedImageSampler extends StdImageSampler {
             return 1;
         }
 
-        pts[2] = findCorner(bw, 0, false, false);
-        MatOfPoint2f corners1 = new MatOfPoint2f(pts[0], pts[1], pts[2], pts[3]); // pts[2] = new Point(3802, 3308) , for captured_179modulesindum.kpg (actually 175)
-        //MatOfPoint2f corners2 = new MatOfPoint2f(new Point(0, 0), new Point(1, 0), new Point(1, 1), new Point(0, 1));
+        double[] xValues = new double[] {pts[0].x, pts[1].x, pts[2].x, pts[3].x};
+        Arrays.sort(xValues);
+        int xMin = (int) Math.floor(xValues[0]);
+        int xMax = (int) Math.ceil(xValues[3]);
+
+        double[] yValues = new double[] {pts[0].y, pts[1].y, pts[2].y, pts[3].y};
+        Arrays.sort(yValues);
+        int yMin = (int) Math.floor(yValues[0]);
+        int yMax = (int) Math.ceil(yValues[3]);
+
+
+        Rect roi = new Rect(new Point(xMin-10, yMin-10), new Point(xMax+10, yMax+10));
+        DistortedImageSampler.distortedImage = new Mat(DistortedImageSampler.distortedImage ,roi);
+        Bitmap DELETE = MainActivity.convertMatToBitmap(DistortedImageSampler.distortedImage);
+
+
+//        GrayU8 grayDELETE = bitmapToGray(DELETE, (GrayU8) null, null);
+//        detector.process(grayDELETE);
+//        List<QrCode> DELETEDETECTOR = detector.getFailures();
+
+        Mat bw = new Mat();
+        cvtColor(DistortedImageSampler.distortedImage, bw, Imgproc.COLOR_BGR2GRAY);
+        adaptiveThreshold(bw, bw, 255, ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY, 105, 90);
+        cvtColor(bw, bw, Imgproc.THRESH_BINARY);
+        Imgcodecs.imwrite(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/bw.jpg", bw);
+
+        pts[0].x -= (xMin - 10); pts[1].x -= (xMin - 10); pts[2].x -= (xMin - 10); pts[3].x -= (xMin - 10);
+        pts[0].y -= (yMin - 10); pts[1].y -= (yMin - 10); pts[2].y -= (yMin - 10); pts[3].y -= (yMin - 10);
+        pts[2] = findCorner(bw, 0, false, false); //TODO: dynamically find what corner to find: pts[2].y < pts[1].y && pts[2].x < pts[3].x ?
+        MatOfPoint2f corners1 = new MatOfPoint2f(pts[0], pts[1], pts[2], pts[3]);
         MatOfPoint2f corners2 = new MatOfPoint2f(new Point(0, 0), new Point(1, 0), new Point(1, 1), new Point(0, 1));
-        Mat H;
-        H = Calib3d.findHomography(corners1, corners2); // possibleCenters
+        Mat H = Calib3d.findHomography(corners1, corners2);
         Mat inverseH = H.inv();
 
         DistortedImageSampler.inverseH = inverseH;
@@ -143,7 +167,7 @@ public class DistortedImageSampler extends StdImageSampler {
 
 
         findMinMaxPixelVals(DistortedImageSampler.distortedImage);
-        Point rightLowerOfPts0 = new Point(failures.get(0).ppCorner.vertexes.data[2].x, failures.get(0).ppCorner.vertexes.data[2].y);
+        Point rightLowerOfPts0 = new Point(failures.get(0).ppCorner.vertexes.data[2].x - xMin + 10, failures.get(0).ppCorner.vertexes.data[2].y - yMin + 10);
         //Point leftLowerOfPts0 = new Point(pointsQueue.get(0).square.vertexes.get(0).x, pointsQueue.get(0).square.vertexes.get(0).y);
         double estimatedModuleSize = 1.01 * computeModuleSize(pts[0], rightLowerOfPts0, H, Math.sqrt(2 * 49));
         double normalizedEstimatedModuleSize = 1 / (Math.floor(1.0 / estimatedModuleSize));
@@ -170,7 +194,6 @@ public class DistortedImageSampler extends StdImageSampler {
     }
 
     private Pair scan(int height, int width) {
-
         int startRow = Math.max(0, d - (width - 1));
         int endRow = Math.min(d, height - 1);
         if (row >= endRow + 1) {
@@ -244,29 +267,36 @@ public class DistortedImageSampler extends StdImageSampler {
         Imgproc.calcHist(bgrPlanes, new MatOfInt(2), new Mat(), rHist, new MatOfInt(histSize), histRange, accumulate);
 
         int countR = 0, countG = 0, countB = 0;
-        int lowPercentile = (int) Math.floor(0*(capturedImage.width()*capturedImage.height()));
-        int highPercentile = (int) Math.floor(0.3*(capturedImage.width()*capturedImage.height()));
+
+        int lowPercentileGreen = (int) Math.floor(0.05*(capturedImage.width()*capturedImage.height()));
+        int highPercentileGreen = (int) Math.floor(0.55*(capturedImage.width()*capturedImage.height()));
+
+        int lowPercentileRed = (int) Math.floor(0.05*(capturedImage.width()*capturedImage.height()));
+        int highPercentileRed = (int) Math.floor(0.55*(capturedImage.width()*capturedImage.height()));
+
+        int lowPercentileBlue = (int) Math.floor(0.05*(capturedImage.width()*capturedImage.height()));
+        int highPercentileBlue = (int) Math.floor(0.55*(capturedImage.width()*capturedImage.height()));
 
         for (int pixelValue = 0; pixelValue < 256; pixelValue++){
             countR += rHist.get(pixelValue, 0)[0];
             countG += gHist.get(pixelValue, 0)[0];
             countB += bHist.get(pixelValue, 0)[0];
-            if(minPixelVal[0] == -1 && countR >= lowPercentile){
+            if(minPixelVal[0] == -1 && countR >= lowPercentileRed){
                 minPixelVal[0] = pixelValue;
             }
-            if(maxPixelVal[0] == -1 && countR >= highPercentile){
+            if(maxPixelVal[0] == -1 && countR >= highPercentileRed){
                 maxPixelVal[0] = pixelValue;
             }
-            if(minPixelVal[1] == -1 && countG >= lowPercentile){
+            if(minPixelVal[1] == -1 && countG >= lowPercentileGreen){
                 minPixelVal[1] = pixelValue;
             }
-            if(maxPixelVal[1] == -1 && countG >= highPercentile){
+            if(maxPixelVal[1] == -1 && countG >= highPercentileGreen){
                 maxPixelVal[1] = pixelValue;
             }
-            if(minPixelVal[2] == -1 && countB >= lowPercentile){
+            if(minPixelVal[2] == -1 && countB >= lowPercentileBlue){
                 minPixelVal[2] = pixelValue;
             }
-            if(maxPixelVal[2] == -1 && countB >= highPercentile){
+            if(maxPixelVal[2] == -1 && countB >= highPercentileBlue){
                 maxPixelVal[2] = pixelValue;
             }
         }
