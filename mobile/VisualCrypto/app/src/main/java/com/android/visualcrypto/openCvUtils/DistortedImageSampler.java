@@ -60,11 +60,12 @@ public class DistortedImageSampler extends StdImageSampler {
     public static final Mat orisCamConfigDst = new Mat(1,5 ,CvType.CV_64F);
 
     static {
-        orisCamConfigDst.put(0,0,   1,2,3,4,5);
-        orisCamConfigMtx.put(0,0, 1, 2, 3,  1, 2, 3,   1, 2, 3);
+        orisCamConfigDst.put(0,0,   0.27645881280644635D, -1.2921109803506816D, 0.00035085555201545886D, 0.0007744739823047046D, 1.8244694216399673D);
+        orisCamConfigMtx.put(0,0, 3590.400278603175D, 0D, 2311.0787696304424D,   0D, 3594.9428667290754D, 1729.1867336239586D,      0D, 0D, 1.0D);
 
-        itaysCamConfigDst.put(0,0,   3.60968325e-01, -1.43901162, -2.30152260e-04, -5.11623902e-04 ,1.71109927);
-        itaysCamConfigMtx.put(0,0, 3.19049211e+03, 0, 1.95151504e+03,  0, 3.19034069e+03, 1.52657925e+03, 0, 0, 1);
+        //itaysCamConfigDst.put(0,0,   0.51539854, -0.00120593, 0.00206427, -0.69356642 ,0.24467169);
+        itaysCamConfigDst.put(0,0,   0.24467169, -0.69356642, 0.00206427, -0.00120593 ,0.51539854);
+        itaysCamConfigMtx.put(0,0, 3.14068354e+03, 0, 1.91008252e+03,              0, 3.14439719e+03, 1.59031581e+03,                0, 0, 1);
     }
 
 
@@ -165,11 +166,13 @@ public class DistortedImageSampler extends StdImageSampler {
 
         double minPixelStride = 1 / getMaxDistance(pts[0], pts[1], pts[2], pts[3]);
 
+        Imgcodecs.imwrite(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/for_debug.jpg", DistortedImageSampler.distortedImage);
+
 
         findMinMaxPixelVals(DistortedImageSampler.distortedImage);
         Point rightLowerOfPts0 = new Point(failures.get(0).ppCorner.vertexes.data[2].x - xMin + 10, failures.get(0).ppCorner.vertexes.data[2].y - yMin + 10);
         //Point leftLowerOfPts0 = new Point(pointsQueue.get(0).square.vertexes.get(0).x, pointsQueue.get(0).square.vertexes.get(0).y);
-        double estimatedModuleSize = 1.01 * computeModuleSize(pts[0], rightLowerOfPts0, H, Math.sqrt(2 * 49));
+        double estimatedModuleSize = computeModuleSize(pts[0], rightLowerOfPts0, H, Math.sqrt(2 * 49));
         double normalizedEstimatedModuleSize = 1 / (Math.floor(1.0 / estimatedModuleSize));
         Point alignmentBottomRight = OpenCvUtils.findAlignmentBottomRight(normalizedEstimatedModuleSize, minPixelStride, inverseH, DistortedImageSampler.distortedImage);
         //alignmentBottomRight = new Point(2362.5, 1691.5);
@@ -178,7 +181,7 @@ public class DistortedImageSampler extends StdImageSampler {
         alignmentBottomRightMat.put(0, 0, alignmentBottomRight.x, alignmentBottomRight.y, 1);
         Point distortedPoint = OpenCvUtils.undistortedToDistortedIndexes(alignmentBottomRightMat, inverseH);
         this.setModuleSize(computeModuleSize(pts[0], distortedPoint, H, Math.sqrt(2 * 99 * 99)));
-        int effectiveModulesInDim = (int) Math.floor(1.0 / this.getModuleSize());
+        int effectiveModulesInDim = (int) Math.round(1.0 / this.getModuleSize());
         this.setModulesInDim(effectiveModulesInDim);
 
         Log.d("ModulesInDim", "modules in dim: " + Float.toString(this.getModulesInDim()));
@@ -268,14 +271,23 @@ public class DistortedImageSampler extends StdImageSampler {
 
         int countR = 0, countG = 0, countB = 0;
 
-        int lowPercentileGreen = (int) Math.floor(0.05*(capturedImage.width()*capturedImage.height()));
-        int highPercentileGreen = (int) Math.floor(0.55*(capturedImage.width()*capturedImage.height()));
+//        int lowPercentileRed = (int) Math.floor(0.05*(capturedImage.width()*capturedImage.height()));
+//        int highPercentileRed = (int) Math.floor(0.5*(capturedImage.width()*capturedImage.height()));
+//
+//        int lowPercentileGreen = (int) Math.floor(0.03*(capturedImage.width()*capturedImage.height()));
+//        int highPercentileGreen = (int) Math.floor(0.5*(capturedImage.width()*capturedImage.height()));
+//
+//        int lowPercentileBlue = (int) Math.floor(0.05*(capturedImage.width()*capturedImage.height()));
+//        int highPercentileBlue = (int) Math.floor(0.5*(capturedImage.width()*capturedImage.height()));
 
-        int lowPercentileRed = (int) Math.floor(0.05*(capturedImage.width()*capturedImage.height()));
-        int highPercentileRed = (int) Math.floor(0.55*(capturedImage.width()*capturedImage.height()));
+        int lowPercentileRed = (int) Math.floor(0.12*(capturedImage.width()*capturedImage.height()));
+        int highPercentileRed = (int) Math.floor(0.49*(capturedImage.width()*capturedImage.height()));
 
-        int lowPercentileBlue = (int) Math.floor(0.05*(capturedImage.width()*capturedImage.height()));
-        int highPercentileBlue = (int) Math.floor(0.55*(capturedImage.width()*capturedImage.height()));
+        int lowPercentileGreen = (int) Math.floor(0.12*(capturedImage.width()*capturedImage.height()));
+        int highPercentileGreen = (int) Math.floor(0.49*(capturedImage.width()*capturedImage.height()));
+
+        int lowPercentileBlue = (int) Math.floor(0.12*(capturedImage.width()*capturedImage.height()));
+        int highPercentileBlue = (int) Math.floor(0.49*(capturedImage.width()*capturedImage.height()));
 
         for (int pixelValue = 0; pixelValue < 256; pixelValue++){
             countR += rHist.get(pixelValue, 0)[0];
