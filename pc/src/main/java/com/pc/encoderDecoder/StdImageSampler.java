@@ -18,7 +18,7 @@ public class StdImageSampler implements ImageSamplerInf{
 		return pixelMatrix;
 	}
 	
-	void setPixelMatrix(int[][] pixelMatrix) {
+	public void setPixelMatrix(int[][] pixelMatrix) {
 		this.pixelMatrix = pixelMatrix;
 	}
 
@@ -69,7 +69,8 @@ public class StdImageSampler implements ImageSamplerInf{
 	}
 	
 	public int getPixel(int rowPixel, int colPixel) {
-		return this.getPixelMatrix()[rowPixel][colPixel];
+		//return this.getPixelMatrix()[rowPixel][colPixel];
+		return tempOrigPixelMatrix[rowPixel][colPixel]; // TODO revert to original case in comment
 	}
 	public int getPixel(double rowPixel, double colPixel, boolean duplicateChannels) {
 		return 0;
@@ -114,6 +115,7 @@ public class StdImageSampler implements ImageSamplerInf{
 	private byte[] IV2Checksum;
 	private int modulesInDim;
 	private int modulesInMargin;
+	public int[][] tempOrigPixelMatrix;
 	
 	
 

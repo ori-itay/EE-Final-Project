@@ -8,6 +8,7 @@ import android.util.Log;
 import androidx.core.util.Pair;
 
 import com.android.visualcrypto.MainActivity;
+import com.pc.configuration.Parameters;
 import com.pc.encoderDecoder.StdImageSampler;
 
 import org.opencv.calib3d.Calib3d;
@@ -347,6 +348,24 @@ public class DistortedImageSampler extends StdImageSampler {
 
         int pixelValue = (int) (Math.round(processedChannels[0])) |
                 (int) (Math.round(processedChannels[1]) << 8) | (int) (Math.round(processedChannels[2]) << 16);
+
+
+
+
+        int rowPixel = (int) Math.round((Parameters.modulesInMargin + rowLoc/this.getModuleSize()) * Parameters.pixelsInModule);
+        int colPixel = (int) Math.round((Parameters.modulesInMargin + colLoc/this.getModuleSize()) * Parameters.pixelsInModule);
+        int encodedPixelValue = super.getPixel(colPixel, rowPixel);
+        int GBR = Integer.reverseBytes(encodedPixelValue) >>> 8;
+        if(GBR != pixelValue){
+
+//            Mat alignmentBottomRightMat = new Mat(1, 3, CvType.CV_64F);
+//            alignmentBottomRightMat.put(0, 0, alignmentBottomRight.x, alignmentBottomRight.y, 1);
+            Point distortedPoint = OpenCvUtils.undistortedToDistortedIndexes(unDistortedImageMatCord, inverseH);
+            Log.d("DistortedImageSampler", "Module pixel value different than expected");
+        }
+
+
+
         return pixelValue;
     }
 

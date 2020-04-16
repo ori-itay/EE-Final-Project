@@ -2,7 +2,6 @@ package com.android.visualcrypto.openCvUtils;
 
 import androidx.core.util.Pair;
 
-import com.android.visualcrypto.MainActivity;
 import com.pc.configuration.Parameters;
 
 import org.opencv.calib3d.Calib3d;

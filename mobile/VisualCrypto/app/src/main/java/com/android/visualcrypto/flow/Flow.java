@@ -2,6 +2,7 @@ package com.android.visualcrypto.flow;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 
 import com.android.visualcrypto.MainActivity;
 import com.android.visualcrypto.configurationFetcher.DimensionsFetcher;
@@ -16,6 +17,7 @@ import com.pc.shuffleDeshuffle.deshuffle.Deshuffle;
 import org.opencv.core.Mat;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -36,6 +38,15 @@ public class Flow{
         int[][] pixelArr;
 
         pixelArr = MainActivity.get2DPixelArray(encodedBitmap);
+
+
+        //delete from here
+        InputStream encodedStream = context.getAssets().open("50_50_2Level_10pixInModule.jpg");
+        Bitmap origEncodedBitmap = BitmapFactory.decodeStream(encodedStream);
+        distortedImageSampler.tempOrigPixelMatrix = MainActivity.get2DPixelArray(origEncodedBitmap);
+        //to here
+
+
         DisplayDecoder.decodePixelMatrix(distortedImageSampler, pixelArr);
         /* decode */
         byte[] decodedBytes = distortedImageSampler.getDecodedData();
