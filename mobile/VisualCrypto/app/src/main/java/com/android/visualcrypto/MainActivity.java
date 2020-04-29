@@ -191,8 +191,8 @@ public class MainActivity extends AppCompatActivity {
         try {
             long startTime = System.nanoTime();
 
-            InputStream encodedStream = getAssets().open("captured50_50_2levels_10pixInModule_alignmentPattern4.jpg");
-            File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/captured50_50_2levels_10pixInModule_alignmentPattern4.jpg");
+            InputStream encodedStream = getAssets().open("orig_50_50_4Level_10pixInModule.jpg");
+            File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/orig_50_50_4Level_10pixInModule.jpg");
 
             Bitmap encodedBitmap = BitmapFactory.decodeStream(encodedStream);
             Bitmap rotatedBitmap = CameraRotationFix.fixRotation(encodedBitmap, file.getAbsolutePath());

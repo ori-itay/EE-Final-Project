@@ -33,6 +33,7 @@ public class OpenCvUtils {
         return Math.max(max1, max2);
     }
 
+    static double[] levelsArr = {0,85,170,255}; //TODO: only for 4 levels. correct to general case
     public static double[] thresholdAndNormalizeChannels(double[] channels, double[] minPixelVal, double[] maxPixelVal) {
         double normalizedChannel;
         double processedChannels[] = new double[3];
@@ -41,7 +42,14 @@ public class OpenCvUtils {
             if (channels[i] < minPixelVal[i]) normalizedChannel = 0;
             else if (channels[i] > maxPixelVal[i]) normalizedChannel = 255;
             else normalizedChannel =  ((channels[i] - minPixelVal[i]) * 255.0 / (maxPixelVal[i] - minPixelVal[i]));
-            processedChannels[i] = Math.round(normalizedChannel / levels) * levels;
+            //processedChannels[i] = Math.round(normalizedChannel / levels) * levels;
+            double diff = 255;
+            for(double level :levelsArr){
+                if(Math.abs(normalizedChannel - level) < diff){
+                    diff = Math.abs(normalizedChannel - level);
+                    processedChannels[i] = level;
+                }
+            }
         }
         return processedChannels;
     }
@@ -143,8 +151,8 @@ public class OpenCvUtils {
         return null;
     }
 
-    private static final int TOTAL_PIXELS_CHECKED = 7;
-    private static final int IS_COLOR_THRESHOLD = 3;
+    private static final int TOTAL_PIXELS_CHECKED = 11;
+    private static final int IS_COLOR_THRESHOLD = 4;
 
     private static Pair<Boolean, Number> isPassage(int passage,
                                                    double undistortedLoc, Mat inverseH, Mat capturedImg, double pixelStride) {

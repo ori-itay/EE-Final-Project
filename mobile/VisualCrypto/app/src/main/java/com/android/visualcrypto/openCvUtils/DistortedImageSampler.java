@@ -151,7 +151,7 @@ public class DistortedImageSampler extends StdImageSampler {
 
         Mat bw = new Mat();
         cvtColor(DistortedImageSampler.distortedImage, bw, Imgproc.COLOR_BGR2GRAY);
-        adaptiveThreshold(bw, bw, 255, ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY, 105, 90);
+        adaptiveThreshold(bw, bw, 255, ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY, 11, 65);
         cvtColor(bw, bw, Imgproc.THRESH_BINARY);
         Imgcodecs.imwrite(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/bw.jpg", bw);
 
@@ -281,14 +281,14 @@ public class DistortedImageSampler extends StdImageSampler {
 //        int lowPercentileBlue = (int) Math.floor(0.05*(capturedImage.width()*capturedImage.height()));
 //        int highPercentileBlue = (int) Math.floor(0.5*(capturedImage.width()*capturedImage.height()));
 
-        int lowPercentileRed = (int) Math.floor(0.12*(capturedImage.width()*capturedImage.height()));
-        int highPercentileRed = (int) Math.floor(0.49*(capturedImage.width()*capturedImage.height()));
+        int lowPercentileRed = (int) Math.floor(0.125*(capturedImage.width()*capturedImage.height()));
+        int highPercentileRed = (int) Math.floor(0.875*(capturedImage.width()*capturedImage.height()));
 
-        int lowPercentileGreen = (int) Math.floor(0.12*(capturedImage.width()*capturedImage.height()));
-        int highPercentileGreen = (int) Math.floor(0.49*(capturedImage.width()*capturedImage.height()));
+        int lowPercentileGreen = (int) Math.floor(0.125*(capturedImage.width()*capturedImage.height()));
+        int highPercentileGreen = (int) Math.floor(0.875*(capturedImage.width()*capturedImage.height()));
 
-        int lowPercentileBlue = (int) Math.floor(0.12*(capturedImage.width()*capturedImage.height()));
-        int highPercentileBlue = (int) Math.floor(0.49*(capturedImage.width()*capturedImage.height()));
+        int lowPercentileBlue = (int) Math.floor(0.125*(capturedImage.width()*capturedImage.height()));
+        int highPercentileBlue = (int) Math.floor(0.875*(capturedImage.width()*capturedImage.height()));
 
         for (int pixelValue = 0; pixelValue < 256; pixelValue++){
             countR += rHist.get(pixelValue, 0)[0];
@@ -337,12 +337,12 @@ public class DistortedImageSampler extends StdImageSampler {
 
         // set all values to the majority
         if (duplicateChannels) {
-            if (channels[0] == channels[1]) {
-                channels[2] = channels[0];
-            } else if (channels[1] == channels[2]) {
-                channels[0] = channels[1];
-            } else if (channels[0] == channels[2]) {
-                channels[1] = channels[0];
+            if (processedChannels[0] == processedChannels[1]) {
+                processedChannels[2] = processedChannels[0];
+            } else if (processedChannels[1] == processedChannels[2]) {
+                processedChannels[0] = processedChannels[1];
+            } else if (processedChannels[0] == processedChannels[2]) {
+                processedChannels[1] = processedChannels[0];
             }
         }
 
