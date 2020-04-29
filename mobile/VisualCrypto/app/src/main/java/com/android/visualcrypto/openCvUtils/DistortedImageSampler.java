@@ -129,6 +129,10 @@ public class DistortedImageSampler extends StdImageSampler {
             return 1;
         }
 
+        //PERFORMANCE START
+        Log.d("performance", "start: " + System.currentTimeMillis());
+
+
         double[] xValues = new double[] {pts[0].x, pts[1].x, pts[2].x, pts[3].x};
         Arrays.sort(xValues);
         int xMin = (int) Math.floor(xValues[0]);
@@ -139,25 +143,28 @@ public class DistortedImageSampler extends StdImageSampler {
         int yMin = (int) Math.floor(yValues[0]);
         int yMax = (int) Math.ceil(yValues[3]);
 
+        long start = System.currentTimeMillis();// performance
 
         Rect roi = new Rect(new Point(xMin-10, yMin-10), new Point(xMax+10, yMax+10));
         DistortedImageSampler.distortedImage = new Mat(DistortedImageSampler.distortedImage ,roi);
-        Bitmap DELETE = MainActivity.convertMatToBitmap(DistortedImageSampler.distortedImage);
+        Log.d("performance", "roi took: " + (System.currentTimeMillis() - start));//performance
+ //       Bitmap DELETE = MainActivity.convertMatToBitmap(DistortedImageSampler.distortedImage);
 
 
 //        GrayU8 grayDELETE = bitmapToGray(DELETE, (GrayU8) null, null);
 //        detector.process(grayDELETE);
 //        List<QrCode> DELETEDETECTOR = detector.getFailures();
-
+        start = System.currentTimeMillis(); //performance
         Mat bw = new Mat();
         cvtColor(DistortedImageSampler.distortedImage, bw, Imgproc.COLOR_BGR2GRAY);
         adaptiveThreshold(bw, bw, 255, ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY, 11, 65);
         cvtColor(bw, bw, Imgproc.THRESH_BINARY);
-        Imgcodecs.imwrite(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/bw.jpg", bw);
+       // Imgcodecs.imwrite(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/bw.jpg", bw);
 
         pts[0].x -= (xMin - 10); pts[1].x -= (xMin - 10); pts[2].x -= (xMin - 10); pts[3].x -= (xMin - 10);
         pts[0].y -= (yMin - 10); pts[1].y -= (yMin - 10); pts[2].y -= (yMin - 10); pts[3].y -= (yMin - 10);
         pts[2] = findCorner(bw, 0, false, false); //TODO: dynamically find what corner to find: pts[2].y < pts[1].y && pts[2].x < pts[3].x ?
+        Log.d("performance", "bw cvtColors and findCorner took: " + (System.currentTimeMillis() - start));//performance
         MatOfPoint2f corners1 = new MatOfPoint2f(pts[0], pts[1], pts[2], pts[3]);
         MatOfPoint2f corners2 = new MatOfPoint2f(new Point(0, 0), new Point(1, 0), new Point(1, 1), new Point(0, 1));
         Mat H = Calib3d.findHomography(corners1, corners2);
@@ -167,21 +174,27 @@ public class DistortedImageSampler extends StdImageSampler {
 
         double minPixelStride = 1 / getMaxDistance(pts[0], pts[1], pts[2], pts[3]);
 
-        Imgcodecs.imwrite(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/for_debug.jpg", DistortedImageSampler.distortedImage);
+        //Imgcodecs.imwrite(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/for_debug.jpg", DistortedImageSampler.distortedImage);
 
-
+        start = System.currentTimeMillis(); // performance
         findMinMaxPixelVals(DistortedImageSampler.distortedImage);
+        Log.d("performance", "findMinMaxPixelVals took: " + (System.currentTimeMillis() - start));
         Point rightLowerOfPts0 = new Point(failures.get(0).ppCorner.vertexes.data[2].x - xMin + 10, failures.get(0).ppCorner.vertexes.data[2].y - yMin + 10);
         //Point leftLowerOfPts0 = new Point(pointsQueue.get(0).square.vertexes.get(0).x, pointsQueue.get(0).square.vertexes.get(0).y);
+        start = System.currentTimeMillis(); // performance
         double estimatedModuleSize = computeModuleSize(pts[0], rightLowerOfPts0, H, Math.sqrt(2 * 49));
+        Log.d("performance", "computeModuleSize took: " + (System.currentTimeMillis() - start));
         double normalizedEstimatedModuleSize = 1 / (Math.floor(1.0 / estimatedModuleSize));
+        start = System.currentTimeMillis();
         Point alignmentBottomRight = OpenCvUtils.findAlignmentBottomRight(normalizedEstimatedModuleSize, minPixelStride, inverseH, DistortedImageSampler.distortedImage);
         //alignmentBottomRight = new Point(2362.5, 1691.5);
-
+        Log.d("performance", "FindAlignmentBottomRight took: " + (System.currentTimeMillis() - start));
         Mat alignmentBottomRightMat = new Mat(1, 3, CvType.CV_64F);
         alignmentBottomRightMat.put(0, 0, alignmentBottomRight.x, alignmentBottomRight.y, 1);
         Point distortedPoint = OpenCvUtils.undistortedToDistortedIndexes(alignmentBottomRightMat, inverseH);
+        start = System.currentTimeMillis();
         this.setModuleSize(computeModuleSize(pts[0], distortedPoint, H, Math.sqrt(2 * 99 * 99)));
+        Log.d("performance", "computeModuleSize took: " + (System.currentTimeMillis() - start));
         int effectiveModulesInDim = (int) Math.round(1.0 / this.getModuleSize());
         this.setModulesInDim(effectiveModulesInDim);
 

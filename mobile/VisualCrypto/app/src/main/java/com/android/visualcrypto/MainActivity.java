@@ -189,10 +189,10 @@ public class MainActivity extends AppCompatActivity {
 
     private void decodeImage() {
         try {
-            long startTime = System.nanoTime();
+            //long startTime = System.currentTimeMillis();
 
-            InputStream encodedStream = getAssets().open("orig_50_50_4Level_10pixInModule.jpg");
-            File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/orig_50_50_4Level_10pixInModule.jpg");
+            InputStream encodedStream = getAssets().open("4.jpg");
+            File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/4.jpg");
 
             Bitmap encodedBitmap = BitmapFactory.decodeStream(encodedStream);
             Bitmap rotatedBitmap = CameraRotationFix.fixRotation(encodedBitmap, file.getAbsolutePath());
@@ -213,7 +213,8 @@ public class MainActivity extends AppCompatActivity {
             ImageView iView = findViewById(R.id.decodedImgId);
             iView.setImageBitmap(Bitmap.createScaledBitmap(resBitmap, iView.getWidth(), iView.getHeight(), false));
 
-            Log.d("performance", String.format("took: %s", System.nanoTime() - startTime));
+            //Log.d("performance", String.format("took: %s", System.currentTimeMillis() - startTime));
+            Log.d("performance", String.format("End time: %d", System.currentTimeMillis()));
 
             /* display configuration information */
             //showConfigurationInfo(rotatedImageSampler, height, width);

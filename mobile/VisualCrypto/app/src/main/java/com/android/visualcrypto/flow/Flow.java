@@ -3,6 +3,7 @@ package com.android.visualcrypto.flow;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.util.Log;
 
 import com.android.visualcrypto.MainActivity;
 import com.android.visualcrypto.configurationFetcher.DimensionsFetcher;
@@ -37,8 +38,9 @@ public class Flow{
 
         int[][] pixelArr;
 
+        long start = System.currentTimeMillis();
         pixelArr = MainActivity.get2DPixelArray(encodedBitmap);
-
+        Log.d("performance", "get2DPixelArray took: " + (System.currentTimeMillis() - start));
 
         //delete from here
         InputStream encodedStream = context.getAssets().open("50_50_2Level_10pixInModule.jpg");
@@ -46,8 +48,9 @@ public class Flow{
         distortedImageSampler.tempOrigPixelMatrix = MainActivity.get2DPixelArray(origEncodedBitmap);
         //to here
 
-
+        start = System.currentTimeMillis();
         DisplayDecoder.decodePixelMatrix(distortedImageSampler, pixelArr);
+        Log.d("performance", "decodePixelMatrix took: " + (System.currentTimeMillis() - start));
         /* decode */
         byte[] decodedBytes = distortedImageSampler.getDecodedData();
 
@@ -64,11 +67,15 @@ public class Flow{
         SecretKeySpec secretKeySpec = new SecretKeySpec(const_key, Parameters.encryptionAlgorithm);
         /* ************************** */
 
+        start = System.currentTimeMillis();
         // deshuffle
         byte[] deshuffledBytes = Deshuffle.getDeshuffledBytes(decodedBytes, ivSpec);
+        Log.d("performance", "getDeshuffledBytes took: " + (System.currentTimeMillis() - start));
 
+        start = System.currentTimeMillis();
         /* decrypt */
         byte[] imageBytes = Decryptor.decryptImage(deshuffledBytes, secretKeySpec, ivSpec);
+        Log.d("performance", "decryptImage took: " + (System.currentTimeMillis() - start));
 
         /* fetch the image dimensions */
         DimensionsFetcher dimensionsFetcher = new DimensionsFetcher(imageBytes);
@@ -83,9 +90,11 @@ public class Flow{
             return null;
         }
 
+        start = System.currentTimeMillis();
         /* convert to Bitmap */
         Bitmap bmp = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
         MainActivity.setBitmapPixels(bmp, imageBytes, width, height);
+        Log.d("performance", "createBitmap took: " + (System.currentTimeMillis() - start));
 
         return bmp;
     }

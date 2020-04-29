@@ -34,6 +34,7 @@ public class OpenCvUtils {
     }
 
     static double[] levelsArr = {0,85,170,255}; //TODO: only for 4 levels. correct to general case
+    //static double[] levelsArr = {0,255};
     public static double[] thresholdAndNormalizeChannels(double[] channels, double[] minPixelVal, double[] maxPixelVal) {
         double normalizedChannel;
         double processedChannels[] = new double[3];
