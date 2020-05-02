@@ -2,13 +2,12 @@ package com.android.visualcrypto.configurationFetcher;
 
 import com.pc.checksum.Checksum;
 
-import static com.pc.configuration.Constants.IMAGE_DIMENSION_ENCODING_LENGTH;
-import static com.pc.configuration.Constants.CHECKSUM_LENGTH;
-import static com.pc.configuration.Constants.IMAGE_DIMS_ENCODING_LENGTH;
-
-import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+
+import static com.pc.configuration.Constants.CHECKSUM_LENGTH;
+import static com.pc.configuration.Constants.IMAGE_DIMENSION_ENCODING_LENGTH;
+import static com.pc.configuration.Constants.IMAGE_DIMS_ENCODING_LENGTH;
 
 public class DimensionsFetcher {
 

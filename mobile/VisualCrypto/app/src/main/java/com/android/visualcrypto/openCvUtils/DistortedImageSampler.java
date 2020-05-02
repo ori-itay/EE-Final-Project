@@ -8,7 +8,7 @@ import android.util.Log;
 import androidx.core.util.Pair;
 
 import com.android.visualcrypto.MainActivity;
-import com.pc.configuration.Parameters;
+import com.pc.configuration.Constants;
 import com.pc.encoderDecoder.StdImageSampler;
 
 import org.opencv.calib3d.Calib3d;
@@ -40,16 +40,19 @@ import georegression.struct.shapes.Polygon2D_F64;
 import static boofcv.android.ConvertBitmap.bitmapToGray;
 import static com.android.visualcrypto.openCvUtils.OpenCvUtils.calcDistance;
 import static com.android.visualcrypto.openCvUtils.OpenCvUtils.getMaxDistance;
-import static com.android.visualcrypto.openCvUtils.OpenCvUtils.getPixelChannels;
 import static com.android.visualcrypto.openCvUtils.OpenCvUtils.thresholdAndNormalizeChannels;
+import static com.android.visualcrypto.openCvUtils.OpenCvUtils.undistortedToDistortedIndexes;
 import static org.opencv.imgproc.Imgproc.ADAPTIVE_THRESH_MEAN_C;
 import static org.opencv.imgproc.Imgproc.adaptiveThreshold;
 import static org.opencv.imgproc.Imgproc.cvtColor;
 
 
 public class DistortedImageSampler extends StdImageSampler {
-    private static final double[] minPixelVal = new double[] {-1,-1,-1};
-    private static final double[] maxPixelVal = new double[] {-1,-1,-1};
+    static final int gridSplitSize = 4;
+    private static final double[][][] minPixelVal = new double[gridSplitSize][gridSplitSize][Constants.CHANNELS];
+    private static final double[][][] maxPixelVal = new double[gridSplitSize][gridSplitSize][Constants.CHANNELS];
+    static int tileHeight;
+    static int tileWidth;
     private static Mat distortedImage;
     private static Mat inverseH;
     private static Bitmap distortedBitmap;
@@ -174,7 +177,7 @@ public class DistortedImageSampler extends StdImageSampler {
 
         double minPixelStride = 1 / getMaxDistance(pts[0], pts[1], pts[2], pts[3]);
 
-        //Imgcodecs.imwrite(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/for_debug.jpg", DistortedImageSampler.distortedImage);
+        Imgcodecs.imwrite(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/for_debug.jpg", DistortedImageSampler.distortedImage);
 
         start = System.currentTimeMillis(); // performance
         findMinMaxPixelVals(DistortedImageSampler.distortedImage);
@@ -191,7 +194,7 @@ public class DistortedImageSampler extends StdImageSampler {
         Log.d("performance", "FindAlignmentBottomRight took: " + (System.currentTimeMillis() - start));
         Mat alignmentBottomRightMat = new Mat(1, 3, CvType.CV_64F);
         alignmentBottomRightMat.put(0, 0, alignmentBottomRight.x, alignmentBottomRight.y, 1);
-        Point distortedPoint = OpenCvUtils.undistortedToDistortedIndexes(alignmentBottomRightMat, inverseH);
+        Point distortedPoint = undistortedToDistortedIndexes(alignmentBottomRightMat, inverseH);
         start = System.currentTimeMillis();
         this.setModuleSize(computeModuleSize(pts[0], distortedPoint, H, Math.sqrt(2 * 99 * 99)));
         Log.d("performance", "computeModuleSize took: " + (System.currentTimeMillis() - start));
@@ -271,19 +274,64 @@ public class DistortedImageSampler extends StdImageSampler {
     }
 
     private void findMinMaxPixelVals(Mat capturedImage) {
-        List<Mat> bgrPlanes = new ArrayList<>();
-        Core.split(capturedImage, bgrPlanes);
-
+        this.tileHeight = capturedImage.height() / gridSplitSize;
+        this.tileWidth = capturedImage.width() / gridSplitSize;
+        Mat subMat;
         int histSize = 256;
         float[] range = {0, 256}; //the upper boundary is exclusive
         MatOfFloat histRange = new MatOfFloat(range);
         boolean accumulate = false;
-        Mat bHist = new Mat(), gHist = new Mat(), rHist = new Mat();
-        Imgproc.calcHist(bgrPlanes, new MatOfInt(0), new Mat(), bHist, new MatOfInt(histSize), histRange, accumulate);
-        Imgproc.calcHist(bgrPlanes, new MatOfInt(1), new Mat(), gHist, new MatOfInt(histSize), histRange, accumulate);
-        Imgproc.calcHist(bgrPlanes, new MatOfInt(2), new Mat(), rHist, new MatOfInt(histSize), histRange, accumulate);
-
         int countR = 0, countG = 0, countB = 0;
+
+        final int lowPercentileRed = (int) Math.floor(0.00*(tileWidth*tileHeight));
+        final int highPercentileRed = (int) Math.floor(0.82*(tileWidth*tileHeight));
+
+        final int lowPercentileGreen = (int) Math.floor(0.00*(tileWidth*tileHeight));
+        final int highPercentileGreen = (int) Math.floor(0.82*(tileWidth*tileHeight));
+
+        final int lowPercentileBlue = (int) Math.floor(0.00*(tileWidth*tileHeight));
+        final int highPercentileBlue = (int) Math.floor(0.82*(tileWidth*tileHeight));
+
+        int high, low, left, right;
+        for(int i = 0; i < gridSplitSize; i++){
+            for(int j = 0; j < gridSplitSize; j++){
+                countR = 0; countG = 0; countB = 0;
+                List<Mat> bgrPlanes = new ArrayList<>();
+                high = i*tileHeight; low = Math.min((i+1)*tileHeight, capturedImage.rows());
+                left = i*tileWidth; right = Math.min((i+1)*tileWidth, capturedImage.cols());
+                subMat = capturedImage.submat(high, low, left, right);
+                Core.split(subMat, bgrPlanes);
+                Mat bHist = new Mat(), gHist = new Mat(), rHist = new Mat();
+                Imgproc.calcHist(bgrPlanes, new MatOfInt(0), new Mat(), bHist, new MatOfInt(histSize), histRange, accumulate);
+                Imgproc.calcHist(bgrPlanes, new MatOfInt(1), new Mat(), gHist, new MatOfInt(histSize), histRange, accumulate);
+                Imgproc.calcHist(bgrPlanes, new MatOfInt(2), new Mat(), rHist, new MatOfInt(histSize), histRange, accumulate);
+
+                for (int pixelValue = 0; pixelValue < 256; pixelValue++){
+                    countR += rHist.get(pixelValue, 0)[0];
+                    countG += gHist.get(pixelValue, 0)[0];
+                    countB += bHist.get(pixelValue, 0)[0];
+                    if(minPixelVal[i][j][0] == 0 && countR >= lowPercentileRed){
+                        minPixelVal[i][j][0] = pixelValue;
+                    }
+                    if(maxPixelVal[i][j][0] == 0 && countR >= highPercentileRed){
+                        maxPixelVal[i][j][0] = pixelValue;
+                    }
+                    if(minPixelVal[i][j][1] == 0 && countG >= lowPercentileGreen){
+                        minPixelVal[i][j][1] = pixelValue;
+                    }
+                    if(maxPixelVal[i][j][1] == 0 && countG >= highPercentileGreen){
+                        maxPixelVal[i][j][1] = pixelValue;
+                    }
+                    if(minPixelVal[i][j][2] == 0 && countB >= lowPercentileBlue){
+                        minPixelVal[i][j][2] = pixelValue;
+                    }
+                    if(maxPixelVal[i][j][2] == 0 && countB >= highPercentileBlue){
+                        maxPixelVal[i][j][2] = pixelValue;
+                    }
+                }
+            }
+        }
+
 
 //        int lowPercentileRed = (int) Math.floor(0.05*(capturedImage.width()*capturedImage.height()));
 //        int highPercentileRed = (int) Math.floor(0.5*(capturedImage.width()*capturedImage.height()));
@@ -294,38 +342,9 @@ public class DistortedImageSampler extends StdImageSampler {
 //        int lowPercentileBlue = (int) Math.floor(0.05*(capturedImage.width()*capturedImage.height()));
 //        int highPercentileBlue = (int) Math.floor(0.5*(capturedImage.width()*capturedImage.height()));
 
-        int lowPercentileRed = (int) Math.floor(0.125*(capturedImage.width()*capturedImage.height()));
-        int highPercentileRed = (int) Math.floor(0.875*(capturedImage.width()*capturedImage.height()));
 
-        int lowPercentileGreen = (int) Math.floor(0.125*(capturedImage.width()*capturedImage.height()));
-        int highPercentileGreen = (int) Math.floor(0.875*(capturedImage.width()*capturedImage.height()));
 
-        int lowPercentileBlue = (int) Math.floor(0.125*(capturedImage.width()*capturedImage.height()));
-        int highPercentileBlue = (int) Math.floor(0.875*(capturedImage.width()*capturedImage.height()));
 
-        for (int pixelValue = 0; pixelValue < 256; pixelValue++){
-            countR += rHist.get(pixelValue, 0)[0];
-            countG += gHist.get(pixelValue, 0)[0];
-            countB += bHist.get(pixelValue, 0)[0];
-            if(minPixelVal[0] == -1 && countR >= lowPercentileRed){
-                minPixelVal[0] = pixelValue;
-            }
-            if(maxPixelVal[0] == -1 && countR >= highPercentileRed){
-                maxPixelVal[0] = pixelValue;
-            }
-            if(minPixelVal[1] == -1 && countG >= lowPercentileGreen){
-                minPixelVal[1] = pixelValue;
-            }
-            if(maxPixelVal[1] == -1 && countG >= highPercentileGreen){
-                maxPixelVal[1] = pixelValue;
-            }
-            if(minPixelVal[2] == -1 && countB >= lowPercentileBlue){
-                minPixelVal[2] = pixelValue;
-            }
-            if(maxPixelVal[2] == -1 && countB >= highPercentileBlue){
-                maxPixelVal[2] = pixelValue;
-            }
-        }
     }
 
     private void convertBoofToOpenPoints(Polygon2D_F64 polygon, Point[] pts) {
@@ -345,8 +364,10 @@ public class DistortedImageSampler extends StdImageSampler {
         unDistortedImageMatCord.put(0, 0, rowLoc);
         unDistortedImageMatCord.put(0, 1, colLoc);
         unDistortedImageMatCord.put(0, 2, 1);
-        double[] channels = getPixelChannels(unDistortedImageMatCord, DistortedImageSampler.inverseH, DistortedImageSampler.distortedImage);
-        double[] processedChannels = thresholdAndNormalizeChannels(channels, minPixelVal, maxPixelVal);
+        Point distortedIndex = undistortedToDistortedIndexes(unDistortedImageMatCord, inverseH);
+        int indexRow = (int) distortedIndex.x; int indexCol = (int) distortedIndex.y;
+        double[] channels = DistortedImageSampler.distortedImage.get(indexCol, indexRow);
+        double[] processedChannels = thresholdAndNormalizeChannels(channels, minPixelVal, maxPixelVal, distortedIndex);
 
         // set all values to the majority
         if (duplicateChannels) {
@@ -363,8 +384,7 @@ public class DistortedImageSampler extends StdImageSampler {
                 (int) (Math.round(processedChannels[1]) << 8) | (int) (Math.round(processedChannels[2]) << 16);
 
 
-
-
+        /* debugging code for comparison to original image
         int rowPixel = (int) Math.round((Parameters.modulesInMargin + rowLoc/this.getModuleSize()) * Parameters.pixelsInModule);
         int colPixel = (int) Math.round((Parameters.modulesInMargin + colLoc/this.getModuleSize()) * Parameters.pixelsInModule);
         int encodedPixelValue = super.getPixel(colPixel, rowPixel);
@@ -375,7 +395,7 @@ public class DistortedImageSampler extends StdImageSampler {
 //            alignmentBottomRightMat.put(0, 0, alignmentBottomRight.x, alignmentBottomRight.y, 1);
             Point distortedPoint = OpenCvUtils.undistortedToDistortedIndexes(unDistortedImageMatCord, inverseH);
             Log.d("DistortedImageSampler", "Module pixel value different than expected");
-        }
+        }*/
 
 
 

@@ -123,6 +123,7 @@ public class DisplayEncoder {
 		}
 
 	}
+
 	private static void encodeBlock(byte currentDataR, byte currentDataG, byte currentDataB , Graphics2D g, Position pos) {
 		int levelR, levelG, levelB;
 		Color color;

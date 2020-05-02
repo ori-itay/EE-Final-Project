@@ -2,8 +2,6 @@ package com.android.visualcrypto.openCvUtils;
 
 import androidx.core.util.Pair;
 
-import com.pc.configuration.Parameters;
-
 import org.opencv.calib3d.Calib3d;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
@@ -35,15 +33,19 @@ public class OpenCvUtils {
 
     static double[] levelsArr = {0,85,170,255}; //TODO: only for 4 levels. correct to general case
     //static double[] levelsArr = {0,255};
-    public static double[] thresholdAndNormalizeChannels(double[] channels, double[] minPixelVal, double[] maxPixelVal) {
+    public static double[] thresholdAndNormalizeChannels(double[] channels, double[][][] minPixelVal,
+                                                         double[][][] maxPixelVal, Point distortedIndex) {
+
+        int subMatIndRow = Math.floorDiv((int) distortedIndex.y , DistortedImageSampler.tileHeight);
+        int subMatIndCol = Math.floorDiv((int) distortedIndex.x , DistortedImageSampler.tileWidth);
+
         double normalizedChannel;
         double processedChannels[] = new double[3];
-        int levels = 255 / (Parameters.encodingColorLevels - 1);
         for (int i = 0; i < processedChannels.length; i++) {
-            if (channels[i] < minPixelVal[i]) normalizedChannel = 0;
-            else if (channels[i] > maxPixelVal[i]) normalizedChannel = 255;
-            else normalizedChannel =  ((channels[i] - minPixelVal[i]) * 255.0 / (maxPixelVal[i] - minPixelVal[i]));
-            //processedChannels[i] = Math.round(normalizedChannel / levels) * levels;
+            if (channels[i] < minPixelVal[subMatIndRow][subMatIndCol][i]) normalizedChannel = 0;
+            else if (channels[i] > maxPixelVal[subMatIndRow][subMatIndCol][i]) normalizedChannel = 255;
+            else normalizedChannel =  ((channels[i] - minPixelVal[subMatIndRow][subMatIndCol][i]) * 255.0 /
+                        (maxPixelVal[subMatIndRow][subMatIndCol][i] - minPixelVal[subMatIndRow][subMatIndCol][i]));
             double diff = 255;
             for(double level :levelsArr){
                 if(Math.abs(normalizedChannel - level) < diff){
@@ -72,9 +74,8 @@ public class OpenCvUtils {
 
 
     public static double[] getPixelChannels(Mat unDistortedImageMatCord, Mat inverseH, Mat capturedImg) {
-        Point distortedindex = undistortedToDistortedIndexes(unDistortedImageMatCord, inverseH);
-        int indexRow = (int) distortedindex.x;
-        int indexCol = (int) distortedindex.y;
+        Point distortedIndex = undistortedToDistortedIndexes(unDistortedImageMatCord, inverseH);
+        int indexRow = (int) distortedIndex.x; int indexCol = (int) distortedIndex.y;
         double[] channels = capturedImg.get(indexCol, indexRow);
         return channels;
     }
