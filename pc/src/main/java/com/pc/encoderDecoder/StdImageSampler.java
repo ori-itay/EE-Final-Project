@@ -52,6 +52,22 @@ public class StdImageSampler implements ImageSamplerInf{
 		IV1Checksum = iV1Checksum;
 	}
 
+	void setDims1Checksum(byte[] checksum) {
+		dims1Checksum = checksum;
+	}
+
+	void setDims2Checksum(byte[] checksum) {
+		dims2Checksum = checksum;
+	}
+
+	void setDims1(byte[] dims) {
+		dims1 = dims;
+	}
+
+	void setDims2(byte[] dims) {
+		dims2 = dims;
+	}
+
 	public byte[] getIV2() {
 		return IV2;
 	}
@@ -66,6 +82,22 @@ public class StdImageSampler implements ImageSamplerInf{
 
 	void setIV2Checksum(byte[] iV2Checksum) {
 		IV2Checksum = iV2Checksum;
+	}
+
+	public byte[] getDims1Checksum() {
+		return dims1Checksum;
+	}
+
+	public byte[] getDims2Checksum() {
+		return dims2Checksum;
+	}
+
+	public byte[] getDims1() {
+		return dims1;
+	}
+
+	public byte[] getDims2() {
+		return dims2;
 	}
 	
 	public int getPixel(int rowPixel, int colPixel) {
@@ -113,6 +145,10 @@ public class StdImageSampler implements ImageSamplerInf{
 	private byte[] IV1Checksum;
 	private byte[] IV2;
 	private byte[] IV2Checksum;
+	private byte[] dims1Checksum;
+	private byte[] dims2Checksum;
+	private byte[] dims1;
+	private byte[] dims2;
 	private int modulesInDim;
 	private int modulesInMargin;
 	public int[][] tempOrigPixelMatrix;

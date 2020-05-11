@@ -6,6 +6,7 @@ import java.io.IOException;
 import javax.imageio.ImageIO;
 
 import com.pc.FlowUtils;
+import com.pc.configuration.Constants;
 import com.pc.configuration.Parameters;
 
 import static com.pc.configuration.Constants.*;
@@ -32,10 +33,14 @@ public class DisplayDecoder {
 		Position pos = new Position(imageSampler.getModulesInMargin(), imageSampler.getModulesInMargin() + MODULES_IN_POS_DET_DIM);
 		imageSampler.setIV1(decodeData(imageSampler, Parameters.ivLength, pos, true));
 		imageSampler.setIV1Checksum(decodeData(imageSampler, CHECKSUM_LENGTH, pos, true));
+		imageSampler.setDims1(decodeData(imageSampler, IMAGE_DIMS_ENCODING_LENGTH, pos, true));
+		imageSampler.setDims1Checksum(decodeData(imageSampler, CHECKSUM_LENGTH, pos, true));
 		int imageDataLength = FlowUtils.computeMaxEncodedLength(imageSampler.getModulesInDim(), imageSampler.getModulesInMargin());
 		imageSampler.setDecodedData(decodeData(imageSampler, imageDataLength, pos, false));
 		imageSampler.setIV2(decodeData(imageSampler, Parameters.ivLength, pos, true));
 		imageSampler.setIV2Checksum(decodeData(imageSampler, CHECKSUM_LENGTH, pos, true));
+		imageSampler.setDims2(decodeData(imageSampler, IMAGE_DIMS_ENCODING_LENGTH, pos, true));
+		imageSampler.setDims2Checksum(decodeData(imageSampler, CHECKSUM_LENGTH, pos, true));
 		return;
 	}
 

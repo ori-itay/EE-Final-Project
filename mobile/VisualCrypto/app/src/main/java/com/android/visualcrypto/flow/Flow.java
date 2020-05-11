@@ -2,6 +2,7 @@ package com.android.visualcrypto.flow;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.util.Log;
 
 import com.android.visualcrypto.MainActivity;
@@ -17,6 +18,7 @@ import com.pc.shuffleDeshuffle.deshuffle.Deshuffle;
 import org.opencv.core.Mat;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -24,6 +26,8 @@ import java.security.NoSuchAlgorithmException;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+
+import static com.android.visualcrypto.openCvUtils.DistortedImageSampler.errCounter;
 
 public class Flow{
 
@@ -40,17 +44,20 @@ public class Flow{
         pixelArr = MainActivity.get2DPixelArray(encodedBitmap);
         Log.d("performance", "get2DPixelArray took: " + (System.currentTimeMillis() - start));
 
-        /*
+
         //delete from here
-        InputStream encodedStream = context.getAssets().open("50_50_2Level_10pixInModule.jpg");
+        InputStream encodedStream = context.getAssets().open("orig50_50_4Level_10pixInModule.jpg");
         Bitmap origEncodedBitmap = BitmapFactory.decodeStream(encodedStream);
         distortedImageSampler.tempOrigPixelMatrix = MainActivity.get2DPixelArray(origEncodedBitmap);
         //to here
-         */
+
 
         start = System.currentTimeMillis();
         DisplayDecoder.decodePixelMatrix(distortedImageSampler, pixelArr);
         Log.d("performance", "decodePixelMatrix took: " + (System.currentTimeMillis() - start));
+        //SNR
+        double SNR = (double)errCounter / (distortedImageSampler.getModulesInDim()*distortedImageSampler.getModulesInDim());
+        Log.d("SNR", "SNR is: " + SNR);
         /* decode */
         byte[] decodedBytes = distortedImageSampler.getDecodedData();
 
@@ -78,7 +85,7 @@ public class Flow{
         Log.d("performance", "decryptImage took: " + (System.currentTimeMillis() - start));
 
         /* fetch the image dimensions */
-        DimensionsFetcher dimensionsFetcher = new DimensionsFetcher(imageBytes);
+        DimensionsFetcher dimensionsFetcher = new DimensionsFetcher(distortedImageSampler);
         int width = dimensionsFetcher.getWidth();
         int height = dimensionsFetcher.getHeight();
 

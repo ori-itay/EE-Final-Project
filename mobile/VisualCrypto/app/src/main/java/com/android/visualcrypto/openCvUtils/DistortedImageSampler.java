@@ -9,6 +9,7 @@ import androidx.core.util.Pair;
 
 import com.android.visualcrypto.MainActivity;
 import com.pc.configuration.Constants;
+import com.pc.configuration.Parameters;
 import com.pc.encoderDecoder.StdImageSampler;
 
 import org.opencv.calib3d.Calib3d;
@@ -57,6 +58,7 @@ public class DistortedImageSampler extends StdImageSampler {
     private static Mat inverseH;
     private static Bitmap distortedBitmap;
     private static int d, row;
+    public static int errCounter = 0;
 
     public static final Mat itaysCamConfigMtx = new Mat(3,3 ,CvType.CV_64F);
     public static final Mat orisCamConfigMtx = new Mat(3,3 ,CvType.CV_64F);
@@ -283,14 +285,14 @@ public class DistortedImageSampler extends StdImageSampler {
         boolean accumulate = false;
         int countR = 0, countG = 0, countB = 0;
 
-        final int lowPercentileRed = (int) Math.floor(0.00*(tileWidth*tileHeight));
-        final int highPercentileRed = (int) Math.floor(0.82*(tileWidth*tileHeight));
+        final int lowPercentileRed = (int) Math.floor(0.01*(tileWidth*tileHeight));
+        final int highPercentileRed = (int) Math.floor(0.99*(tileWidth*tileHeight));
 
-        final int lowPercentileGreen = (int) Math.floor(0.00*(tileWidth*tileHeight));
-        final int highPercentileGreen = (int) Math.floor(0.82*(tileWidth*tileHeight));
+        final int lowPercentileGreen = (int) Math.floor(0.01*(tileWidth*tileHeight));
+        final int highPercentileGreen = (int) Math.floor(0.99*(tileWidth*tileHeight));
 
-        final int lowPercentileBlue = (int) Math.floor(0.00*(tileWidth*tileHeight));
-        final int highPercentileBlue = (int) Math.floor(0.82*(tileWidth*tileHeight));
+        final int lowPercentileBlue = (int) Math.floor(0.01*(tileWidth*tileHeight));
+        final int highPercentileBlue = (int) Math.floor(0.99*(tileWidth*tileHeight));
 
         int high, low, left, right;
         for(int i = 0; i < gridSplitSize; i++){
@@ -384,18 +386,18 @@ public class DistortedImageSampler extends StdImageSampler {
                 (int) (Math.round(processedChannels[1]) << 8) | (int) (Math.round(processedChannels[2]) << 16);
 
 
-        /* debugging code for comparison to original image
+        // debugging code for comparison to original image
         int rowPixel = (int) Math.round((Parameters.modulesInMargin + rowLoc/this.getModuleSize()) * Parameters.pixelsInModule);
         int colPixel = (int) Math.round((Parameters.modulesInMargin + colLoc/this.getModuleSize()) * Parameters.pixelsInModule);
         int encodedPixelValue = super.getPixel(colPixel, rowPixel);
         int GBR = Integer.reverseBytes(encodedPixelValue) >>> 8;
         if(GBR != pixelValue){
-
+            errCounter++;
 //            Mat alignmentBottomRightMat = new Mat(1, 3, CvType.CV_64F);
 //            alignmentBottomRightMat.put(0, 0, alignmentBottomRight.x, alignmentBottomRight.y, 1);
             Point distortedPoint = OpenCvUtils.undistortedToDistortedIndexes(unDistortedImageMatCord, inverseH);
             Log.d("DistortedImageSampler", "Module pixel value different than expected");
-        }*/
+        }
 
 
 

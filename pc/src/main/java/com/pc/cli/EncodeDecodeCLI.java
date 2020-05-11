@@ -110,6 +110,7 @@ public class EncodeDecodeCLI {
 			System.out.println("Entered input filepath has error.\n");
 			return null;
 		}
+		byte[] dimsArr = FlowUtils.getDimensionsArray(image);
 		byte[] rawData = FlowUtils.convertToBytesUsingGetRGB(image) ;
 		IvParameterSpec iv = new IvParameterSpec(new byte[] {1,2,3,4,5,6,7,8,9,10,11,12});//Encryptor.generateIv(Parameters.ivLength);
 		byte[] checksumIV = Checksum.computeChecksum(iv.getIV());
@@ -118,7 +119,7 @@ public class EncodeDecodeCLI {
 		byte[] encryptedImg = Encryptor.encryptImage(rawData, generatedXorBytes);
 		byte[] shuffledEncryptedImg = Shuffle.shuffleImgPixels(encryptedImg, iv);
 
-		return DisplayEncoder.encodeBytes(shuffledEncryptedImg, iv.getIV(),  checksumIV);
+		return DisplayEncoder.encodeBytes(shuffledEncryptedImg, dimsArr, iv.getIV(),  checksumIV);
 	}
 
 	private static BufferedImage convertToImageUsingGetRGB(byte[] imageData) {

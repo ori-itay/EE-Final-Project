@@ -12,7 +12,7 @@ import static com.pc.configuration.Constants.*;
 
 public class DisplayEncoder {
 
-	public static BufferedImage encodeBytes(byte[] binaryData, byte[] IV, byte[] ivchecksum) throws Exception {
+	public static BufferedImage encodeBytes(byte[] binaryData, byte[] dimsArr, byte[] IV, byte[] ivchecksum) throws Exception {
 		//allocate space including white margins
 		BufferedImage image = new BufferedImage(MODULES_IN_ENCODED_IMAGE_DIM*Parameters.pixelsInModule,
 				MODULES_IN_ENCODED_IMAGE_DIM*Parameters.pixelsInModule, BufferedImage.TYPE_INT_RGB);
@@ -27,23 +27,21 @@ public class DisplayEncoder {
 		Position pos = new Position(Parameters.modulesInMargin, Parameters.modulesInMargin + MODULES_IN_POS_DET_DIM);
 		encodeData(g, IV, pos, true); //encode IV first time
 		encodeData(g, ivchecksum, pos, true); //encode IV checksum first time
+		encodeData(g, dimsArr, pos, true); //encode dims+checksum first time
 		encodeData(g, binaryData, pos, false); 	//encode actual picture data
 		encodeData(g, IV, pos, true); //encode IV second time
 		encodeData(g, ivchecksum, pos, true); //encode IV checksum second time
-		//pad till end
-		//boolean x= true;
+		encodeData(g, dimsArr, pos, true); //encode dims+checksum second time
+		//pad till end - should be removed later because data is already padded to maximum
+		int x;
+		Random rand = new Random();
 		while(pos.rowModule<MODULES_IN_ENCODED_IMAGE_DIM - Parameters.modulesInMargin){
-			/*if(x) {
-				encodeBlock((byte) 0, (byte) 0, (byte) 0, g, pos);
-			}
-			else {
-				encodeBlock((byte) 1, (byte) 1, (byte) 1, g, pos);
-			}*/
-			encodeBlock((byte) 0, (byte) 0, (byte) 0, g, pos);
+			x = rand.nextInt(256);
+			encodeBlock((byte) x, (byte) x, (byte) x, g, pos);
 			StdImageSampler.imageCheckForColumnEnd(pos,MODULES_IN_ENCODED_IMAGE_DIM, Parameters.modulesInMargin);
-			//x= !x;
 		}
-
+		pos.colModule = pos.rowModule = MODULES_IN_ENCODED_IMAGE_DIM - Parameters.modulesInMargin - 1;
+		encodeBlock((byte) 0, (byte) 0, (byte) 0, g, pos); //last module will be black for corner detection
 		return image;
 	}
 

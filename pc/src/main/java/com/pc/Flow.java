@@ -29,6 +29,7 @@ public class Flow {
 		IvParameterSpec iv = Encryptor.generateIv(Parameters.ivLength); 
 		System.out.println("IV:" + Arrays.toString(iv.getIV()));
 		byte[] chksumIV = Checksum.computeChecksum(iv.getIV());
+		byte[] dimsArr = FlowUtils.getDimensionsArray(image);
 		//SecretKey skey; 
 		BufferedImage encodedImage;
 		try {
@@ -44,7 +45,7 @@ public class Flow {
 			byte[] shuffledEncryptedImg = Shuffle.shuffleImgPixels(encryptedImg, iv);
 			
 
-			encodedImage = DisplayEncoder.encodeBytes(shuffledEncryptedImg, iv.getIV(),  chksumIV);
+			encodedImage = DisplayEncoder.encodeBytes(shuffledEncryptedImg, dimsArr, iv.getIV(),  chksumIV);
 			ImageIO.write(encodedImage, "png", new File(encodedFilePath));
 		} catch (Exception e) {
 			e.printStackTrace();
