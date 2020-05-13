@@ -32,7 +32,7 @@ public class DisplayEncoder {
 		encodeData(g, IV, pos, true); //encode IV second time
 		encodeData(g, ivchecksum, pos, true); //encode IV checksum second time
 		encodeData(g, dimsArr, pos, true); //encode dims+checksum second time
-		//pad till end - should be removed later because data is already padded to maximum
+		//pad till end -maybe should be removed later because data is already padded to maximum
 		int x;
 		Random rand = new Random();
 		while(pos.rowModule<MODULES_IN_ENCODED_IMAGE_DIM - Parameters.modulesInMargin){
@@ -135,9 +135,7 @@ public class DisplayEncoder {
                 Parameters.pixelsInModule, Parameters.pixelsInModule);
 		pos.colModule++;
 		//skip alignment pattern
-		if(pos.colModule >= ALIGNMENT_PATTERN_UPPER_LEFT_MODULE && pos.rowModule >= ALIGNMENT_PATTERN_UPPER_LEFT_MODULE
-		&& pos.colModule < ALIGNMENT_PATTERN_UPPER_LEFT_MODULE + MODULES_IN_ALIGNMENT_PATTERN_DIM
-				&& pos.rowModule < ALIGNMENT_PATTERN_UPPER_LEFT_MODULE + MODULES_IN_ALIGNMENT_PATTERN_DIM ){
+		if(pos.colModule == ALIGNMENT_PATTERN_UPPER_LEFT_MODULE && pos.rowModule == ALIGNMENT_PATTERN_UPPER_LEFT_MODULE){
 			pos.colModule+=  MODULES_IN_ALIGNMENT_PATTERN_DIM;
 		}
 		RotatedImageSampler.imageCheckForColumnEnd(pos, MODULES_IN_ENCODED_IMAGE_DIM, Parameters.modulesInMargin);

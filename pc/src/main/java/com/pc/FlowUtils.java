@@ -44,7 +44,6 @@ public class FlowUtils {
         while((maxEncodedLength=computeMaxEncodedLength(dim, Parameters.modulesInMargin)) < bytesDataLen)
             dim++;
 
-        dim++;//TODO: remove this. its here due to the dimension bug
         MODULES_IN_ENCODED_IMAGE_DIM = dim;
         return maxEncodedLength;
     }
