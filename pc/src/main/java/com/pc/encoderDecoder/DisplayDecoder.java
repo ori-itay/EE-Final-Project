@@ -33,14 +33,12 @@ public class DisplayDecoder {
 		Position pos = new Position(imageSampler.getModulesInMargin(), imageSampler.getModulesInMargin() + MODULES_IN_POS_DET_DIM);
 		imageSampler.setIV1(decodeData(imageSampler, Parameters.ivLength, pos, true));
 		imageSampler.setIV1Checksum(decodeData(imageSampler, CHECKSUM_LENGTH, pos, true));
-		imageSampler.setDims1(decodeData(imageSampler, IMAGE_DIMS_ENCODING_LENGTH, pos, true));
-		imageSampler.setDims1Checksum(decodeData(imageSampler, CHECKSUM_LENGTH, pos, true));
+		imageSampler.setDimsAndChecksum1(decodeData(imageSampler, IMAGE_DIMS_ENCODING_LENGTH + CHECKSUM_LENGTH, pos, true));
 		int imageDataLength = FlowUtils.computeMaxEncodedLength(imageSampler.getModulesInDim(), imageSampler.getModulesInMargin());
 		imageSampler.setDecodedData(decodeData(imageSampler, imageDataLength, pos, false));
 		imageSampler.setIV2(decodeData(imageSampler, Parameters.ivLength, pos, true));
 		imageSampler.setIV2Checksum(decodeData(imageSampler, CHECKSUM_LENGTH, pos, true));
-		imageSampler.setDims2(decodeData(imageSampler, IMAGE_DIMS_ENCODING_LENGTH, pos, true));
-		imageSampler.setDims2Checksum(decodeData(imageSampler, CHECKSUM_LENGTH, pos, true));
+		imageSampler.setDimsAndChecksum2(decodeData(imageSampler, IMAGE_DIMS_ENCODING_LENGTH + CHECKSUM_LENGTH, pos, true));
 		return;
 	}
 
@@ -93,7 +91,7 @@ public class DisplayDecoder {
 				bitsLeftToByte = 0;
 			}
 
-			if(mask == 0) { // get next block
+			if(mask == 0 && bitsLeftToByte != 0) { // get next block
 				mask = BIT_GROUP_MASK_OF_ONES;
 				ones_in_mask = ENCODING_BIT_GROUP_SIZE;
 				RGB = sampleModule(imageSampler, pos, isMetadata);
@@ -159,8 +157,7 @@ public class DisplayDecoder {
 
 		pos.colModule++;
 		//skip alignment pattern
-		if(pos.colModule >= ALIGNMENT_PATTERN_UPPER_LEFT_MODULE && pos.rowModule >= ALIGNMENT_PATTERN_UPPER_LEFT_MODULE
-				&& pos.colModule < ALIGNMENT_PATTERN_UPPER_LEFT_MODULE + MODULES_IN_ALIGNMENT_PATTERN_DIM
+		if(pos.colModule == ALIGNMENT_PATTERN_UPPER_LEFT_MODULE && pos.rowModule >= ALIGNMENT_PATTERN_UPPER_LEFT_MODULE
 				&& pos.rowModule < ALIGNMENT_PATTERN_UPPER_LEFT_MODULE + MODULES_IN_ALIGNMENT_PATTERN_DIM ){
 			pos.colModule+=  MODULES_IN_ALIGNMENT_PATTERN_DIM;
 		}

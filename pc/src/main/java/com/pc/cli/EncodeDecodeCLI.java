@@ -118,8 +118,8 @@ public class EncodeDecodeCLI {
 		byte[] generatedXorBytes = EncryptorDecryptor.generateXorBytes(skeySpec, iv);
 		byte[] encryptedImg = Encryptor.encryptImage(rawData, generatedXorBytes);
 		byte[] shuffledEncryptedImg = Shuffle.shuffleImgPixels(encryptedImg, iv);
-
-		return DisplayEncoder.encodeBytes(shuffledEncryptedImg, dimsArr, iv.getIV(),  checksumIV);
+		//return DisplayEncoder.encodeBytes(shuffledEncryptedImg, dimsArr, iv.getIV(),  checksumIV);
+        return DisplayEncoder.encodeBytes(rawData, dimsArr, iv.getIV(),  checksumIV);
 	}
 
 	private static BufferedImage convertToImageUsingGetRGB(byte[] imageData) {
