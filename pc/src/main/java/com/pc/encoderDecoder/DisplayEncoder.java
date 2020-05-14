@@ -3,6 +3,7 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Random;
 
 import com.pc.configuration.Constants;
@@ -11,7 +12,8 @@ import com.pc.configuration.Parameters;
 import static com.pc.configuration.Constants.*;
 
 public class DisplayEncoder {
-
+	static int encodedCnt = 0;
+	static boolean[][] positions = new boolean[MODULES_IN_ENCODED_IMAGE_DIM][MODULES_IN_ENCODED_IMAGE_DIM];
 	public static BufferedImage encodeBytes(byte[] binaryData, byte[] dimsArr, byte[] IV, byte[] ivchecksum) throws Exception {
 		//allocate space including white margins
 		BufferedImage image = new BufferedImage(MODULES_IN_ENCODED_IMAGE_DIM*Parameters.pixelsInModule,
@@ -33,13 +35,13 @@ public class DisplayEncoder {
 		encodeData(g, ivchecksum, pos, true); //encode IV checksum second time
 		encodeData(g, dimsArr, pos, true); //encode dims+checksum second time
 		//pad till end -maybe should be removed later because data is already padded to maximum
-		int x;
+		/*int x;
 		Random rand = new Random();
 		while(pos.rowModule<MODULES_IN_ENCODED_IMAGE_DIM - Parameters.modulesInMargin){
 			x = rand.nextInt(256);
 			encodeBlock((byte) x, (byte) x, (byte) x, g, pos);
 			StdImageSampler.imageCheckForColumnEnd(pos,MODULES_IN_ENCODED_IMAGE_DIM, Parameters.modulesInMargin);
-		}
+		}*/
 		pos.colModule = pos.rowModule = MODULES_IN_ENCODED_IMAGE_DIM - Parameters.modulesInMargin - 1;
 		encodeBlock((byte) 0, (byte) 0, (byte) 0, g, pos); //last module will be black for corner detection
 		return image;
@@ -114,7 +116,8 @@ public class DisplayEncoder {
 					}
 				}
 				else {
-					encodeBlock(currentDataR, currentDataG, currentDataB, g, pos);
+					if(mask != BIT_GROUP_MASK_OF_ONES)
+						encodeBlock(currentDataR, currentDataG, currentDataB, g, pos);
 					return;
 				}
 			}
@@ -123,6 +126,15 @@ public class DisplayEncoder {
 	}
 
 	private static void encodeBlock(byte currentDataR, byte currentDataG, byte currentDataB , Graphics2D g, Position pos) {
+		encodedCnt++;
+		if(positions[pos.rowModule][pos.colModule]){
+			//g.clearRect(pos.colModule * Parameters.pixelsInModule, pos.rowModule * Parameters.pixelsInModule,
+			//		Parameters.pixelsInModule, Parameters.pixelsInModule);
+			System.out.println("Encoding certain module twice - ERROR!\n");
+			return;
+		}
+		positions[pos.rowModule][pos.colModule] = true;
+
 		int levelR, levelG, levelB;
 		Color color;
 
@@ -135,7 +147,9 @@ public class DisplayEncoder {
                 Parameters.pixelsInModule, Parameters.pixelsInModule);
 		pos.colModule++;
 		//skip alignment pattern
-		if(pos.colModule == ALIGNMENT_PATTERN_UPPER_LEFT_MODULE && pos.rowModule == ALIGNMENT_PATTERN_UPPER_LEFT_MODULE){
+		if(pos.colModule == ALIGNMENT_PATTERN_UPPER_LEFT_MODULE &&
+				(pos.rowModule >= ALIGNMENT_PATTERN_UPPER_LEFT_MODULE &&
+						pos.rowModule < ALIGNMENT_PATTERN_UPPER_LEFT_MODULE + MODULES_IN_ALIGNMENT_PATTERN_DIM)){
 			pos.colModule+=  MODULES_IN_ALIGNMENT_PATTERN_DIM;
 		}
 		RotatedImageSampler.imageCheckForColumnEnd(pos, MODULES_IN_ENCODED_IMAGE_DIM, Parameters.modulesInMargin);

@@ -23,7 +23,6 @@ import androidx.core.content.FileProvider;
 
 import com.android.visualcrypto.cameraUtils.CameraRotationFix;
 import com.android.visualcrypto.flow.Flow;
-import com.android.visualcrypto.openCvUtils.OpenCvUtils;
 import com.pc.configuration.Constants;
 
 import org.opencv.android.OpenCVLoader;
@@ -155,7 +154,7 @@ public class MainActivity extends AppCompatActivity {
     private void showEncodedImage() {
         InputStream encodedStream;
         try {
-            encodedStream = getAssets().open("4levels11.05_lap3.jpg");
+            encodedStream = getAssets().open("14_05.jpg");
             Bitmap encodedBitmap = BitmapFactory.decodeStream(encodedStream);
 
             ImageView iView = findViewById(R.id.decodedImgId);
@@ -167,7 +166,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void test(View v) throws IOException, CameraAccessException {
 
-        InputStream is = this.getAssets().open("4levels11.05_lap3.jpg");
+        InputStream is = this.getAssets().open("14_05.jpg");
         Bitmap b = BitmapFactory.decodeStream(is);
 
         Mat capturedImage = new Mat();
@@ -190,19 +189,19 @@ public class MainActivity extends AppCompatActivity {
     private void decodeImage() {
         try {
             //long startTime = System.currentTimeMillis();
-
-            InputStream encodedStream = getAssets().open("4levels11.05_lap3.jpg");
-            File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/4levels11.05_lap3.jpg");
+            String imageName = "encodedImage.jpg";
+            InputStream encodedStream = getAssets().open(imageName);
+            File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + imageName);
 
             Bitmap encodedBitmap = BitmapFactory.decodeStream(encodedStream);
             Bitmap rotatedBitmap = CameraRotationFix.fixRotation(encodedBitmap, file.getAbsolutePath());
 
             Mat capturedImage = new Mat();
             Utils.bitmapToMat(rotatedBitmap, capturedImage);
-
-            Mat afterCalibrationMatrix = OpenCvUtils.calibrateImage(capturedImage);
-            rotatedBitmap = convertMatToBitmap(afterCalibrationMatrix); // update bitmap as well
-
+            //TODO: pay attention whether calibrateimage is commented
+            //Mat afterCalibrationMatrix = OpenCvUtils.calibrateImage(capturedImage);
+            //rotatedBitmap = convertMatToBitmap(afterCalibrationMatrix); // update bitmap as well
+            Mat afterCalibrationMatrix = capturedImage;
             Bitmap resBitmap = Flow.executeAndroidFlow(afterCalibrationMatrix, rotatedBitmap, this);
 
             if (resBitmap == null) {
@@ -211,6 +210,7 @@ public class MainActivity extends AppCompatActivity {
 
             /* display the image */
             ImageView iView = findViewById(R.id.decodedImgId);
+            bitmapToFile(resBitmap);
             iView.setImageBitmap(Bitmap.createScaledBitmap(resBitmap, iView.getWidth(), iView.getHeight(), false));
 
             //Log.d("performance", String.format("took: %s", System.currentTimeMillis() - startTime));

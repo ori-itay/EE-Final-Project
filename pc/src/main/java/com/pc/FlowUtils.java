@@ -50,15 +50,19 @@ public class FlowUtils {
 
     public static int computeMaxEncodedLength(int dim, int effectiveModulesInMargin) {
         //metadata (i.e iv+checksum + dims+checksum) is encoded "three times" - once in each channel (RGB)
-        int modulesForIVChecksum = 2*(int)(Math.ceil(BITS_IN_BYTE*CHECKSUM_LENGTH/(double)ENCODING_BIT_GROUP_SIZE));
-        int modulesForIV = 2*(int)(Math.ceil(BITS_IN_BYTE*Parameters.ivLength/(double)ENCODING_BIT_GROUP_SIZE));
-        int modulesForDims = 2*(int)(Math.ceil(BITS_IN_BYTE*(IMAGE_DIMS_ENCODING_LENGTH+CHECKSUM_LENGTH)/(double)ENCODING_BIT_GROUP_SIZE));
+        int modulesForAlignmentPattern = 0;
+        if(dim >= MODULES_FROM_UPPER_LEFT_TO_ALIGNMENT_BOTTOM_RIGHT){
+            modulesForAlignmentPattern = MODULES_IN_ALIGNMENT_PATTERN_DIM*MODULES_IN_ALIGNMENT_PATTERN_DIM;
+        }
+        int modulesForIVChecksum =  2*(int)(( (BITS_IN_BYTE*CHECKSUM_LENGTH + ENCODING_BIT_GROUP_SIZE - 1)/(double)ENCODING_BIT_GROUP_SIZE));
+        int modulesForIV = 2*(int)(( (BITS_IN_BYTE*Parameters.ivLength + ENCODING_BIT_GROUP_SIZE - 1)/(double)ENCODING_BIT_GROUP_SIZE));
+        int modulesForDims = 2*(int)( ((BITS_IN_BYTE*(IMAGE_DIMS_ENCODING_LENGTH+CHECKSUM_LENGTH) + ENCODING_BIT_GROUP_SIZE - 1)
+                /(double)ENCODING_BIT_GROUP_SIZE));
         int modulesForMetadata = modulesForIVChecksum + modulesForIV + modulesForDims;
-
         int modulesForEncoding = (dim - 2*effectiveModulesInMargin)*(dim - 2*effectiveModulesInMargin)
                 - MODULES_IN_POS_DET_DIM*MODULES_IN_POS_DET_DIM*NUM_OF_POSITION_DETECTORS
-                - MODULES_IN_ALIGNMENT_PATTERN_DIM*MODULES_IN_ALIGNMENT_PATTERN_DIM
-                - modulesForMetadata -1; //-1 for bottom right module to be black for corner detection
+                - modulesForAlignmentPattern
+                - modulesForMetadata -2; //-1 for bottom right module to be black for corner detection
 
         int maxBitsToEncode = CHANNELS*ENCODING_BIT_GROUP_SIZE*modulesForEncoding;
         return maxBitsToEncode/BITS_IN_BYTE;

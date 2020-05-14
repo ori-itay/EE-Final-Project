@@ -46,7 +46,7 @@ public class Flow{
 
 
         //delete from here
-        InputStream encodedStream = context.getAssets().open("orig50_50_4Level_10pixInModule.jpg");
+        InputStream encodedStream = context.getAssets().open("encodedImage.jpg");
         Bitmap origEncodedBitmap = BitmapFactory.decodeStream(encodedStream);
         distortedImageSampler.tempOrigPixelMatrix = MainActivity.get2DPixelArray(origEncodedBitmap);
         //to here
@@ -82,8 +82,6 @@ public class Flow{
         start = System.currentTimeMillis();
         /* decrypt */
         byte[] imageBytes = Decryptor.decryptImage(deshuffledBytes, secretKeySpec, ivSpec);
-        Log.d("performance", "decryptImage took: " + (System.currentTimeMillis() - start));
-
         /* fetch the image dimensions */
         DimensionsFetcher dimensionsFetcher = new DimensionsFetcher(distortedImageSampler);
         int width = dimensionsFetcher.getWidth();
@@ -100,7 +98,8 @@ public class Flow{
         start = System.currentTimeMillis();
         /* convert to Bitmap */
         Bitmap bmp = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-        MainActivity.setBitmapPixels(bmp, imageBytes, width, height);
+        //MainActivity.setBitmapPixels(bmp, imageBytes, width, height);
+        MainActivity.setBitmapPixels(bmp, decodedBytes, width, height);
         Log.d("performance", "createBitmap took: " + (System.currentTimeMillis() - start));
 
         return bmp;
