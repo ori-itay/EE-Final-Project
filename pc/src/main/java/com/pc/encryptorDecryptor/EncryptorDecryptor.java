@@ -7,11 +7,14 @@ import java.nio.ByteBuffer;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.util.Random;
 //import java.util.concurrent.ExecutorService;
 //import java.util.concurrent.Executors;
 
+import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 
+import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
@@ -19,7 +22,6 @@ import javax.crypto.spec.SecretKeySpec;
 public class EncryptorDecryptor {
 	public static final String encryptionAlgorithm = "AES";
 	public static final int symmetricKeyLength = 256;
-	private static final int intSize = 4;
 	private static final String encryptionMethod = encryptionAlgorithm + "/CBC/NoPadding";
 	
 	public static byte[] xorPaddedImage(byte[] imageBytes, byte[] generatedXorBytes) {
@@ -31,57 +33,24 @@ public class EncryptorDecryptor {
 		return xoredImage;
 	}
 	
-	public static byte[] generateXorBytes(SecretKeySpec skeySpec, IvParameterSpec iv) throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidAlgorithmParameterException, InvalidKeyException {
-		final Cipher cipher = Cipher.getInstance(encryptionMethod);
+	public static byte[] generateXorBytes(SecretKeySpec skeySpec, IvParameterSpec iv)  {
 		final byte[] cipherIV = new byte[16];
-		System.arraycopy(iv.getIV(), 0, cipherIV, 0, ivLength);
-		
 		final byte[] ourIV = iv.getIV();
+
+		System.arraycopy(ourIV, 0, cipherIV, 0, ivLength);
+
 		final byte[] randomBytes = new byte[MAX_ENCODED_LENGTH_BYTES];
-		final int ivAndCounterLen = ourIV.length + intSize;
-		final byte[] ivAndCounter = new byte[ivAndCounterLen];
-		
-		cipher.init(Cipher.ENCRYPT_MODE, skeySpec, new IvParameterSpec(cipherIV));
-		
-		//ExecutorService executor = Executors.newCachedThreadPool();
-		
-		for (int i = 0; i < MAX_ENCODED_LENGTH_BYTES/ivAndCounterLen ; i++) {
-			final byte[] counterBytes = ByteBuffer.allocate(intSize).putInt(i).array(); // convert i to byte[4]
-			System.arraycopy(ourIV, 0, ivAndCounter, 0, ourIV.length);
-			System.arraycopy(counterBytes, 0, ivAndCounter, ourIV.length, counterBytes.length); // concatenate iv||counter
-			//executor.execute(new ComputeAESBlock(randomBytes, i * ivAndCounterLen, ivAndCounter, cipher)); //AES[key,iv] (iv+i)
-			
-			final byte[] encryptedBlockBytes = cipher.update(ivAndCounter);
-			System.arraycopy(encryptedBlockBytes, 0, randomBytes, i * ivAndCounterLen, encryptedBlockBytes.length);
-			
-		}	
-		return randomBytes;
+		final Random random = new Random(ByteBuffer.wrap(ourIV).getLong());
+		random.nextBytes(randomBytes);
+
+		try {
+			final Cipher cipher = Cipher.getInstance(encryptionMethod);
+			cipher.init(Cipher.ENCRYPT_MODE, skeySpec, new IvParameterSpec(cipherIV));
+			return cipher.doFinal(randomBytes);
+		} catch (IllegalBlockSizeException | BadPaddingException | InvalidKeyException |
+				InvalidAlgorithmParameterException | NoSuchAlgorithmException | NoSuchPaddingException e) {
+			e.printStackTrace();
+		}
+		return null;
 	}
-	
-//	private static class ComputeAESBlock implements Runnable {
-//		
-//		private final byte[] encryptedBytes;
-//		private final int startIndex;
-//		private final byte[] ivAndCounter;
-//		private final Cipher cipher;
-//		
-//		public ComputeAESBlock(byte[] encryptedBytes, int startIndex, byte[] ivAndCounter, Cipher cipher) {
-//			this.encryptedBytes = encryptedBytes;
-//			this.startIndex = startIndex;
-//			this.ivAndCounter = ivAndCounter;
-//			this.cipher = cipher;
-//		}
-//		@Override
-//		public void run() {
-////			try {
-////				byte[] encryptedBlockBytes = cipher.doFinal(ivAndCounter);
-////				System.arraycopy(encryptedBlockBytes, 0, encryptedBytes, startIndex, encryptedBlockBytes.length);
-////			} catch (BadPaddingException | IllegalBlockSizeException e) {
-////				e.printStackTrace();
-////			}
-//			// option 2:
-////			byte[] encryptedBlockBytes = cipher.update(ivAndCounter);
-////			System.arraycopy(encryptedBlockBytes, 0, encryptedBytes, startIndex, encryptedBlockBytes.length);
-//		}
-//	}
 }
