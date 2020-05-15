@@ -23,6 +23,7 @@ import androidx.core.content.FileProvider;
 
 import com.android.visualcrypto.cameraUtils.CameraRotationFix;
 import com.android.visualcrypto.flow.Flow;
+import com.android.visualcrypto.openCvUtils.OpenCvUtils;
 import com.pc.configuration.Constants;
 
 import org.opencv.android.OpenCVLoader;
@@ -189,7 +190,7 @@ public class MainActivity extends AppCompatActivity {
     private void decodeImage() {
         try {
             //long startTime = System.currentTimeMillis();
-            String imageName = "encodedImage.jpg";
+            String imageName = "14_05.jpg";
             InputStream encodedStream = getAssets().open(imageName);
             File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + imageName);
 
@@ -199,9 +200,9 @@ public class MainActivity extends AppCompatActivity {
             Mat capturedImage = new Mat();
             Utils.bitmapToMat(rotatedBitmap, capturedImage);
             //TODO: pay attention whether calibrateimage is commented
-            //Mat afterCalibrationMatrix = OpenCvUtils.calibrateImage(capturedImage);
-            //rotatedBitmap = convertMatToBitmap(afterCalibrationMatrix); // update bitmap as well
-            Mat afterCalibrationMatrix = capturedImage;
+            Mat afterCalibrationMatrix = OpenCvUtils.calibrateImage(capturedImage);
+            rotatedBitmap = convertMatToBitmap(afterCalibrationMatrix); // update bitmap as well
+            //Mat afterCalibrationMatrix = capturedImage;
             Bitmap resBitmap = Flow.executeAndroidFlow(afterCalibrationMatrix, rotatedBitmap, this);
 
             if (resBitmap == null) {
@@ -301,7 +302,7 @@ public class MainActivity extends AppCompatActivity {
 
     public static void setBitmapPixels(Bitmap bmp, byte[] imageBytes, int width, int height) {
         final byte ALPHA_VALUE = (byte) 0xff;
-        final int METADATA_LENGTH = 5;
+        final int METADATA_LENGTH = 0;
         int index, ARGB;
         ByteBuffer wrapped;
         for (int row = 0; row < height; row++) {

@@ -98,8 +98,8 @@ public class Flow{
         start = System.currentTimeMillis();
         /* convert to Bitmap */
         Bitmap bmp = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-        //MainActivity.setBitmapPixels(bmp, imageBytes, width, height);
-        MainActivity.setBitmapPixels(bmp, decodedBytes, width, height);
+        MainActivity.setBitmapPixels(bmp, imageBytes, width, height);
+        //MainActivity.setBitmapPixels(bmp, decodedBytes, width, height);
         Log.d("performance", "createBitmap took: " + (System.currentTimeMillis() - start));
 
         return bmp;

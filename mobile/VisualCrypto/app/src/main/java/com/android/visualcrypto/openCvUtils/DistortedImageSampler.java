@@ -49,7 +49,7 @@ import static org.opencv.imgproc.Imgproc.cvtColor;
 
 
 public class DistortedImageSampler extends StdImageSampler {
-    static final int gridSplitSize = 1;
+    static final int gridSplitSize = 4;
     private static final double[][][] minPixelVal = new double[gridSplitSize][gridSplitSize][Constants.CHANNELS];
     private static final double[][][] maxPixelVal = new double[gridSplitSize][gridSplitSize][Constants.CHANNELS];
     static int tileHeight;
