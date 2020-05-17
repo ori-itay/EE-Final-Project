@@ -12,9 +12,11 @@ import com.pc.configuration.Parameters;
 import static com.pc.configuration.Constants.*;
 
 public class DisplayEncoder {
-	static int encodedCnt = 0;
-	static boolean[][] positions = new boolean[MODULES_IN_ENCODED_IMAGE_DIM][MODULES_IN_ENCODED_IMAGE_DIM];
+	static int encodedCnt;
+	static boolean[][] positions;
 	public static BufferedImage encodeBytes(byte[] binaryData, byte[] dimsArr, byte[] IV, byte[] ivchecksum) throws Exception {
+		encodedCnt = 0;
+		positions = new boolean[MODULES_IN_ENCODED_IMAGE_DIM][MODULES_IN_ENCODED_IMAGE_DIM];
 		//allocate space including white margins
 		BufferedImage image = new BufferedImage(MODULES_IN_ENCODED_IMAGE_DIM*Parameters.pixelsInModule,
 				MODULES_IN_ENCODED_IMAGE_DIM*Parameters.pixelsInModule, BufferedImage.TYPE_INT_RGB);

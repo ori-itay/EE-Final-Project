@@ -35,20 +35,22 @@ public class DisplayDecoder {
 		imageSampler.setIV1(decodeData(imageSampler, Parameters.ivLength, pos, true));
 		imageSampler.setIV1Checksum(decodeData(imageSampler, CHECKSUM_LENGTH, pos, true));
 		imageSampler.setDimsAndChecksum1(decodeData(imageSampler, IMAGE_DIMS_ENCODING_LENGTH + CHECKSUM_LENGTH, pos, true));
+		int imageDataLength = computeMaxEncodedLength(imageSampler.getModulesInDim());
+
 
 		long startTime = System.currentTimeMillis();
-		int imageDataLength = computeMaxEncodedLength(imageSampler.getModulesInDim());
+		imageSampler.setDecodedData(decodeData(imageSampler, imageDataLength, pos, false));
 		long estimatedTime = System.currentTimeMillis() - startTime;
 		try {
 			FileWriter myWriter = new FileWriter("/storage/emulated/0/Download/timing.txt");
-			myWriter.write("comupteMaxEncodedLength took: "+estimatedTime+"\n");
+			myWriter.write("decodeData for "+imageDataLength+" bytes took: "+estimatedTime+"\n");
 			myWriter.close();
 		} catch (IOException e) {
 			System.out.println("An error occurred.");
 			e.printStackTrace();
 		}
 
-		imageSampler.setDecodedData(decodeData(imageSampler, imageDataLength, pos, false));
+
 		imageSampler.setIV2(decodeData(imageSampler, Parameters.ivLength, pos, true));
 		imageSampler.setIV2Checksum(decodeData(imageSampler, CHECKSUM_LENGTH, pos, true));
 		imageSampler.setDimsAndChecksum2(decodeData(imageSampler, IMAGE_DIMS_ENCODING_LENGTH + CHECKSUM_LENGTH, pos, true));
@@ -77,7 +79,6 @@ public class DisplayDecoder {
 
 		int bitsLeftToByte = BITS_IN_BYTE, currByteInd = 0, mask = BIT_GROUP_MASK_OF_ONES,
 				ones_in_mask = ENCODING_BIT_GROUP_SIZE;
-
 		int[] RGB = sampleModule(imageSampler, pos, isMetadata);
 		// assuming ENCODING_COLOR_LEVELS<255
 		int RChannelValue = RGB[0]/ COLOR_SCALE_DELTA;

@@ -43,12 +43,12 @@ public class OpenCvUtils {
     }
 
     public static double[] thresholdAndNormalizeChannels(double[] channels, double[][][] minPixelVal,
-                                                         double[][][] maxPixelVal, Point distortedIndex) {
+                                                         double[][][] maxPixelVal, int indexRow, int indexCol) {
 
-        int subMatIndRow = Math.floorDiv((int) distortedIndex.y , DistortedImageSampler.tileHeight);
-        int subMatIndCol = Math.floorDiv((int) distortedIndex.x , DistortedImageSampler.tileWidth);
+        int subMatIndRow = indexRow / DistortedImageSampler.tileHeight;
+        int subMatIndCol = indexCol / DistortedImageSampler.tileWidth;
 
-        double normalizedChannel;
+        double normalizedChannel, closestLevel = 0;
         double processedChannels[] = new double[3];
         for (int i = 0; i < processedChannels.length; i++) {
             if (channels[i] < minPixelVal[subMatIndRow][subMatIndCol][i]) normalizedChannel = 0;
@@ -59,9 +59,10 @@ public class OpenCvUtils {
             for(double level :levelsArr){
                 if(Math.abs(normalizedChannel - level) < diff){
                     diff = Math.abs(normalizedChannel - level);
-                    processedChannels[i] = level;
+                    closestLevel = level;
                 }
             }
+            processedChannels[i] = closestLevel;
         }
         return processedChannels;
     }
