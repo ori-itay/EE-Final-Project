@@ -65,9 +65,10 @@ public class DistortedImageSampler extends StdImageSampler {
     public static final Mat itaysCamConfigDst = new Mat(1,5 ,CvType.CV_64F);
     public static final Mat orisCamConfigDst = new Mat(1,5 ,CvType.CV_64F);
 
+
     static {
-        orisCamConfigDst.put(0,0,   0.27645881280644635D, -1.2921109803506816D, 0.00035085555201545886D, 0.0007744739823047046D, 1.8244694216399673D);
-        orisCamConfigMtx.put(0,0, 3590.400278603175D, 0D, 2311.0787696304424D,   0D, 3594.9428667290754D, 1729.1867336239586D,      0D, 0D, 1.0D);
+        orisCamConfigDst.put(0,0,    2.37788419e-01, -1.05060973, -1.24226900e-03, -1.06977518e-03, 1.36988634);
+        orisCamConfigMtx.put(0,0, 3.54906380e+03, 0D, 2.28702762e+03,   0D, 3.55130312e+03, 1.69588285e+03,    0D, 0D, 1.0D);
 
         //itaysCamConfigDst.put(0,0,   0.51539854, -0.00120593, 0.00206427, -0.69356642 ,0.24467169);
         itaysCamConfigDst.put(0,0,   0.24467169, -0.69356642, 0.00206427, -0.00120593 ,0.51539854);
