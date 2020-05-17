@@ -155,7 +155,7 @@ public class MainActivity extends AppCompatActivity {
     private void showEncodedImage() {
         InputStream encodedStream;
         try {
-            encodedStream = getAssets().open("14_05.jpg");
+            encodedStream = getAssets().open("16_05_2level_BigScreen.jpg");
             Bitmap encodedBitmap = BitmapFactory.decodeStream(encodedStream);
 
             ImageView iView = findViewById(R.id.decodedImgId);
@@ -167,7 +167,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void test(View v) throws IOException, CameraAccessException {
 
-        InputStream is = this.getAssets().open("14_05.jpg");
+        InputStream is = this.getAssets().open("16_05_2level_BigScreen.jpg");
         Bitmap b = BitmapFactory.decodeStream(is);
 
         Mat capturedImage = new Mat();
@@ -190,7 +190,7 @@ public class MainActivity extends AppCompatActivity {
     private void decodeImage() {
         try {
             //long startTime = System.currentTimeMillis();
-            String imageName = "14_05.jpg";
+            String imageName = "16_05_2level_BigScreen.jpg";
             InputStream encodedStream = getAssets().open(imageName);
             File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + imageName);
 

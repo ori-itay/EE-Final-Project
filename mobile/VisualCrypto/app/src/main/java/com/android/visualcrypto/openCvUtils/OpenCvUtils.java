@@ -8,6 +8,8 @@ import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
 
+import static com.pc.configuration.Parameters.encodingColorLevels;
+
 
 public class OpenCvUtils {
 
@@ -31,8 +33,15 @@ public class OpenCvUtils {
         return Math.max(max1, max2);
     }
 
-    static double[] levelsArr = {0,85,170,255}; //TODO: only for 4 levels. correct to general case
-    //static double[] levelsArr = {0,255};
+    static double[] levelsArr = new double[encodingColorLevels];
+    static {
+        final double MAX_VALUE = 255.0;
+        double levelDiff = MAX_VALUE / (encodingColorLevels - 1);
+        for(int i = 0; i < encodingColorLevels; i++){
+            levelsArr[i] = Math.round(levelDiff * i);
+        }
+    }
+
     public static double[] thresholdAndNormalizeChannels(double[] channels, double[][][] minPixelVal,
                                                          double[][][] maxPixelVal, Point distortedIndex) {
 

@@ -32,24 +32,22 @@ import static com.android.visualcrypto.openCvUtils.DistortedImageSampler.errCoun
 public class Flow{
 
     public static Bitmap executeAndroidFlow(Mat capturedImg, Bitmap encodedBitmap, Context context) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidAlgorithmParameterException, InvalidKeyException, IOException {
-        DistortedImageSampler distortedImageSampler = new DistortedImageSampler(capturedImg, encodedBitmap, context);
 
+        DistortedImageSampler distortedImageSampler = new DistortedImageSampler(capturedImg, encodedBitmap, context);
         if (distortedImageSampler.initParameters() != 0) {
             return null;
         }
 
-        int[][] pixelArr;
-
-        long start = System.currentTimeMillis();
-        pixelArr = MainActivity.get2DPixelArray(encodedBitmap);
-        Log.d("performance", "get2DPixelArray took: " + (System.currentTimeMillis() - start));
-
-
         //delete from here
-        InputStream encodedStream = context.getAssets().open("encodedImage.jpg");
+        InputStream encodedStream = context.getAssets().open("50_50_2Level_10pixInModule.jpg");
         Bitmap origEncodedBitmap = BitmapFactory.decodeStream(encodedStream);
         distortedImageSampler.tempOrigPixelMatrix = MainActivity.get2DPixelArray(origEncodedBitmap);
         //to here
+
+
+        long start = System.currentTimeMillis();
+        int[][] pixelArr = MainActivity.get2DPixelArray(encodedBitmap);
+        Log.d("performance", "get2DPixelArray took: " + (System.currentTimeMillis() - start));
 
 
         start = System.currentTimeMillis();

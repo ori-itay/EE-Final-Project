@@ -286,13 +286,13 @@ public class DistortedImageSampler extends StdImageSampler {
         int countR = 0, countG = 0, countB = 0;
 
         final int lowPercentileRed = (int) Math.floor(0.0*(tileWidth*tileHeight));
-        final int highPercentileRed = (int) Math.floor(1*(tileWidth*tileHeight));
+        final int highPercentileRed = (int) Math.floor(.85*(tileWidth*tileHeight));
 
         final int lowPercentileGreen = (int) Math.floor(0.0*(tileWidth*tileHeight));
-        final int highPercentileGreen = (int) Math.floor(1*(tileWidth*tileHeight));
+        final int highPercentileGreen = (int) Math.floor(.85*(tileWidth*tileHeight));
 
         final int lowPercentileBlue = (int) Math.floor(0.0*(tileWidth*tileHeight));
-        final int highPercentileBlue = (int) Math.floor(1*(tileWidth*tileHeight));
+        final int highPercentileBlue = (int) Math.floor(.85*(tileWidth*tileHeight));
 
         int high, low, left, right;
         for(int i = 0; i < gridSplitSize; i++){

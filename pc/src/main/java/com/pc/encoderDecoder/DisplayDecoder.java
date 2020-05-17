@@ -1,6 +1,7 @@
 package com.pc.encoderDecoder;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 
 import javax.imageio.ImageIO;
@@ -34,7 +35,19 @@ public class DisplayDecoder {
 		imageSampler.setIV1(decodeData(imageSampler, Parameters.ivLength, pos, true));
 		imageSampler.setIV1Checksum(decodeData(imageSampler, CHECKSUM_LENGTH, pos, true));
 		imageSampler.setDimsAndChecksum1(decodeData(imageSampler, IMAGE_DIMS_ENCODING_LENGTH + CHECKSUM_LENGTH, pos, true));
-		int imageDataLength = FlowUtils.computeMaxEncodedLength(imageSampler.getModulesInDim(), imageSampler.getModulesInMargin());
+
+		long startTime = System.currentTimeMillis();
+		int imageDataLength = computeMaxEncodedLength(imageSampler.getModulesInDim());
+		long estimatedTime = System.currentTimeMillis() - startTime;
+		try {
+			FileWriter myWriter = new FileWriter("/storage/emulated/0/Download/timing.txt");
+			myWriter.write("comupteMaxEncodedLength took: "+estimatedTime+"\n");
+			myWriter.close();
+		} catch (IOException e) {
+			System.out.println("An error occurred.");
+			e.printStackTrace();
+		}
+
 		imageSampler.setDecodedData(decodeData(imageSampler, imageDataLength, pos, false));
 		imageSampler.setIV2(decodeData(imageSampler, Parameters.ivLength, pos, true));
 		imageSampler.setIV2Checksum(decodeData(imageSampler, CHECKSUM_LENGTH, pos, true));
@@ -45,9 +58,7 @@ public class DisplayDecoder {
 	private static void configureImage(StdImageSampler imageSampler, int[][] pixelMatrix) {
 		imageSampler.setReceivedImageDim(pixelMatrix.length);
 		imageSampler.setPixelMatrix(pixelMatrix);
-		//configureModuleSizeAndRotation(imageSampler);
 		assert( imageSampler.getModuleSize() != 0);
-		//configureCrop(imageSampler);
 		return;
 	}
 
@@ -157,8 +168,9 @@ public class DisplayDecoder {
 
 		pos.colModule++;
 		//skip alignment pattern
-		if(pos.colModule == ALIGNMENT_PATTERN_UPPER_LEFT_MODULE && pos.rowModule >= ALIGNMENT_PATTERN_UPPER_LEFT_MODULE
-				&& pos.rowModule < ALIGNMENT_PATTERN_UPPER_LEFT_MODULE + MODULES_IN_ALIGNMENT_PATTERN_DIM ){
+		if(pos.colModule == ALIGNMENT_PATTERN_UPPER_LEFT_MODULE - Parameters.modulesInMargin &&
+				pos.rowModule >= ALIGNMENT_PATTERN_UPPER_LEFT_MODULE - Parameters.modulesInMargin
+				&& pos.rowModule < ALIGNMENT_PATTERN_UPPER_LEFT_MODULE + MODULES_IN_ALIGNMENT_PATTERN_DIM - Parameters.modulesInMargin ){
 			pos.colModule+=  MODULES_IN_ALIGNMENT_PATTERN_DIM;
 		}
 		imageSampler.checkForColumnEnd(pos);
@@ -173,6 +185,26 @@ public class DisplayDecoder {
 			retVal |= ( (bytes[i] & 0xFF) << (i*BITS_IN_BYTE) );
 
 		return retVal;
+	}
+
+	private static int computeMaxEncodedLength(int dim) {
+		//metadata (i.e iv+checksum + dims+checksum) is encoded "three times" - once in each channel (RGB)
+		int modulesForAlignmentPattern = 0;
+		if(dim >= MODULES_FROM_UPPER_LEFT_TO_ALIGNMENT_BOTTOM_RIGHT){
+			modulesForAlignmentPattern = MODULES_IN_ALIGNMENT_PATTERN_DIM*MODULES_IN_ALIGNMENT_PATTERN_DIM;
+		}
+		int modulesForPosDet = MODULES_IN_POS_DET_DIM*MODULES_IN_POS_DET_DIM*NUM_OF_POSITION_DETECTORS;
+
+		int modulesForIVChecksum =  2*(int)(( (BITS_IN_BYTE*CHECKSUM_LENGTH + ENCODING_BIT_GROUP_SIZE - 1)/(double)ENCODING_BIT_GROUP_SIZE));
+		int modulesForIV = 2*(int)(( (BITS_IN_BYTE*Parameters.ivLength + ENCODING_BIT_GROUP_SIZE - 1)/(double)ENCODING_BIT_GROUP_SIZE));
+		int modulesForDims = 2*(int)( ((BITS_IN_BYTE*(IMAGE_DIMS_ENCODING_LENGTH+CHECKSUM_LENGTH) + ENCODING_BIT_GROUP_SIZE - 1)
+				/(double)ENCODING_BIT_GROUP_SIZE));
+		int modulesForMetadata = modulesForIVChecksum + modulesForIV + modulesForDims;
+		int modulesForRightLowerCorner = 1;
+
+		int modulesForEncoding = dim*dim - modulesForAlignmentPattern - modulesForPosDet - modulesForMetadata - modulesForRightLowerCorner;
+		int maxBitsToEncode = CHANNELS*ENCODING_BIT_GROUP_SIZE*modulesForEncoding;
+		return maxBitsToEncode/BITS_IN_BYTE;
 	}
 
 	public static int TestByteArrayToInt(byte[] bytes) { return byteArrayToInt(bytes);}

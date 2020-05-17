@@ -13,10 +13,10 @@ public class FlowUtils {
         int width = image.getWidth();
         int height = image.getHeight();
         int ARGB, index;
-        int imageDataLen = width*height*CHANNELS;
+        int imageDataLen = width*height;
 
         int totalLengthToEncode = computeMinDimensionAndReturnMaxEncodedLength(imageDataLen);
-        byte[] resultArray = new byte[totalLengthToEncode];
+        byte[] resultArray = new byte[CHANNELS * totalLengthToEncode];
 
         for (int row = 0; row < height; row++) {
             for (int col = 0; col < width; col++) {
@@ -33,40 +33,30 @@ public class FlowUtils {
 
 
 
-    private static int computeMinDimensionAndReturnMaxEncodedLength(int bytesDataLen) {
-        int totalNumOfBits = bytesDataLen*BITS_IN_BYTE;
-        int modulesForEncoding = Math.floorDiv(totalNumOfBits, ENCODING_BIT_GROUP_SIZE*CHANNELS);
-        int dim = (int) Math.ceil(Math.sqrt(modulesForEncoding)) + 2*(MODULES_IN_POS_DET_DIM+Parameters.modulesInMargin); // initial guess
-        int maxEncodedLength;
+    public static int computeMinDimensionAndReturnMaxEncodedLength(int bytesDataLen) {
 
-        while(computeMaxEncodedLength(dim, Parameters.modulesInMargin) > bytesDataLen)
-            dim--;
-        while((maxEncodedLength=computeMaxEncodedLength(dim, Parameters.modulesInMargin)) < bytesDataLen)
-            dim++;
-
-        MODULES_IN_ENCODED_IMAGE_DIM = dim;
-        return maxEncodedLength;
-    }
-
-    public static int computeMaxEncodedLength(int dim, int effectiveModulesInMargin) {
-        //metadata (i.e iv+checksum + dims+checksum) is encoded "three times" - once in each channel (RGB)
-        int modulesForAlignmentPattern = 0;
-        if(dim >= MODULES_FROM_UPPER_LEFT_TO_ALIGNMENT_BOTTOM_RIGHT){
-            modulesForAlignmentPattern = MODULES_IN_ALIGNMENT_PATTERN_DIM*MODULES_IN_ALIGNMENT_PATTERN_DIM;
-        }
         int modulesForIVChecksum =  2*(int)(( (BITS_IN_BYTE*CHECKSUM_LENGTH + ENCODING_BIT_GROUP_SIZE - 1)/(double)ENCODING_BIT_GROUP_SIZE));
         int modulesForIV = 2*(int)(( (BITS_IN_BYTE*Parameters.ivLength + ENCODING_BIT_GROUP_SIZE - 1)/(double)ENCODING_BIT_GROUP_SIZE));
         int modulesForDims = 2*(int)( ((BITS_IN_BYTE*(IMAGE_DIMS_ENCODING_LENGTH+CHECKSUM_LENGTH) + ENCODING_BIT_GROUP_SIZE - 1)
                 /(double)ENCODING_BIT_GROUP_SIZE));
         int modulesForMetadata = modulesForIVChecksum + modulesForIV + modulesForDims;
-        int modulesForEncoding = (dim - 2*effectiveModulesInMargin)*(dim - 2*effectiveModulesInMargin)
-                - MODULES_IN_POS_DET_DIM*MODULES_IN_POS_DET_DIM*NUM_OF_POSITION_DETECTORS
-                - modulesForAlignmentPattern
-                - modulesForMetadata -2; //-1 for bottom right module to be black for corner detection
+        int modulesForAlignmentPattern = MODULES_IN_ALIGNMENT_PATTERN_DIM*MODULES_IN_ALIGNMENT_PATTERN_DIM;
+        int modulesForImageData = (bytesDataLen*BITS_IN_BYTE + ENCODING_BIT_GROUP_SIZE - 1)/(ENCODING_BIT_GROUP_SIZE);
+        int modulesForPosDet = MODULES_IN_POS_DET_DIM*MODULES_IN_POS_DET_DIM*NUM_OF_POSITION_DETECTORS;
+        int modulesForRightLowerCorner = 1;
 
-        int maxBitsToEncode = CHANNELS*ENCODING_BIT_GROUP_SIZE*modulesForEncoding;
-        return maxBitsToEncode/BITS_IN_BYTE;
+        int totalNumOfModules = modulesForMetadata + modulesForPosDet + modulesForAlignmentPattern + modulesForRightLowerCorner + modulesForImageData;
+
+
+        int dim = (int) Math.ceil(Math.sqrt(totalNumOfModules));
+        int encodingModules = dim*dim - (modulesForMetadata + modulesForPosDet + modulesForAlignmentPattern + modulesForRightLowerCorner);
+        int maxEncodedLength = (encodingModules*ENCODING_BIT_GROUP_SIZE)/BITS_IN_BYTE;
+
+        //TODO: treat case of small dimension without alignment pattern
+        MODULES_IN_ENCODED_IMAGE_DIM = dim + 2*Parameters.modulesInMargin;
+        return maxEncodedLength;
     }
+
 
     public static byte[] getDimensionsArray(BufferedImage image){
         short width = (short) image.getWidth();
