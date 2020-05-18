@@ -9,6 +9,7 @@ import androidx.core.util.Pair;
 
 import com.android.visualcrypto.MainActivity;
 import com.pc.configuration.Constants;
+import com.pc.configuration.Parameters;
 import com.pc.encoderDecoder.StdImageSampler;
 
 import org.opencv.calib3d.Calib3d;
@@ -48,7 +49,7 @@ import static org.opencv.imgproc.Imgproc.cvtColor;
 
 
 public class DistortedImageSampler extends StdImageSampler {
-    static final int gridSplitSize = 4;
+    static final int gridSplitSize = 1;
     private static final double[][][] minPixelVal = new double[gridSplitSize][gridSplitSize][Constants.CHANNELS];
     private static final double[][][] maxPixelVal = new double[gridSplitSize][gridSplitSize][Constants.CHANNELS];
     static int tileHeight;
@@ -184,7 +185,7 @@ public class DistortedImageSampler extends StdImageSampler {
         start = System.currentTimeMillis(); // performance
         findMinMaxPixelVals(DistortedImageSampler.distortedImage);
         Log.d("performance", "findMinMaxPixelVals took: " + (System.currentTimeMillis() - start));
-        Point rightLowerOfPts0 = new Point(failures.get(0).ppCorner.vertexes.data[2].x - xMin + 10, failures.get(0).ppCorner.vertexes.data[2].y - yMin + 10);
+        int[] rightLowerOfPts0 = {(int)failures.get(0).ppCorner.vertexes.data[2].x - xMin + 10, (int)failures.get(0).ppCorner.vertexes.data[2].y - yMin + 10};
         //Point leftLowerOfPts0 = new Point(pointsQueue.get(0).square.vertexes.get(0).x, pointsQueue.get(0).square.vertexes.get(0).y);
         start = System.currentTimeMillis(); // performance
         double estimatedModuleSize = computeModuleSize(pts[0], rightLowerOfPts0, H, Math.sqrt(2 * 49));
@@ -196,7 +197,7 @@ public class DistortedImageSampler extends StdImageSampler {
         Log.d("performance", "FindAlignmentBottomRight took: " + (System.currentTimeMillis() - start));
         Mat alignmentBottomRightMat = new Mat(1, 3, CvType.CV_64F);
         alignmentBottomRightMat.put(0, 0, alignmentBottomRight.x, alignmentBottomRight.y, 1);
-        Point distortedPoint = undistortedToDistortedIndexes(alignmentBottomRightMat, inverseH);
+        int[] distortedPoint = undistortedToDistortedIndexes(alignmentBottomRightMat, inverseH);
         start = System.currentTimeMillis();
         this.setModuleSize(computeModuleSize(pts[0], distortedPoint, H, Math.sqrt(2 * 99 * 99)));
         Log.d("performance", "computeModuleSize took: " + (System.currentTimeMillis() - start));
@@ -204,7 +205,7 @@ public class DistortedImageSampler extends StdImageSampler {
         this.setModulesInDim(effectiveModulesInDim);
 
         Log.d("ModulesInDim", "modules in dim: " + Float.toString(this.getModulesInDim()));
-        Log.d("ModulesInDim", "left lower: " + rightLowerOfPts0.x + "," + rightLowerOfPts0.y);
+        Log.d("ModulesInDim", "left lower: " + rightLowerOfPts0[0] + "," + rightLowerOfPts0[0]);
         return 0;
     }
 
@@ -248,7 +249,7 @@ public class DistortedImageSampler extends StdImageSampler {
     }
 
 
-    private double computeModuleSize(Point upperLeft, Point lowerRight, Mat H, double expectedModulesDistance) {
+    private double computeModuleSize(Point upperLeft, int[] lowerRight, Mat H, double expectedModulesDistance) {
         Mat upperPoint = new Mat(1, 3, CvType.CV_64F);
 
         upperPoint.put(0, 0, upperLeft.x);
@@ -264,8 +265,8 @@ public class DistortedImageSampler extends StdImageSampler {
         double yUpper = undistortedUpperPoint.get(1, 0)[0] / zUpper;
 
 
-        upperPoint.put(0, 0, lowerRight.x);
-        upperPoint.put(0, 1, lowerRight.y);
+        upperPoint.put(0, 0, lowerRight[0]);
+        upperPoint.put(0, 1, lowerRight[1]);
         undistortedUpperPoint = new Mat();
         Core.gemm(H, upperPoint.t(), 1.0, new Mat(), 0, undistortedUpperPoint, 0);
         double zLower = undistortedUpperPoint.get(2, 0)[0];
@@ -286,13 +287,13 @@ public class DistortedImageSampler extends StdImageSampler {
         int countR = 0, countG = 0, countB = 0;
 
         final int lowPercentileRed = (int) Math.floor(0.0*(tileWidth*tileHeight));
-        final int highPercentileRed = (int) Math.floor(.85*(tileWidth*tileHeight));
+        final int highPercentileRed = (int) Math.floor(1*(tileWidth*tileHeight));
 
         final int lowPercentileGreen = (int) Math.floor(0.0*(tileWidth*tileHeight));
-        final int highPercentileGreen = (int) Math.floor(.85*(tileWidth*tileHeight));
+        final int highPercentileGreen = (int) Math.floor(1*(tileWidth*tileHeight));
 
         final int lowPercentileBlue = (int) Math.floor(0.0*(tileWidth*tileHeight));
-        final int highPercentileBlue = (int) Math.floor(.85*(tileWidth*tileHeight));
+        final int highPercentileBlue = (int) Math.floor(1*(tileWidth*tileHeight));
 
         int high, low, left, right;
         for(int i = 0; i < gridSplitSize; i++){
@@ -333,20 +334,6 @@ public class DistortedImageSampler extends StdImageSampler {
                 }
             }
         }
-
-
-//        int lowPercentileRed = (int) Math.floor(0.05*(capturedImage.width()*capturedImage.height()));
-//        int highPercentileRed = (int) Math.floor(0.5*(capturedImage.width()*capturedImage.height()));
-//
-//        int lowPercentileGreen = (int) Math.floor(0.03*(capturedImage.width()*capturedImage.height()));
-//        int highPercentileGreen = (int) Math.floor(0.5*(capturedImage.width()*capturedImage.height()));
-//
-//        int lowPercentileBlue = (int) Math.floor(0.05*(capturedImage.width()*capturedImage.height()));
-//        int highPercentileBlue = (int) Math.floor(0.5*(capturedImage.width()*capturedImage.height()));
-
-
-
-
     }
 
     private void convertBoofToOpenPoints(Polygon2D_F64 polygon, Point[] pts) {
@@ -363,11 +350,11 @@ public class DistortedImageSampler extends StdImageSampler {
     @Override
     public int getPixel(double rowLoc, double colLoc, boolean duplicateChannels) {
         Mat unDistortedImageMatCord = new Mat(1, 3, CvType.CV_64F);
-        unDistortedImageMatCord.put(0, 0, rowLoc);
-        unDistortedImageMatCord.put(0, 1, colLoc);
+        unDistortedImageMatCord.put(0, 0, colLoc);
+        unDistortedImageMatCord.put(0, 1, rowLoc);
         unDistortedImageMatCord.put(0, 2, 1);
-        Point distortedIndex = undistortedToDistortedIndexes(unDistortedImageMatCord, inverseH);
-        int indexCol = (int) distortedIndex.x; int indexRow = (int) distortedIndex.y;
+        int[] distortedIndex = undistortedToDistortedIndexes(unDistortedImageMatCord, inverseH);
+        int indexCol = distortedIndex[0]; int indexRow = distortedIndex[1];
         double[] channels = DistortedImageSampler.distortedImage.get(indexRow, indexCol);
         double[] processedChannels = thresholdAndNormalizeChannels(channels, minPixelVal, maxPixelVal, indexRow, indexCol);
 
@@ -385,22 +372,22 @@ public class DistortedImageSampler extends StdImageSampler {
         int pixelValue = (int) (Math.round(processedChannels[0])) |
                 (int) (Math.round(processedChannels[1]) << 8) | (int) (Math.round(processedChannels[2]) << 16);
 
-/*
+
         // debugging code for comparison to original image
         int rowPixel = (int) Math.round((Parameters.modulesInMargin + rowLoc/this.getModuleSize()) * Parameters.pixelsInModule);
         int colPixel = (int) Math.round((Parameters.modulesInMargin + colLoc/this.getModuleSize()) * Parameters.pixelsInModule);
-        int encodedPixelValue = super.getPixel(colPixel, rowPixel);
+        int encodedPixelValue = super.getPixel(rowPixel, colPixel);
         int GBR = Integer.reverseBytes(encodedPixelValue) >>> 8;
         if(GBR != pixelValue){
             errCounter++;
 //            Mat alignmentBottomRightMat = new Mat(1, 3, CvType.CV_64F);
 //            alignmentBottomRightMat.put(0, 0, alignmentBottomRight.x, alignmentBottomRight.y, 1);
-            Point distortedPoint = OpenCvUtils.undistortedToDistortedIndexes(unDistortedImageMatCord, inverseH);
+            int[] distortedPoint = OpenCvUtils.undistortedToDistortedIndexes(unDistortedImageMatCord, inverseH);
             Log.d("DistortedImageSampler", "Module pixel value different than expected");
         }
 
 
-*/
+
         return pixelValue;
     }
 
