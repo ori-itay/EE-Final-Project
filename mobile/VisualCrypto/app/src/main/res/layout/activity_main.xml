@@ -7,22 +7,11 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <TextView
-        android:id="@+id/moduleSizeCfg"
-        android:layout_width="304dp"
-        android:layout_height="23dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="68dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.406"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/decodeImgBtn" />
-
     <Button
         android:id="@+id/decodeImgBtn"
-        android:layout_width="159dp"
-        android:layout_height="53dp"
-        android:layout_marginTop="492dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="408dp"
         android:text="@string/decode_image_as_image"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -30,8 +19,8 @@
 
     <ImageView
         android:id="@+id/decodedImgId"
-        android:layout_width="402dp"
-        android:layout_height="471dp"
+        android:layout_width="392dp"
+        android:layout_height="367dp"
         android:contentDescription="@string/displays_the_images"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -41,35 +30,13 @@
         app:layout_constraintVertical_bias="0.038"
         app:srcCompat="@android:color/background_light" />
 
-    <TextView
-        android:id="@+id/imageWidthCfg"
-        android:layout_width="305dp"
-        android:layout_height="21dp"
-        android:layout_marginTop="24dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/moduleSizeCfg" />
-
-    <TextView
-        android:id="@+id/imageHeightCfg"
-        android:layout_width="305dp"
-        android:layout_height="25dp"
-        android:layout_marginTop="12dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/imageWidthCfg"
-        app:layout_constraintVertical_bias="0.276" />
-
     <Button
         android:id="@+id/captureImageBTN"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="49dp"
+        android:layout_marginTop="68dp"
         android:text="@string/click_to_take_picture"
-        app:layout_constraintBottom_toTopOf="@+id/moduleSizeCfg"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.605"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="@+id/decodeImgBtn" />
 
@@ -77,12 +44,25 @@
         android:id="@+id/magicBTN"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="44dp"
+        android:layout_marginTop="43dp"
         android:onClick="test"
         android:text="test"
-        app:layout_constraintBottom_toTopOf="@+id/moduleSizeCfg"
+        app:layout_constraintBottom_toTopOf="@+id/videoProcessBtn"
         app:layout_constraintEnd_toStartOf="@+id/decodeImgBtn"
-        app:layout_constraintHorizontal_bias="0.52"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintHorizontal_bias="0.421"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/decodedImgId" />
+
+    <Button
+        android:id="@+id/videoProcessBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Go to heaven"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.498"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/captureImageBTN"
+        app:layout_constraintVertical_bias="0.0" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

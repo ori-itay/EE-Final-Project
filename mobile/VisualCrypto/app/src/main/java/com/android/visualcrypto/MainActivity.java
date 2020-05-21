@@ -1,6 +1,7 @@
 package com.android.visualcrypto;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -54,13 +55,14 @@ import javax.crypto.NoSuchPaddingException;
 public class MainActivity extends AppCompatActivity {
 
     private static final int CAMERA_REQUEST = 1888;
+    private static final int VIDEO_PROCESS_INTENT = 5;
     private String currentPhotoPath;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (!OpenCVLoader.initDebug()) {
-            showAlert("OpenCV failed to load..Exiting");
+            showAlert(this, "OpenCV failed to load..Exiting");
             return;
         }
         setContentView(R.layout.activity_main);
@@ -80,6 +82,18 @@ public class MainActivity extends AppCompatActivity {
                 decodeImage();
             }
         });
+
+        Button videoProcessBTN = this.findViewById(R.id.videoProcessBtn);
+        videoProcessBTN.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(v.getContext(), VideoProcessing.class);
+                startActivityForResult(intent, VIDEO_PROCESS_INTENT);
+            }
+        });
+
+
         //zxing - maybe for next stage
         //IntentIntegrator integrator = new IntentIntegrator(this);
         //integrator.initiateScan();
@@ -108,7 +122,7 @@ public class MainActivity extends AppCompatActivity {
             try {
                 photoFile = createImageFile();
             } catch (IOException ex) {
-                showAlert("Error while creating photoFile");
+                showAlert(this, "Error while creating photoFile");
                 Log.d("photoFile", "Error while creating photoFile", ex);
                 return;
             }
@@ -220,7 +234,7 @@ public class MainActivity extends AppCompatActivity {
             /* display configuration information */
             //showConfigurationInfo(rotatedImageSampler, height, width);
         } catch (InvalidAlgorithmParameterException | NoSuchAlgorithmException | InvalidKeyException | NoSuchPaddingException | IOException e) {
-            showAlert("Exception in decodeImage: " + e);
+            showAlert(this, "Exception in decodeImage: " + e);
             Log.e("decodeImage", "decodeFile exception", e);
         }
     }
@@ -265,8 +279,8 @@ public class MainActivity extends AppCompatActivity {
         return outval;
     }
 
-    public void showAlert(String msg) {
-        AlertDialog alertDialog = new AlertDialog.Builder(MainActivity.this).create();
+    public static void showAlert(Context context, String msg) {
+        AlertDialog alertDialog = new AlertDialog.Builder(context).create();
         alertDialog.setTitle("Alert");
         alertDialog.setMessage(msg);
         alertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "OK",
@@ -341,12 +355,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-
-    public static Bitmap convertMatToBitmap(Mat mat) {
-        Bitmap bp = Bitmap.createBitmap(mat.cols(), mat.rows(), Bitmap.Config.ARGB_8888);
-        Utils.matToBitmap(mat, bp);
-        return bp;
-    }
 
     private byte[] convertBitmapToByteArray(Bitmap bp) {
         ByteArrayOutputStream stream = new ByteArrayOutputStream();

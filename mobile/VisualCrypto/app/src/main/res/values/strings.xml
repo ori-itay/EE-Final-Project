@@ -8,4 +8,5 @@
     <string name="moduleSizeText">Module size is:</string>
     <string name="displays_the_images">Displays the images</string>
     <string name="click_to_take_picture">Click to take picture</string>
+    <string name="displays_processed_image">Displays processed image</string>
 </resources>

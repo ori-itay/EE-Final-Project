@@ -33,6 +33,7 @@ configurations {
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
+    //implementation 'androidx.appcompat:appcompat:1.1.0'
     implementation 'androidx.appcompat:appcompat:1.1.0'
     implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
     implementation 'com.quickbirdstudios:opencv:4.1.0'
@@ -44,8 +45,14 @@ dependencies {
     androidTestImplementation 'androidx.test:rules:1.2.0'
     // Optional -- Hamcrest library
     androidTestImplementation 'org.hamcrest:hamcrest-library:1.3'
-	implementation 'com.journeyapps:zxing-android-embedded:3.0.2@aar'
+	//implementation 'com.journeyapps:zxing-android-embedded:3.0.2@aar'
     //implementation 'com.google.zxing:core:3.2.0'
     implementation 'org.boofcv:boofcv-core:0.35'
     implementation 'org.boofcv:boofcv-android:0.35'
+
+    // cameraX
+    def cameraxVersion = "1.0.0-alpha02"
+    implementation "androidx.camera:camera-core:${cameraxVersion}"
+    implementation "androidx.camera:camera-camera2:${cameraxVersion}"
+    implementation 'com.google.android.material:material:1.1.0'
 }

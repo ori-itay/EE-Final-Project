@@ -1,9 +1,12 @@
 package com.android.visualcrypto.openCvUtils;
 
+import android.graphics.Bitmap;
+
 import androidx.core.util.Pair;
 
 import com.pc.configuration.Constants;
 
+import org.opencv.android.Utils;
 import org.opencv.calib3d.Calib3d;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
@@ -222,6 +225,12 @@ public class OpenCvUtils {
         Mat undistored = new Mat();
         Calib3d.undistort(capturedImage, undistored, DistortedImageSampler.itaysCamConfigMtx, DistortedImageSampler.itaysCamConfigDst);
         return undistored;
+    }
+
+    public static Bitmap convertMatToBitmap(Mat mat) {
+        Bitmap bp = Bitmap.createBitmap(mat.cols(), mat.rows(), Bitmap.Config.ARGB_8888);
+        Utils.matToBitmap(mat, bp);
+        return bp;
     }
 
 

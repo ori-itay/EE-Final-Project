@@ -38,6 +38,7 @@ import georegression.struct.point.Point2D_F64;
 import georegression.struct.shapes.Polygon2D_F64;
 
 import static boofcv.android.ConvertBitmap.bitmapToGray;
+import static com.android.visualcrypto.MainActivity.showAlert;
 import static com.android.visualcrypto.openCvUtils.OpenCvUtils.calcDistance;
 import static com.android.visualcrypto.openCvUtils.OpenCvUtils.getMaxDistance;
 import static com.android.visualcrypto.openCvUtils.OpenCvUtils.thresholdAndNormalizeChannels;
@@ -130,7 +131,7 @@ public class DistortedImageSampler extends StdImageSampler {
 
         } else if (failures.size() == 0 && detections.size() == 0) {
             Log.d("DistortedImageSampler", "Couldn't detect QR position detectors");
-            ((MainActivity) this.context).showAlert("Couldn't detect QR position detectors");
+            showAlert(context, "Couldn't detect QR position detectors");
             return 1;
         }
 

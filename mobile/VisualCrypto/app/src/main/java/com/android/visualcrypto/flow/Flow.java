@@ -27,6 +27,7 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
+import static com.android.visualcrypto.MainActivity.showAlert;
 import static com.android.visualcrypto.openCvUtils.DistortedImageSampler.errCounter;
 
 public class Flow{
@@ -62,7 +63,7 @@ public class Flow{
         /* get iv */
         byte[] iv = IvFetcher.getIV(distortedImageSampler);
         if (iv == null) {
-            ((MainActivity) context).showAlert("Cannot decode the image: IV checksums are wrong!");
+            showAlert(context, "Cannot decode the image: IV checksums are wrong!");
             return null;
         }
         IvParameterSpec ivSpec = new IvParameterSpec(iv);
@@ -86,10 +87,10 @@ public class Flow{
         int height = dimensionsFetcher.getHeight();
 
         if (width == 0 || height == 0) {
-            ((MainActivity) context).showAlert("Cannot decode the image: Dimensions checksum are wrong!");
+            showAlert(context, "Cannot decode the image: Dimensions checksum are wrong!");
             return null;
         } else if (width > Constants.MAX_IMAGE_DIMENSION_SIZE || height > Constants.MAX_IMAGE_DIMENSION_SIZE) {
-            ((MainActivity) context).showAlert("Error: image dimension larger than " + Constants.MAX_IMAGE_DIMENSION_SIZE);
+            showAlert(context, "Error: image dimension larger than " + Constants.MAX_IMAGE_DIMENSION_SIZE);
             return null;
         }
 
