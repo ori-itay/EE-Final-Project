@@ -9,6 +9,7 @@ import androidx.core.util.Pair;
 
 import com.android.visualcrypto.MainActivity;
 import com.pc.configuration.Constants;
+import com.pc.configuration.Parameters;
 import com.pc.encoderDecoder.StdImageSampler;
 
 import org.opencv.calib3d.Calib3d;
@@ -163,9 +164,9 @@ public class DistortedImageSampler extends StdImageSampler {
         start = System.currentTimeMillis(); //performance
         Mat bw = new Mat();
         cvtColor(DistortedImageSampler.distortedImage, bw, Imgproc.COLOR_BGR2GRAY);
-        adaptiveThreshold(bw, bw, 255, ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY, 11, 65);
+        adaptiveThreshold(bw, bw, 255, ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY, 5, 11);
         cvtColor(bw, bw, Imgproc.THRESH_BINARY);
-       // Imgcodecs.imwrite(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/bw.jpg", bw);
+        Imgcodecs.imwrite(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/bw.jpg", bw);
 
         pts[0].x -= (xMin - 10); pts[1].x -= (xMin - 10); pts[2].x -= (xMin - 10); pts[3].x -= (xMin - 10);
         pts[0].y -= (yMin - 10); pts[1].y -= (yMin - 10); pts[2].y -= (yMin - 10); pts[3].y -= (yMin - 10);
@@ -287,14 +288,14 @@ public class DistortedImageSampler extends StdImageSampler {
         boolean accumulate = false;
         int countR = 0, countG = 0, countB = 0;
 
-        final int lowPercentileRed = (int) Math.floor(0.0*(tileWidth*tileHeight));
-        final int highPercentileRed = (int) Math.floor(1*(tileWidth*tileHeight));
+        final int lowPercentileRed = (int) Math.floor(0.1*(tileWidth*tileHeight));
+        final int highPercentileRed = (int) Math.floor(0.95*(tileWidth*tileHeight));
 
-        final int lowPercentileGreen = (int) Math.floor(0.0*(tileWidth*tileHeight));
-        final int highPercentileGreen = (int) Math.floor(1*(tileWidth*tileHeight));
+        final int lowPercentileGreen = (int) Math.floor(0.1*(tileWidth*tileHeight));
+        final int highPercentileGreen = (int) Math.floor(0.95*(tileWidth*tileHeight));
 
-        final int lowPercentileBlue = (int) Math.floor(0.0*(tileWidth*tileHeight));
-        final int highPercentileBlue = (int) Math.floor(1*(tileWidth*tileHeight));
+        final int lowPercentileBlue = (int) Math.floor(0.1*(tileWidth*tileHeight));
+        final int highPercentileBlue = (int) Math.floor(0.95*(tileWidth*tileHeight));
 
         int high, low, left, right;
         for(int i = 0; i < gridSplitSize; i++){
@@ -386,7 +387,6 @@ public class DistortedImageSampler extends StdImageSampler {
 
         int pixelValue = (processedChannels[0]) |(processedChannels[1] << 8) | (processedChannels[2] << 16);
 
-/*
         // debugging code for comparison to original image
         int rowPixel = (int) Math.round((Parameters.modulesInMargin + rowLoc/this.getModuleSize()) * Parameters.pixelsInModule);
         int colPixel = (int) Math.round((Parameters.modulesInMargin + colLoc/this.getModuleSize()) * Parameters.pixelsInModule);
@@ -400,7 +400,6 @@ public class DistortedImageSampler extends StdImageSampler {
             Log.d("DistortedImageSampler", "Module pixel value different than expected");
         }
 
-*/
 
         return pixelValue;
     }

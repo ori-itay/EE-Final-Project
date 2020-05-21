@@ -24,12 +24,8 @@ public class DimensionsFetcher {
                 IMAGE_DIMENSION_ENCODING_LENGTH, IMAGE_DIMENSION_ENCODING_LENGTH);
         byte[] dimensionsChecksum1 = ByteBuffer.wrap(Arrays.copyOfRange(sampler.getDimsAndChecksum1()
                 ,2*IMAGE_DIMENSION_ENCODING_LENGTH, 2*IMAGE_DIMENSION_ENCODING_LENGTH+CHECKSUM_LENGTH)).array();
-//        byte[] dimensionsChecksum1 = ByteBuffer.wrap(imageBytes,
-//                2*IMAGE_DIMENSION_ENCODING_LENGTH, CHECKSUM_LENGTH).array();
-        //byte[] dimensionsChecksum1 = Arrays.copyOfRange(sampler.getDims1(), IMAGE_DIMS_ENCODING_LENGTH, IMAGE_DIMS_ENCODING_LENGTH+CHECKSUM_LENGTH);
 
         boolean validDimensions1 = Checksum.isValidChecksum(width1, height1, dimensionsChecksum1);
-
         if (validDimensions1){
             this.width = width1;
             this.height = height1;
@@ -40,13 +36,10 @@ public class DimensionsFetcher {
         int width2 = getIntByteBuffer(sampler.getDimsAndChecksum2(), 0, IMAGE_DIMENSION_ENCODING_LENGTH);
         int height2 = getIntByteBuffer(sampler.getDimsAndChecksum2(),
                 IMAGE_DIMENSION_ENCODING_LENGTH, IMAGE_DIMENSION_ENCODING_LENGTH);
-        byte[] dimensionsChecksum2 = ByteBuffer.wrap(sampler.getDimsAndChecksum2(),
-                2*IMAGE_DIMENSION_ENCODING_LENGTH, CHECKSUM_LENGTH).array();
-        //byte[] dimensionsChecksum2 = ByteBuffer.wrap(imageBytes,
-          //      startOfWidthIndex + 2*IMAGE_DIMENSION_ENCODING_LENGTH, CHECKSUM_LENGTH).array();
+        byte[] dimensionsChecksum2 = ByteBuffer.wrap(Arrays.copyOfRange(sampler.getDimsAndChecksum2()
+                ,2*IMAGE_DIMENSION_ENCODING_LENGTH, 2*IMAGE_DIMENSION_ENCODING_LENGTH+CHECKSUM_LENGTH)).array();
 
         boolean validDimensions2 = Checksum.isValidChecksum(width2, height2, dimensionsChecksum2);
-
         if (validDimensions2){
             this.width = width2;
             this.height = height2;

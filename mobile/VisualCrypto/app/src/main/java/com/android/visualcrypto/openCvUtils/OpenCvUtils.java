@@ -18,7 +18,7 @@ import static com.pc.configuration.Parameters.encodingColorLevels;
 
 public class OpenCvUtils {
 
-    private static final int BLACK_THRESHOLD = 50;
+    private static final int BLACK_THRESHOLD = 60;
     private static final int WHITE_THRESHOLD = 120;
     private static final int BLACK_PASSAGE = 1;
     private static final int WHITE_PASSAGE = 2;
@@ -110,6 +110,7 @@ public class OpenCvUtils {
         while (undistortedLoc < 1) {
             while (!isBlack(channels)) {
                 undistortedLoc += pixelStride;
+                if (undistortedLoc > 1) return null;
                 channels = getNewPixel(unDistortedImageMatCord1, undistortedLoc, inverseH, capturedImg);
             }
 
@@ -118,6 +119,7 @@ public class OpenCvUtils {
                 return endOfPattern;
             } else {
                 undistortedLoc += pixelStride;
+                if (undistortedLoc > 1) return null;
                 channels = getNewPixel(unDistortedImageMatCord1, undistortedLoc, inverseH, capturedImg);
             }
         }
@@ -223,7 +225,8 @@ public class OpenCvUtils {
 
     public static Mat calibrateImage(Mat capturedImage) {
         Mat undistored = new Mat();
-        Calib3d.undistort(capturedImage, undistored, DistortedImageSampler.itaysCamConfigMtx, DistortedImageSampler.itaysCamConfigDst);
+        //Calib3d.undistort(capturedImage, undistored, DistortedImageSampler.itaysCamConfigMtx, DistortedImageSampler.itaysCamConfigDst);
+        Calib3d.undistort(capturedImage, undistored, DistortedImageSampler.orisCamConfigMtx, DistortedImageSampler.orisCamConfigDst);
         return undistored;
     }
 
