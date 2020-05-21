@@ -2,6 +2,8 @@ package com.android.visualcrypto.openCvUtils;
 
 import androidx.core.util.Pair;
 
+import com.pc.configuration.Constants;
+
 import org.opencv.calib3d.Calib3d;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
@@ -33,30 +35,31 @@ public class OpenCvUtils {
         return Math.max(max1, max2);
     }
 
-    static double[] levelsArr = new double[encodingColorLevels];
+    static int[] levelsArr = new int[encodingColorLevels];
     static {
-        final double MAX_VALUE = 255.0;
+        final int MAX_VALUE = 255;
         double levelDiff = MAX_VALUE / (encodingColorLevels - 1);
         for(int i = 0; i < encodingColorLevels; i++){
-            levelsArr[i] = Math.round(levelDiff * i);
+            levelsArr[i] = (int) Math.round(levelDiff * i);
         }
     }
 
-    public static double[] thresholdAndNormalizeChannels(double[] channels, double[][][] minPixelVal,
+    public static int[] thresholdAndNormalizeChannels(double[] channels, double[][][] minPixelVal,
                                                          double[][][] maxPixelVal, int indexRow, int indexCol) {
 
         int subMatIndRow = indexRow / DistortedImageSampler.tileHeight;
         int subMatIndCol = indexCol / DistortedImageSampler.tileWidth;
 
-        double normalizedChannel, closestLevel = 0;
-        double processedChannels[] = new double[3];
+        double normalizedChannel;
+        int closestLevel = 0;
+        int processedChannels[] = new int[Constants.CHANNELS];
         for (int i = 0; i < processedChannels.length; i++) {
             if (channels[i] < minPixelVal[subMatIndRow][subMatIndCol][i]) normalizedChannel = 0;
             else if (channels[i] > maxPixelVal[subMatIndRow][subMatIndCol][i]) normalizedChannel = 255;
             else normalizedChannel =  ((channels[i] - minPixelVal[subMatIndRow][subMatIndCol][i]) * 255.0 /
                         (maxPixelVal[subMatIndRow][subMatIndCol][i] - minPixelVal[subMatIndRow][subMatIndCol][i]));
             double diff = 255;
-            for(double level :levelsArr){
+            for(int level :levelsArr){
                 if(Math.abs(normalizedChannel - level) < diff){
                     diff = Math.abs(normalizedChannel - level);
                     closestLevel = level;

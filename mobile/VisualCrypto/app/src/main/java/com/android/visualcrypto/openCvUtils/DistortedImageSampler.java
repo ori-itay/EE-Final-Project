@@ -9,7 +9,6 @@ import androidx.core.util.Pair;
 
 import com.android.visualcrypto.MainActivity;
 import com.pc.configuration.Constants;
-import com.pc.configuration.Parameters;
 import com.pc.encoderDecoder.StdImageSampler;
 
 import org.opencv.calib3d.Calib3d;
@@ -371,7 +370,7 @@ public class DistortedImageSampler extends StdImageSampler {
         Point distortedIndex = undistortedToDistortedIndexes(unDistortedImageMatCord, inverseH);
         int indexCol = (int) distortedIndex.x; int indexRow = (int) distortedIndex.y;
         double[] channels = DistortedImageSampler.distortedImage.get(indexRow, indexCol);
-        double[] processedChannels = thresholdAndNormalizeChannels(channels, minPixelVal, maxPixelVal, indexRow, indexCol);
+        int[] processedChannels = thresholdAndNormalizeChannels(channels, minPixelVal, maxPixelVal, indexRow, indexCol);
 
         // set all values to the majority
         if (duplicateChannels) {
@@ -384,10 +383,9 @@ public class DistortedImageSampler extends StdImageSampler {
             }
         }
 
-        int pixelValue = (int) (Math.round(processedChannels[0])) |
-                (int) (Math.round(processedChannels[1]) << 8) | (int) (Math.round(processedChannels[2]) << 16);
+        int pixelValue = (processedChannels[0]) |(processedChannels[1] << 8) | (processedChannels[2] << 16);
 
-
+/*
         // debugging code for comparison to original image
         int rowPixel = (int) Math.round((Parameters.modulesInMargin + rowLoc/this.getModuleSize()) * Parameters.pixelsInModule);
         int colPixel = (int) Math.round((Parameters.modulesInMargin + colLoc/this.getModuleSize()) * Parameters.pixelsInModule);
@@ -401,7 +399,7 @@ public class DistortedImageSampler extends StdImageSampler {
             Log.d("DistortedImageSampler", "Module pixel value different than expected");
         }
 
-
+*/
 
         return pixelValue;
     }
