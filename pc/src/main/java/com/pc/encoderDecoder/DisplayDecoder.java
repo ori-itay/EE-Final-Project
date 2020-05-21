@@ -14,6 +14,7 @@ import static com.pc.configuration.Constants.*;
 
 
 public class DisplayDecoder {
+	static int decodedCnt;
 
 //	public static RotatedImageSampler decodeFilePC(String filepath) throws IOException {
 //		File inputFile = new File(filepath);
@@ -154,7 +155,7 @@ public class DisplayDecoder {
 	}
 
 	private static int[] sampleModule(StdImageSampler imageSampler, Position pos, boolean duplicateChannels) {
-
+		decodedCnt++;
 		//int rowPixel = pos.rowModule * imageSampler.getModuleSize();
 		//int colPixel = pos.colModule * imageSampler.getModuleSize();
 		double rowPixel = (0.5 + pos.rowModule) * imageSampler.getModuleSize(); //  (imageSampler.getModuleSize() / 2) + (pos.rowModule * imageSampler.getModuleSize())
@@ -203,9 +204,10 @@ public class DisplayDecoder {
 		int modulesForMetadata = modulesForIVChecksum + modulesForIV + modulesForDims;
 		int modulesForRightLowerCorner = 1;
 
-		int modulesForEncoding = dim*dim - modulesForAlignmentPattern - modulesForPosDet - modulesForMetadata - modulesForRightLowerCorner;
-		int maxBitsToEncode = CHANNELS*ENCODING_BIT_GROUP_SIZE*modulesForEncoding;
-		return maxBitsToEncode/BITS_IN_BYTE;
+		int modulesForEncoding = dim*dim  - (modulesForMetadata + modulesForPosDet + modulesForAlignmentPattern + modulesForRightLowerCorner);
+		int maxBitsToEncode = ENCODING_BIT_GROUP_SIZE*modulesForEncoding;
+		int maxBytesToEncode = CHANNELS*(maxBitsToEncode/BITS_IN_BYTE);
+		return maxBytesToEncode;
 	}
 
 	public static int TestByteArrayToInt(byte[] bytes) { return byteArrayToInt(bytes);}

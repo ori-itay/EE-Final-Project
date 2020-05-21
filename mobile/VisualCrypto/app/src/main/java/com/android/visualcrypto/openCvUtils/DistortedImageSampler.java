@@ -9,6 +9,7 @@ import androidx.core.util.Pair;
 
 import com.android.visualcrypto.MainActivity;
 import com.pc.configuration.Constants;
+import com.pc.configuration.Parameters;
 import com.pc.encoderDecoder.StdImageSampler;
 
 import org.opencv.calib3d.Calib3d;
@@ -48,7 +49,7 @@ import static org.opencv.imgproc.Imgproc.cvtColor;
 
 
 public class DistortedImageSampler extends StdImageSampler {
-    static final int gridSplitSize = 4;
+    static final int gridSplitSize = 1;
     private static final double[][][] minPixelVal = new double[gridSplitSize][gridSplitSize][Constants.CHANNELS];
     private static final double[][][] maxPixelVal = new double[gridSplitSize][gridSplitSize][Constants.CHANNELS];
     static int tileHeight;
@@ -172,6 +173,7 @@ public class DistortedImageSampler extends StdImageSampler {
         Log.d("performance", "bw cvtColors and findCorner took: " + (System.currentTimeMillis() - start));//performance
         MatOfPoint2f corners1 = new MatOfPoint2f(pts[0], pts[1], pts[2], pts[3]);
         MatOfPoint2f corners2 = new MatOfPoint2f(new Point(0, 0), new Point(1, 0), new Point(1, 1), new Point(0, 1));
+
         Mat H = Calib3d.findHomography(corners1, corners2);
         Mat inverseH = H.inv();
 
@@ -286,13 +288,13 @@ public class DistortedImageSampler extends StdImageSampler {
         int countR = 0, countG = 0, countB = 0;
 
         final int lowPercentileRed = (int) Math.floor(0.0*(tileWidth*tileHeight));
-        final int highPercentileRed = (int) Math.floor(.85*(tileWidth*tileHeight));
+        final int highPercentileRed = (int) Math.floor(1*(tileWidth*tileHeight));
 
         final int lowPercentileGreen = (int) Math.floor(0.0*(tileWidth*tileHeight));
-        final int highPercentileGreen = (int) Math.floor(.85*(tileWidth*tileHeight));
+        final int highPercentileGreen = (int) Math.floor(1*(tileWidth*tileHeight));
 
         final int lowPercentileBlue = (int) Math.floor(0.0*(tileWidth*tileHeight));
-        final int highPercentileBlue = (int) Math.floor(.85*(tileWidth*tileHeight));
+        final int highPercentileBlue = (int) Math.floor(1*(tileWidth*tileHeight));
 
         int high, low, left, right;
         for(int i = 0; i < gridSplitSize; i++){
@@ -385,7 +387,7 @@ public class DistortedImageSampler extends StdImageSampler {
         int pixelValue = (int) (Math.round(processedChannels[0])) |
                 (int) (Math.round(processedChannels[1]) << 8) | (int) (Math.round(processedChannels[2]) << 16);
 
-/*
+
         // debugging code for comparison to original image
         int rowPixel = (int) Math.round((Parameters.modulesInMargin + rowLoc/this.getModuleSize()) * Parameters.pixelsInModule);
         int colPixel = (int) Math.round((Parameters.modulesInMargin + colLoc/this.getModuleSize()) * Parameters.pixelsInModule);
@@ -400,7 +402,7 @@ public class DistortedImageSampler extends StdImageSampler {
         }
 
 
-*/
+
         return pixelValue;
     }
 
