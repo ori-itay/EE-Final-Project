@@ -54,7 +54,7 @@ import static org.opencv.imgproc.Imgproc.cvtColor;
 
 
 public class DistortedImageSampler extends StdImageSampler {
-    static final int gridSplitSize = 1;
+    private static final int gridSplitSize = 4;
     private static final double[][][] minPixelVal = new double[gridSplitSize][gridSplitSize][Constants.CHANNELS];
     private static final double[][][] maxPixelVal = new double[gridSplitSize][gridSplitSize][Constants.CHANNELS];
     static int tileHeight;
@@ -315,13 +315,13 @@ public class DistortedImageSampler extends StdImageSampler {
         int countR = 0, countG = 0, countB = 0;
 
         final int lowPercentileRed = (int) Math.floor(0.1*(tileWidth*tileHeight));
-        final int highPercentileRed = (int) Math.floor(0.95*(tileWidth*tileHeight));
+        final int highPercentileRed = (int) Math.floor(0.9*(tileWidth*tileHeight));
 
         final int lowPercentileGreen = (int) Math.floor(0.1*(tileWidth*tileHeight));
-        final int highPercentileGreen = (int) Math.floor(0.95*(tileWidth*tileHeight));
+        final int highPercentileGreen = (int) Math.floor(0.9*(tileWidth*tileHeight));
 
         final int lowPercentileBlue = (int) Math.floor(0.1*(tileWidth*tileHeight));
-        final int highPercentileBlue = (int) Math.floor(0.95*(tileWidth*tileHeight));
+        final int highPercentileBlue = (int) Math.floor(0.9*(tileWidth*tileHeight));
 
         int high, low, left, right;
         for(int i = 0; i < gridSplitSize; i++){
@@ -423,7 +423,7 @@ public class DistortedImageSampler extends StdImageSampler {
 //            Mat alignmentBottomRightMat = new Mat(1, 3, CvType.CV_64F);
 //            alignmentBottomRightMat.put(0, 0, alignmentBottomRight.x, alignmentBottomRight.y, 1);
             Point distortedPoint = OpenCvUtils.undistortedToDistortedIndexes(unDistortedImageMatCord, inverseH);
-            Log.d("DistortedImageSampler", "Module pixel value different than expected");
+            //Log.d("DistortedImageSampler", "Module pixel value different than expected");
         }
 
 

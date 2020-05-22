@@ -39,7 +39,7 @@ public class Flow{
         }
 
         //delete from here
-        InputStream encodedStream = context.getAssets().open("encodedImage.jpg");
+        InputStream encodedStream = context.getAssets().open("2levels_50_50_encoded_ori.jpg");
         Bitmap origEncodedBitmap = BitmapFactory.decodeStream(encodedStream);
         distortedImageSampler.tempOrigPixelMatrix = MainActivity.get2DPixelArray(origEncodedBitmap);
         //to here
