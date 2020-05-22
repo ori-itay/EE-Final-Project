@@ -75,7 +75,6 @@ public class VideoProcessing extends AppCompatActivity {
 
         ImageAnalysis imageAnalysis = new ImageAnalysis(imageAnalysisConfig);
         imageAnalysis.setAnalyzer((image, rotationDegrees) -> {
-            updateTransform();
             final Bitmap bp = processedImgTextureView.getBitmap();
             if (bp == null) {
                 return;

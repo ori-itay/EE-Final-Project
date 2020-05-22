@@ -63,7 +63,8 @@ public class Flow{
         /* get iv */
         byte[] iv = IvFetcher.getIV(distortedImageSampler);
         if (iv == null) {
-            showAlert(context, "Cannot decode the image: IV checksums are wrong!");
+            Log.d("iv", "Cannot decode the image: IV checksums are wrong!");
+            //showAlert(context, "Cannot decode the image: IV checksums are wrong!");
             return null;
         }
         IvParameterSpec ivSpec = new IvParameterSpec(iv);
@@ -87,10 +88,12 @@ public class Flow{
         int height = dimensionsFetcher.getHeight();
 
         if (width == 0 || height == 0) {
-            showAlert(context, "Cannot decode the image: Dimensions checksum are wrong!");
+            Log.d("dimensions", "Cannot decode the image: Dimensions checksum are wrong!");
+            //showAlert(context, "Cannot decode the image: Dimensions checksum are wrong!");
             return null;
         } else if (width > Constants.MAX_IMAGE_DIMENSION_SIZE || height > Constants.MAX_IMAGE_DIMENSION_SIZE) {
-            showAlert(context, "Error: image dimension larger than " + Constants.MAX_IMAGE_DIMENSION_SIZE);
+            Log.d("dimensions", "Error: image dimension larger than " + Constants.MAX_IMAGE_DIMENSION_SIZE);
+            //showAlert(context, "Error: image dimension larger than " + Constants.MAX_IMAGE_DIMENSION_SIZE);
             return null;
         }
 

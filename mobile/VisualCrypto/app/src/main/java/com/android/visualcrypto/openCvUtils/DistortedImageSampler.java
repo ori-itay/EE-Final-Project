@@ -132,7 +132,7 @@ public class DistortedImageSampler extends StdImageSampler {
 
         } else if (failures.size() == 0 && detections.size() == 0) {
             Log.d("DistortedImageSampler", "Couldn't detect QR position detectors");
-            showAlert(context, "Couldn't detect QR position detectors");
+            //showAlert(context, "Couldn't detect QR position detectors");
             return 1;
         }
 
@@ -155,12 +155,7 @@ public class DistortedImageSampler extends StdImageSampler {
         Rect roi = new Rect(new Point(xMin-10, yMin-10), new Point(xMax+10, yMax+10));
         DistortedImageSampler.distortedImage = new Mat(DistortedImageSampler.distortedImage ,roi);
         Log.d("performance", "roi took: " + (System.currentTimeMillis() - start));//performance
- //       Bitmap DELETE = MainActivity.convertMatToBitmap(DistortedImageSampler.distortedImage);
 
-
-//        GrayU8 grayDELETE = bitmapToGray(DELETE, (GrayU8) null, null);
-//        detector.process(grayDELETE);
-//        List<QrCode> DELETEDETECTOR = detector.getFailures();
         start = System.currentTimeMillis(); //performance
         Mat bw = new Mat();
         cvtColor(DistortedImageSampler.distortedImage, bw, Imgproc.COLOR_BGR2GRAY);
