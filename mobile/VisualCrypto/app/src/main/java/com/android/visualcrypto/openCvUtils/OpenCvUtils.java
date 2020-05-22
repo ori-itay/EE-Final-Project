@@ -1,6 +1,7 @@
 package com.android.visualcrypto.openCvUtils;
 
 import android.graphics.Bitmap;
+import android.util.Log;
 
 import androidx.core.util.Pair;
 
@@ -216,12 +217,20 @@ public class OpenCvUtils {
     private static boolean isBlack(double[] channels) {
         //double avg = (channels[0]+channels[1]+channels[2])/3;
         //return avg < BLACK_THRESHOLD;
+        if (channels.length < 3) {
+            Log.d("isBlack", "isBlack empty channels...Out of bounds?");
+            return false;
+        }
         return channels[0] < BLACK_THRESHOLD && channels[1] < BLACK_THRESHOLD && channels[2] < BLACK_THRESHOLD;
     }
 
     private static boolean isWhite(double[] channels) {
 //        double avg = (channels[0]+channels[1]+channels[2])/3;
 //        return avg >= WHITE_THRESHOLD;
+        if (channels.length < 3) {
+            Log.d("isWhite", "isWhite empty channels...Out of bounds?");
+            return false;
+        }
         return channels[0] > WHITE_THRESHOLD && channels[1] > WHITE_THRESHOLD && channels[2] > WHITE_THRESHOLD;
     }
 
