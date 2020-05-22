@@ -27,7 +27,6 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
-import static com.android.visualcrypto.MainActivity.showAlert;
 import static com.android.visualcrypto.openCvUtils.DistortedImageSampler.errCounter;
 
 public class Flow{
@@ -40,7 +39,7 @@ public class Flow{
         }
 
         //delete from here
-        InputStream encodedStream = context.getAssets().open("ori_50_50.jpg");
+        InputStream encodedStream = context.getAssets().open("encodedImage.jpg");
         Bitmap origEncodedBitmap = BitmapFactory.decodeStream(encodedStream);
         distortedImageSampler.tempOrigPixelMatrix = MainActivity.get2DPixelArray(origEncodedBitmap);
         //to here

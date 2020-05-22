@@ -7,7 +7,6 @@ import android.util.Log;
 
 import androidx.core.util.Pair;
 
-import com.android.visualcrypto.MainActivity;
 import com.pc.configuration.Constants;
 import com.pc.configuration.Parameters;
 import com.pc.encoderDecoder.StdImageSampler;
@@ -45,7 +44,6 @@ import georegression.struct.point.Point2D_F64;
 import georegression.struct.shapes.Polygon2D_F64;
 
 import static boofcv.android.ConvertBitmap.bitmapToGray;
-import static com.android.visualcrypto.MainActivity.showAlert;
 import static com.android.visualcrypto.openCvUtils.OpenCvUtils.calcDistance;
 import static com.android.visualcrypto.openCvUtils.OpenCvUtils.getMaxDistance;
 import static com.android.visualcrypto.openCvUtils.OpenCvUtils.thresholdAndNormalizeChannels;
@@ -77,7 +75,7 @@ public class DistortedImageSampler extends StdImageSampler {
         orisCamConfigDst.put(0,0,    2.37788419e-01, -1.05060973, -1.24226900e-03, -1.06977518e-03, 1.36988634);
         orisCamConfigMtx.put(0,0, 3.54906380e+03, 0D, 2.28702762e+03,   0D, 3.55130312e+03, 1.69588285e+03,    0D, 0D, 1.0D);
 
-        //itaysCamConfigDst.put(0,0,   0.51539854, -0.00120593, 0.00206427, -0.69356642 ,0.24467169);
+        itaysCamConfigDst.put(0,0,   0.51539854, -0.00120593, 0.00206427, -0.69356642 ,0.24467169);
         itaysCamConfigDst.put(0,0,   0.24467169, -0.69356642, 0.00206427, -0.00120593 ,0.51539854);
         itaysCamConfigMtx.put(0,0, 3.14068354e+03, 0, 1.91008252e+03,              0, 3.14439719e+03, 1.59031581e+03,                0, 0, 1);
     }

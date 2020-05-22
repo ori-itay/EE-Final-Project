@@ -14,7 +14,6 @@ import static com.pc.configuration.Constants.*;
 
 
 public class DisplayDecoder {
-	static int decodedCnt;
 
 //	public static RotatedImageSampler decodeFilePC(String filepath) throws IOException {
 //		File inputFile = new File(filepath);
@@ -37,21 +36,7 @@ public class DisplayDecoder {
 		imageSampler.setIV1Checksum(decodeData(imageSampler, CHECKSUM_LENGTH, pos, true));
 		imageSampler.setDimsAndChecksum1(decodeData(imageSampler, IMAGE_DIMS_ENCODING_LENGTH + CHECKSUM_LENGTH, pos, true));
 		int imageDataLength = computeMaxEncodedLength(imageSampler.getModulesInDim());
-
-
-		long startTime = System.currentTimeMillis();
 		imageSampler.setDecodedData(decodeData(imageSampler, imageDataLength, pos, false));
-		long estimatedTime = System.currentTimeMillis() - startTime;
-		try {
-			FileWriter myWriter = new FileWriter("/storage/emulated/0/Download/timing.txt");
-			myWriter.write("decodeData for "+imageDataLength+" bytes took: "+estimatedTime+"\n");
-			myWriter.close();
-		} catch (IOException e) {
-			System.out.println("An error occurred.");
-			e.printStackTrace();
-		}
-
-
 		imageSampler.setIV2(decodeData(imageSampler, Parameters.ivLength, pos, true));
 		imageSampler.setIV2Checksum(decodeData(imageSampler, CHECKSUM_LENGTH, pos, true));
 		imageSampler.setDimsAndChecksum2(decodeData(imageSampler, IMAGE_DIMS_ENCODING_LENGTH + CHECKSUM_LENGTH, pos, true));
@@ -155,9 +140,6 @@ public class DisplayDecoder {
 	}
 
 	private static int[] sampleModule(StdImageSampler imageSampler, Position pos, boolean duplicateChannels) {
-		decodedCnt++;
-		//int rowPixel = pos.rowModule * imageSampler.getModuleSize();
-		//int colPixel = pos.colModule * imageSampler.getModuleSize();
 		double rowPixel = (0.5 + pos.rowModule) * imageSampler.getModuleSize(); //  (imageSampler.getModuleSize() / 2) + (pos.rowModule * imageSampler.getModuleSize())
 		double colPixel = (0.5 + pos.colModule) * imageSampler.getModuleSize();
 		//int currPixelSample = imageSampler.getPixel(rowPixel, colPixel);

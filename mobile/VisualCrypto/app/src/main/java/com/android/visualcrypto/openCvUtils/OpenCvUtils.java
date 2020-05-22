@@ -136,6 +136,7 @@ public class OpenCvUtils {
 
             while (isBlack(channels)) {
                 undistortedLoc += pixelStride;
+                if (undistortedLoc > 1) return null;
                 channels = getNewPixel(unDistortedImageMatCord, undistortedLoc, inverseH, capturedImg);
             }
 
@@ -144,12 +145,13 @@ public class OpenCvUtils {
             if (!((boolean) pair.first)) {
                 return null;
             }
-            undistortedLoc = (double) pair.second;
+            undistortedLoc = (double) pair.second - pixelStride*7;// ORIs MODIFCATION FROM ITAYS TEAMVIEWER
             unDistortedImageMatCord.put(0, 0, undistortedLoc, undistortedLoc); // advance the pixels
             blackAndWhitePassageCounter++;
             channels = getNewPixel(unDistortedImageMatCord, undistortedLoc, inverseH, capturedImg);
             while (isWhite(channels)) {
                 undistortedLoc += pixelStride;
+                if (undistortedLoc > 1) return null;
                 channels = getNewPixel(unDistortedImageMatCord, undistortedLoc, inverseH, capturedImg);
             }
 
@@ -163,7 +165,7 @@ public class OpenCvUtils {
                 return new Point(undistortedLoc, undistortedLoc);
             }
 
-            undistortedLoc = (double) pair.second;
+            undistortedLoc = (double) pair.second - 7*pixelStride; // ORIs MODIFCATION FROM ITAYS TEAMVIEWER
             unDistortedImageMatCord.put(0, 0, undistortedLoc, undistortedLoc); // advance the pixels
             channels = getNewPixel(unDistortedImageMatCord, undistortedLoc, inverseH, capturedImg);
             blackAndWhitePassageCounter++;
@@ -172,7 +174,7 @@ public class OpenCvUtils {
     }
 
     private static final int TOTAL_PIXELS_CHECKED = 11;
-    private static final int IS_COLOR_THRESHOLD = 4;
+    private static final int IS_COLOR_THRESHOLD = 3;
 
     private static Pair<Boolean, Number> isPassage(int passage,
                                                    double undistortedLoc, Mat inverseH, Mat capturedImg, double pixelStride) {
@@ -225,8 +227,8 @@ public class OpenCvUtils {
 
     public static Mat calibrateImage(Mat capturedImage) {
         Mat undistored = new Mat();
-        //Calib3d.undistort(capturedImage, undistored, DistortedImageSampler.itaysCamConfigMtx, DistortedImageSampler.itaysCamConfigDst);
-        Calib3d.undistort(capturedImage, undistored, DistortedImageSampler.orisCamConfigMtx, DistortedImageSampler.orisCamConfigDst);
+        Calib3d.undistort(capturedImage, undistored, DistortedImageSampler.itaysCamConfigMtx, DistortedImageSampler.itaysCamConfigDst);
+        //Calib3d.undistort(capturedImage, undistored, DistortedImageSampler.orisCamConfigMtx, DistortedImageSampler.orisCamConfigDst);
         return undistored;
     }
 
