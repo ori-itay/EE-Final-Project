@@ -25,6 +25,12 @@ import org.opencv.core.Size;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -151,17 +157,21 @@ public class DistortedImageSampler extends StdImageSampler {
         int yMax = (int) Math.ceil(yValues[3]);
 
         long start = System.currentTimeMillis();// performance
-
-        Rect roi = new Rect(new Point(xMin-10, yMin-10), new Point(xMax+10, yMax+10));
-        DistortedImageSampler.distortedImage = new Mat(DistortedImageSampler.distortedImage ,roi);
-        Log.d("performance", "roi took: " + (System.currentTimeMillis() - start));//performance
+        try {
+            Rect roi = new Rect(new Point(xMin-10, yMin-10), new Point(xMax+10, yMax+10));
+            DistortedImageSampler.distortedImage = new Mat(DistortedImageSampler.distortedImage, roi);
+            Log.d("performance", "roi took: " + (System.currentTimeMillis() - start));//performance
+        } catch (Exception e) {
+            Log.d("roi", "roi threw exception");
+            return 1;
+        }
 
         start = System.currentTimeMillis(); //performance
         Mat bw = new Mat();
         cvtColor(DistortedImageSampler.distortedImage, bw, Imgproc.COLOR_BGR2GRAY);
         adaptiveThreshold(bw, bw, 255, ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY, 5, 11);
         cvtColor(bw, bw, Imgproc.THRESH_BINARY);
-        Imgcodecs.imwrite(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/bw.jpg", bw);
+
 
         pts[0].x -= (xMin - 10); pts[1].x -= (xMin - 10); pts[2].x -= (xMin - 10); pts[3].x -= (xMin - 10);
         pts[0].y -= (yMin - 10); pts[1].y -= (yMin - 10); pts[2].y -= (yMin - 10); pts[3].y -= (yMin - 10);
@@ -177,7 +187,7 @@ public class DistortedImageSampler extends StdImageSampler {
 
         double minPixelStride = 1 / getMaxDistance(pts[0], pts[1], pts[2], pts[3]);
 
-        Imgcodecs.imwrite(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/for_debug.jpg", DistortedImageSampler.distortedImage);
+
 
         start = System.currentTimeMillis(); // performance
         findMinMaxPixelVals(DistortedImageSampler.distortedImage);
@@ -190,6 +200,29 @@ public class DistortedImageSampler extends StdImageSampler {
         double normalizedEstimatedModuleSize = 1 / (Math.floor(1.0 / estimatedModuleSize));
         start = System.currentTimeMillis();
         Point alignmentBottomRight = OpenCvUtils.findAlignmentBottomRight(normalizedEstimatedModuleSize, minPixelStride, inverseH, DistortedImageSampler.distortedImage);
+        if (alignmentBottomRight == null) {
+            String folderPath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + Instant.now().toString();
+            Path path = Paths.get(folderPath);
+            try {
+                Files.createDirectory(path);
+                Imgcodecs.imwrite(folderPath + "/bw.jpg", bw);
+                Imgcodecs.imwrite(folderPath + "/afterRoi.jpg", DistortedImageSampler.distortedImage);
+                FileWriter fw = new FileWriter(folderPath + "/parameters.txt");
+                //String upperRowPts = String.format("leftUpperPoint: %f,%f\t\trightUpperPoint: %f,%f\n", pts[0].x,pts[0].y, pts[1].x, pts[1].y);
+                String upperRowPts = String.format("leftUpperPoint: %f,%f\t\trightUpperPoint: %f,%f\n", pts[0].x,pts[0].y, pts[1].x, pts[1].y);
+                String lowerRowPts = String.format("leftLowerrPoint: %f,%f\t\trightLowerPoint: %f,%f", pts[3].x,pts[3].y, pts[2].x, pts[2].y);
+                fw.write(upperRowPts);
+                fw.write(lowerRowPts);
+                fw.close();
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+
+            Log.d("DistortedImageSampler", "findAlignmentBottomRight returned null");
+            return 1;
+        }
         //alignmentBottomRight = new Point(2362.5, 1691.5);
         Log.d("performance", "FindAlignmentBottomRight took: " + (System.currentTimeMillis() - start));
         Mat alignmentBottomRightMat = new Mat(1, 3, CvType.CV_64F);

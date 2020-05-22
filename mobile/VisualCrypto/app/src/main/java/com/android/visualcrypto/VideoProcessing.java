@@ -5,6 +5,7 @@ import android.graphics.Matrix;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.util.Log;
 import android.util.Rational;
 import android.util.Size;
 import android.view.Surface;
@@ -71,7 +72,7 @@ public class VideoProcessing extends AppCompatActivity {
         ImageAnalysisConfig imageAnalysisConfig = new ImageAnalysisConfig.Builder()
                 .setImageReaderMode(ImageAnalysis.ImageReaderMode.ACQUIRE_LATEST_IMAGE) // need to check for ACQUIRE_NEXT_IMAGE
                 .setCallbackHandler(new Handler(analyzerThread.getLooper()))
-                .setImageQueueDepth(1).build();
+                .setImageQueueDepth(2).build();
 
         ImageAnalysis imageAnalysis = new ImageAnalysis(imageAnalysisConfig);
         imageAnalysis.setAnalyzer((image, rotationDegrees) -> {
@@ -92,6 +93,9 @@ public class VideoProcessing extends AppCompatActivity {
             } catch (NoSuchAlgorithmException | NoSuchPaddingException |
                     InvalidAlgorithmParameterException | InvalidKeyException | IOException e) {
                 e.printStackTrace();
+            } catch (Exception rest) {
+                Log.d("VideoProcessing", "General exception occured!");
+                rest.printStackTrace();
             }
         });
 
