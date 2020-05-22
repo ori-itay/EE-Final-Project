@@ -206,12 +206,16 @@ public class MainActivity extends AppCompatActivity {
     private void decodeImage() {
         try {
             //long startTime = System.currentTimeMillis();
-            String imageName = "pink_50_50_captured.jpg";
-            InputStream encodedStream = getAssets().open(imageName);
-            File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + imageName);
+//            String imageName = "pink_50_50_captured.jpg";
+//            InputStream encodedStream = getAssets().open(imageName);
+//            File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + imageName);
+//
+//            Bitmap encodedBitmap = BitmapFactory.decodeStream(encodedStream);
 
-            Bitmap encodedBitmap = BitmapFactory.decodeStream(encodedStream);
-            Bitmap rotatedBitmap = CameraRotationFix.fixRotation(encodedBitmap, file.getAbsolutePath());
+            //Bitmap rotatedBitmap = CameraRotationFix.fixRotation(encodedBitmap, file.getAbsolutePath());
+
+            Bitmap encodedBitmap = BitmapFactory.decodeFile(currentPhotoPath);
+            Bitmap rotatedBitmap = CameraRotationFix.fixRotation(encodedBitmap, currentPhotoPath);
 
             Mat capturedImage = new Mat();
             Utils.bitmapToMat(rotatedBitmap, capturedImage);
