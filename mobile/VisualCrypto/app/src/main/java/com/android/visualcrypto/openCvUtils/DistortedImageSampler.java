@@ -54,7 +54,7 @@ import static org.opencv.imgproc.Imgproc.cvtColor;
 
 
 public class DistortedImageSampler extends StdImageSampler {
-    private static final int gridSplitSize = 4;
+    private static final int gridSplitSize = 1;
     private static final double[][][] minPixelVal = new double[gridSplitSize][gridSplitSize][Constants.CHANNELS];
     private static final double[][][] maxPixelVal = new double[gridSplitSize][gridSplitSize][Constants.CHANNELS];
     static int tileHeight;
@@ -314,13 +314,13 @@ public class DistortedImageSampler extends StdImageSampler {
         boolean accumulate = false;
         int countR = 0, countG = 0, countB = 0;
 
-        final int lowPercentileRed = (int) Math.floor(0.1*(tileWidth*tileHeight));
+        final int lowPercentileRed = (int) Math.floor(0.01*(tileWidth*tileHeight));
         final int highPercentileRed = (int) Math.floor(0.9*(tileWidth*tileHeight));
 
-        final int lowPercentileGreen = (int) Math.floor(0.1*(tileWidth*tileHeight));
+        final int lowPercentileGreen = (int) Math.floor(0.01*(tileWidth*tileHeight));
         final int highPercentileGreen = (int) Math.floor(0.9*(tileWidth*tileHeight));
 
-        final int lowPercentileBlue = (int) Math.floor(0.1*(tileWidth*tileHeight));
+        final int lowPercentileBlue = (int) Math.floor(0.01*(tileWidth*tileHeight));
         final int highPercentileBlue = (int) Math.floor(0.9*(tileWidth*tileHeight));
 
         int high, low, left, right;
@@ -397,9 +397,17 @@ public class DistortedImageSampler extends StdImageSampler {
         unDistortedImageMatCord.put(0, 2, 1);
         Point distortedIndex = undistortedToDistortedIndexes(unDistortedImageMatCord, inverseH);
         int indexCol = (int) distortedIndex.x; int indexRow = (int) distortedIndex.y;
-        double[] channels = DistortedImageSampler.distortedImage.get(indexRow, indexCol);
-        int[] processedChannels = thresholdAndNormalizeChannels(channels, minPixelVal, maxPixelVal, indexRow, indexCol);
+        //double[] channels = DistortedImageSampler.distortedImage.get(indexRow, indexCol);
+        double[] channels1 = DistortedImageSampler.distortedImage.get((int)Math.round(indexRow+.51), (int)Math.round(indexCol+.51));
+        double[] channels2 = DistortedImageSampler.distortedImage.get((int)Math.round(indexRow-.5), (int)Math.round(indexCol-.51));
+        double[] channels3 = DistortedImageSampler.distortedImage.get((int)Math.round(indexRow+.51), (int)Math.round(indexCol-.51));
+        double[] channels4 = DistortedImageSampler.distortedImage.get((int)Math.round(indexRow-.51), (int)Math.round(indexCol+.51));
+        double[] avgChannels = new double[Constants.CHANNELS];
+        for (int i = 0; i < avgChannels.length; i++) {
+            avgChannels[i] = (channels1[i]+channels2[i]+channels3[i]+channels4[i])/4;
+        }
 
+        int[] processedChannels = thresholdAndNormalizeChannels(avgChannels, minPixelVal, maxPixelVal, indexRow, indexCol);
         // set all values to the majority
         if (duplicateChannels) {
             if (processedChannels[0] == processedChannels[1]) {

@@ -236,8 +236,8 @@ public class OpenCvUtils {
 
     public static Mat calibrateImage(Mat capturedImage) {
         Mat undistored = new Mat();
-        //Calib3d.undistort(capturedImage, undistored, DistortedImageSampler.itaysCamConfigMtx, DistortedImageSampler.itaysCamConfigDst);
-        Calib3d.undistort(capturedImage, undistored, DistortedImageSampler.orisCamConfigMtx, DistortedImageSampler.orisCamConfigDst);
+        Calib3d.undistort(capturedImage, undistored, DistortedImageSampler.itaysCamConfigMtx, DistortedImageSampler.itaysCamConfigDst);
+        //Calib3d.undistort(capturedImage, undistored, DistortedImageSampler.orisCamConfigMtx, DistortedImageSampler.orisCamConfigDst);
         return undistored;
     }
 

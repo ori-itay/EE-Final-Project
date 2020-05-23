@@ -24,6 +24,7 @@ import androidx.core.content.FileProvider;
 
 import com.android.visualcrypto.cameraUtils.CameraRotationFix;
 import com.android.visualcrypto.flow.Flow;
+import com.android.visualcrypto.openCvUtils.OpenCvUtils;
 import com.pc.configuration.Constants;
 
 import org.opencv.android.OpenCVLoader;
@@ -49,6 +50,8 @@ import java.util.Date;
 import java.util.List;
 
 import javax.crypto.NoSuchPaddingException;
+
+import static com.android.visualcrypto.openCvUtils.OpenCvUtils.convertMatToBitmap;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -203,23 +206,23 @@ public class MainActivity extends AppCompatActivity {
     private void decodeImage() {
         try {
             //long startTime = System.currentTimeMillis();
-            String imageName = "afterRoi.jpg";
-            InputStream encodedStream = getAssets().open(imageName);
-            File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + imageName);
+//            String imageName = "afterRoi.jpg";
+//            InputStream encodedStream = getAssets().open(imageName);
+//            File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + imageName);
+//
+//            Bitmap encodedBitmap = BitmapFactory.decodeStream(encodedStream);
+//
+//            Bitmap rotatedBitmap = CameraRotationFix.fixRotation(encodedBitmap, file.getAbsolutePath());
 
-            Bitmap encodedBitmap = BitmapFactory.decodeStream(encodedStream);
-
-            Bitmap rotatedBitmap = CameraRotationFix.fixRotation(encodedBitmap, file.getAbsolutePath());
-
-            //Bitmap encodedBitmap = BitmapFactory.decodeFile(currentPhotoPath);
-            //Bitmap rotatedBitmap = CameraRotationFix.fixRotation(encodedBitmap, currentPhotoPath);
+            Bitmap encodedBitmap = BitmapFactory.decodeFile(currentPhotoPath);
+            Bitmap rotatedBitmap = CameraRotationFix.fixRotation(encodedBitmap, currentPhotoPath);
 
             Mat capturedImage = new Mat();
             Utils.bitmapToMat(rotatedBitmap, capturedImage);
             //TODO: pay attention whether calibrateimage is commented
-            //Mat afterCalibrationMatrix = OpenCvUtils.calibrateImage(capturedImage);
-            //rotatedBitmap = convertMatToBitmap(afterCalibrationMatrix); // update bitmap as well
-            Mat afterCalibrationMatrix = capturedImage;
+            Mat afterCalibrationMatrix = OpenCvUtils.calibrateImage(capturedImage);
+            rotatedBitmap = convertMatToBitmap(afterCalibrationMatrix); // update bitmap as well
+            //Mat afterCalibrationMatrix = capturedImage;
             Bitmap resBitmap = Flow.executeAndroidFlow(afterCalibrationMatrix, rotatedBitmap, this);
 
             if (resBitmap == null) {
