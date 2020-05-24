@@ -19,7 +19,7 @@ import static com.pc.configuration.Parameters.encodingColorLevels;
 
 public class OpenCvUtils {
 
-    private static final int BLACK_THRESHOLD = 60;
+    private static final int BLACK_THRESHOLD = 80;
     private static final int WHITE_THRESHOLD = 120;
     private static final int BLACK_PASSAGE = 1;
     private static final int WHITE_PASSAGE = 2;

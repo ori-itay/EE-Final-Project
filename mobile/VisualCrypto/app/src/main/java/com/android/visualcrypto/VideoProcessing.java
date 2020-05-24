@@ -10,7 +10,6 @@ import android.util.Rational;
 import android.util.Size;
 import android.view.Surface;
 import android.view.TextureView;
-import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
@@ -22,9 +21,7 @@ import androidx.camera.core.Preview;
 import androidx.camera.core.PreviewConfig;
 
 import com.android.visualcrypto.flow.Flow;
-import com.android.visualcrypto.openCvUtils.OpenCvUtils;
 
-import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
 import org.opencv.core.Mat;
 
@@ -72,10 +69,13 @@ public class VideoProcessing extends AppCompatActivity {
         ImageAnalysisConfig imageAnalysisConfig = new ImageAnalysisConfig.Builder()
                 .setImageReaderMode(ImageAnalysis.ImageReaderMode.ACQUIRE_LATEST_IMAGE) // need to check for ACQUIRE_NEXT_IMAGE
                 .setCallbackHandler(new Handler(analyzerThread.getLooper()))
+                //.setTargetRotation(Surface.ROTATION_0) // has no effect :(
                 .setImageQueueDepth(2).build();
 
         ImageAnalysis imageAnalysis = new ImageAnalysis(imageAnalysisConfig);
         imageAnalysis.setAnalyzer((image, rotationDegrees) -> {
+            //updateTransform(rotationDegrees);
+            //Log.d("rotation", String.valueOf(rotationDegrees) + ": " + String.valueOf((int) processedImgTextureView.getRotation()));
             final Bitmap bp = processedImgTextureView.getBitmap();
             if (bp == null) {
                 return;
@@ -84,8 +84,9 @@ public class VideoProcessing extends AppCompatActivity {
             Utils.bitmapToMat(bp, mat);
 
             //Camera Calibration
-            Mat afterCalibrationMatrix = OpenCvUtils.calibrateImage(mat);
-            Utils.matToBitmap(afterCalibrationMatrix, bp); // update bitmap as well
+            //Mat afterCalibrationMatrix = OpenCvUtils.calibrateImage(mat);
+            //Utils.matToBitmap(afterCalibrationMatrix, bp); // update bitmap as well
+            Mat afterCalibrationMatrix = mat;
 
             try {
                 final Bitmap finalBitmap = Flow.executeAndroidFlow(afterCalibrationMatrix, bp, this);
@@ -117,13 +118,13 @@ public class VideoProcessing extends AppCompatActivity {
                     parent.addView(processedImgTextureView, 0);
 
                     processedImgTextureView.setSurfaceTexture(output.getSurfaceTexture());
-                    updateTransform();
+                    updateTransform(0);
                 });
 
         return preview;
     }
 
-    private void updateTransform() {
+    private void updateTransform(int rotation) {
         Matrix mx = new Matrix();
         float w = processedImgTextureView.getMeasuredWidth();
         float h = processedImgTextureView.getMeasuredHeight();
@@ -132,7 +133,7 @@ public class VideoProcessing extends AppCompatActivity {
         float cY = h / 2f;
 
         int rotationDgr;
-        int rotation = (int) processedImgTextureView.getRotation();
+        //int rotation = (int) processedImgTextureView.getRotation();
 
         switch (rotation) {
             case Surface.ROTATION_0:

@@ -48,7 +48,7 @@ import static com.android.visualcrypto.openCvUtils.OpenCvUtils.calcDistance;
 import static com.android.visualcrypto.openCvUtils.OpenCvUtils.getMaxDistance;
 import static com.android.visualcrypto.openCvUtils.OpenCvUtils.thresholdAndNormalizeChannels;
 import static com.android.visualcrypto.openCvUtils.OpenCvUtils.undistortedToDistortedIndexes;
-import static org.opencv.imgproc.Imgproc.ADAPTIVE_THRESH_MEAN_C;
+import static org.opencv.imgproc.Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C;
 import static org.opencv.imgproc.Imgproc.adaptiveThreshold;
 import static org.opencv.imgproc.Imgproc.cvtColor;
 
@@ -167,7 +167,8 @@ public class DistortedImageSampler extends StdImageSampler {
         start = System.currentTimeMillis(); //performance
         Mat bw = new Mat();
         cvtColor(DistortedImageSampler.distortedImage, bw, Imgproc.COLOR_BGR2GRAY);
-        adaptiveThreshold(bw, bw, 255, ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY, 5, 11);
+        //adaptiveThreshold(bw, bw, 255, ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY, 7, 25);
+        adaptiveThreshold(bw, bw, 255, ADAPTIVE_THRESH_GAUSSIAN_C, Imgproc.THRESH_BINARY, 31, 45);
         cvtColor(bw, bw, Imgproc.THRESH_BINARY);
 
 
@@ -197,6 +198,7 @@ public class DistortedImageSampler extends StdImageSampler {
         Log.d("performance", "computeModuleSize took: " + (System.currentTimeMillis() - start));
         double normalizedEstimatedModuleSize = 1 / (Math.floor(1.0 / estimatedModuleSize));
         start = System.currentTimeMillis();
+
         Point alignmentBottomRight = OpenCvUtils.findAlignmentBottomRight(normalizedEstimatedModuleSize, minPixelStride, inverseH, DistortedImageSampler.distortedImage);
         if (alignmentBottomRight == null) {
             String folderPath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + Instant.now().toString();
@@ -206,7 +208,6 @@ public class DistortedImageSampler extends StdImageSampler {
                 Imgcodecs.imwrite(folderPath + "/bw.jpg", bw);
                 Imgcodecs.imwrite(folderPath + "/afterRoi.jpg", DistortedImageSampler.distortedImage);
                 FileWriter fw = new FileWriter(folderPath + "/parameters.txt");
-                //String upperRowPts = String.format("leftUpperPoint: %f,%f\t\trightUpperPoint: %f,%f\n", pts[0].x,pts[0].y, pts[1].x, pts[1].y);
                 String upperRowPts = String.format("leftUpperPoint: %f,%f\t\trightUpperPoint: %f,%f\n", pts[0].x,pts[0].y, pts[1].x, pts[1].y);
                 String lowerRowPts = String.format("leftLowerrPoint: %f,%f\t\trightLowerPoint: %f,%f", pts[3].x,pts[3].y, pts[2].x, pts[2].y);
                 fw.write(upperRowPts);
@@ -221,7 +222,6 @@ public class DistortedImageSampler extends StdImageSampler {
             Log.d("DistortedImageSampler", "findAlignmentBottomRight returned null");
             return 1;
         }
-        //alignmentBottomRight = new Point(2362.5, 1691.5);
         Log.d("performance", "FindAlignmentBottomRight took: " + (System.currentTimeMillis() - start));
         Mat alignmentBottomRightMat = new Mat(1, 3, CvType.CV_64F);
         alignmentBottomRightMat.put(0, 0, alignmentBottomRight.x, alignmentBottomRight.y, 1);
@@ -305,8 +305,8 @@ public class DistortedImageSampler extends StdImageSampler {
     }
 
     private void findMinMaxPixelVals(Mat capturedImage) {
-        this.tileHeight = capturedImage.height() / gridSplitSize;
-        this.tileWidth = capturedImage.width() / gridSplitSize;
+        DistortedImageSampler.tileHeight = capturedImage.height() / gridSplitSize;
+        DistortedImageSampler.tileWidth = capturedImage.width() / gridSplitSize;
         Mat subMat;
         int histSize = 256;
         float[] range = {0, 256}; //the upper boundary is exclusive
