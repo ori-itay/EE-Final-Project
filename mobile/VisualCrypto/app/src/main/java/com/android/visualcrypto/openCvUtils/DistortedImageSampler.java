@@ -144,7 +144,6 @@ public class DistortedImageSampler extends StdImageSampler {
         //PERFORMANCE START
         Log.d("performance", "start: " + System.currentTimeMillis());
 
-
         double[] xValues = new double[] {pts[0].x, pts[1].x, pts[2].x, pts[3].x};
         Arrays.sort(xValues);
         int xMin = (int) Math.floor(xValues[0]);
@@ -186,6 +185,32 @@ public class DistortedImageSampler extends StdImageSampler {
         Mat inverseH = H.inv();
 
         DistortedImageSampler.inverseH = inverseH;
+
+
+        /***********INSERT HERE THE ROTATION + CALCULATION OF THE MATRIX "A" (COLOR BALANCING)**********/
+        Point2D_F64 center1 = pointsQueue.get(0).center;
+        Point2D_F64 center2 = pointsQueue.get(1).center;
+        Point2D_F64 center3 = pointsQueue.get(2).center;
+        Point2D_F64 center4 = pointsQueue.get(3).center;
+        double[] center1Channels = OpenCvUtils.getAvgQrCornerColor(center1);
+        double[] center2Channels = OpenCvUtils.getAvgQrCornerColor(center2);
+        double[] center3Channels = OpenCvUtils.getAvgQrCornerColor(center3);
+        double[] center4Channels = OpenCvUtils.getAvgQrCornerColor(center4);
+        double[] topLeft; double[] topRight; double[] bottomLeft;
+
+        double[][] indexes = OpenCvUtils.getCentersOrder(center1Channels, center2Channels, center3Channels, center4Channels); // indexes[0] == R, indexes[1] = G, indexes[2] = B
+        if (indexes != null || indexes.length < 3) {
+            Log.d("getCentersOrder", "ERROR IN getCentersOrder()");
+        } else {
+            topLeft = indexes[0];
+            topRight = indexes[1];
+            bottomLeft = indexes[2];
+            Mat colorBalancingMat = OpenCvUtils.getColorBalancingMatrix(topLeft, topRight, bottomLeft); // TODO: integrate colorbalancingMat with getpixel?
+        }
+
+        //rotate(topLeft, topRight, bottomLeft);
+        /***********************************************************************************************/
+
 
         double minPixelStride = 1 / getMaxDistance(pts[0], pts[1], pts[2], pts[3]);
 
@@ -256,10 +281,6 @@ public class DistortedImageSampler extends StdImageSampler {
 
         try (FileWriter fw = new FileWriter(folderPath + "/information.txt")) {
             fw.write("alignment: " + distortedPoint.x +"," + distortedPoint.y);
-            String upperRowPts = String.format("\n\nleftUpperPoint: %f,%f\t\trightUpperPoint: %f,%f\n", pts[0].x,pts[0].y, pts[1].x, pts[1].y);
-            String lowerRowPts = String.format("leftLowerrPoint: %f,%f\t\trightLowerPoint: %f,%f", pts[3].x,pts[3].y, pts[2].x, pts[2].y);
-            fw.write(upperRowPts);
-            fw.write(lowerRowPts);
             fw.write("\nModules in dim: " + (1.0/this.getModuleSize()));
         } catch (IOException e) {
             e.printStackTrace();

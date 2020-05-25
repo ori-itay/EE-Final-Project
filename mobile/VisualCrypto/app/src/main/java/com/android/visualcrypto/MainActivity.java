@@ -30,6 +30,7 @@ import com.pc.configuration.Constants;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
 import org.opencv.core.Mat;
+import org.opencv.imgproc.Imgproc;
 
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
@@ -206,7 +207,7 @@ public class MainActivity extends AppCompatActivity {
 //            File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + imageName);
 //
 //            Bitmap encodedBitmap = BitmapFactory.decodeStream(encodedStream);
-//
+//            /*           Bitmap rotatedBitmap = encodedBitmap; //del*/
 //            Bitmap rotatedBitmap = CameraRotationFix.fixRotation(encodedBitmap, file.getAbsolutePath());
 //            Mat temp = new Mat();
 //            Utils.bitmapToMat(rotatedBitmap, temp);
@@ -227,15 +228,15 @@ public class MainActivity extends AppCompatActivity {
 
             //TODO: pay attention whether calibrateimage is commented
             /**********NO CALIBRATION***************/
-//            Bitmap resBitmap = Flow.executeAndroidFlow(capturedImage, rotatedBitmap, this);
+            Bitmap resBitmap = Flow.executeAndroidFlow(capturedImage, rotatedBitmap, this);
             /***************************************/
 
 
             /*********WITH CALIBRATION**************/
-            Mat afterCalibrationMatrix = OpenCvUtils.calibrateImage(capturedImage);
-            Utils.matToBitmap(afterCalibrationMatrix, rotatedBitmap);
-            //rotatedBitmap = convertMatToBitmap(afterCalibrationMatrix); // update bitmap as well
-            Bitmap resBitmap = Flow.executeAndroidFlow(afterCalibrationMatrix, rotatedBitmap, this);
+//            Mat afterCalibrationMatrix = OpenCvUtils.calibrateImage(capturedImage);
+//            Utils.matToBitmap(afterCalibrationMatrix, rotatedBitmap);
+//            //rotatedBitmap = convertMatToBitmap(afterCalibrationMatrix); // update bitmap as well
+//            Bitmap resBitmap = Flow.executeAndroidFlow(afterCalibrationMatrix, rotatedBitmap, this);
             /***************************************/
 
             if (resBitmap == null) {

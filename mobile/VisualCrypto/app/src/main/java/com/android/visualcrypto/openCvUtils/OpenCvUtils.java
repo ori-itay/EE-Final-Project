@@ -13,6 +13,9 @@ import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
+import org.opencv.core.Scalar;
+
+import georegression.struct.point.Point2D_F64;
 
 import static com.pc.configuration.Parameters.encodingColorLevels;
 
@@ -274,10 +277,39 @@ public class OpenCvUtils {
         return undistored;
     }
 
-    public static Bitmap convertMatToBitmap(Mat mat) {
-        Bitmap bp = Bitmap.createBitmap(mat.cols(), mat.rows(), Bitmap.Config.ARGB_8888);
-        Utils.matToBitmap(mat, bp);
-        return bp;
+    public static Mat getColorBalancingMatrix(double[] topLeft, double[] topRight, double[] bottomLeft) {
+        Mat M = new Mat(3,3, CvType.CV_32F);
+
+        M.put(0,0, topLeft[0], topRight[0], bottomLeft[0]);
+        M.put(1,0, topLeft[1], topRight[1], bottomLeft[1]);
+        M.put(2,0, topLeft[2], topRight[2], bottomLeft[2]);
+
+        Mat A = new Mat();
+        Core.multiply(M.inv(), new Scalar(1/255.0), A);
+
+        return A;
+    }
+
+    /**
+     * Gets the average value for each channel in the colorful center of the QR position detector
+     * @param centerOfQr
+     * @return
+     */
+    public static double[] getAvgQrCornerColor(Point2D_F64 centerOfQr) {
+
+        return null;
+    }
+
+    /**
+     * Decides which center accounts for which color
+     * @param center1Channels
+     * @param center2Channels
+     * @param center3Channels
+     * @param center4Channels
+     * @return
+     */
+    public static double[][] getCentersOrder(double[] center1Channels, double[] center2Channels, double[] center3Channels, double[] center4Channels) {
+        return null;
     }
 
 

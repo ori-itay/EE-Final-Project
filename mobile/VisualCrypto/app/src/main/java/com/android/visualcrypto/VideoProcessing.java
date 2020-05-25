@@ -33,6 +33,8 @@ import java.security.NoSuchAlgorithmException;
 
 import javax.crypto.NoSuchPaddingException;
 
+import static com.android.visualcrypto.MainActivity.bitmapToFile;
+
 
 public class VideoProcessing extends AppCompatActivity {
 
@@ -81,6 +83,12 @@ public class VideoProcessing extends AppCompatActivity {
             if (bp == null) {
                 return;
             }
+//            try {// debug: write the captured frame to file
+//                bitmapToFile(bp);
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+
             Mat mat = new Mat();
             Utils.bitmapToMat(bp, mat);
 
