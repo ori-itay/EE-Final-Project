@@ -205,14 +205,16 @@ public class DistortedImageSampler extends StdImageSampler {
 
         String folderPath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + Instant.now().toString();
         Path path = Paths.get(folderPath);
-        try (FileWriter fw = new FileWriter(folderPath + "/parameters.txt")){
+        try {
             Files.createDirectory(path);
+            FileWriter fw = new FileWriter(folderPath + "/parameters.txt");
             Imgcodecs.imwrite(folderPath + "/bw.jpg", bw);
             Imgcodecs.imwrite(folderPath + "/afterRoi.jpg", DistortedImageSampler.distortedImage);
             String upperRowPts = String.format("leftUpperPoint: %f,%f\t\trightUpperPoint: %f,%f\n", pts[0].x,pts[0].y, pts[1].x, pts[1].y);
             String lowerRowPts = String.format("leftLowerrPoint: %f,%f\t\trightLowerPoint: %f,%f", pts[3].x,pts[3].y, pts[2].x, pts[2].y);
             fw.write(upperRowPts);
             fw.write(lowerRowPts);
+            fw.close();
         }catch(Exception e){
             Log.d("writing_file", e.getMessage());
         }

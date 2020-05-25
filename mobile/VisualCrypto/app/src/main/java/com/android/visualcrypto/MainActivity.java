@@ -29,8 +29,6 @@ import com.pc.configuration.Constants;
 
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
-import org.opencv.core.Core;
-import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 
 import java.io.BufferedOutputStream;
@@ -45,9 +43,7 @@ import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 
 import javax.crypto.NoSuchPaddingException;
 
@@ -262,45 +258,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-
-
-    public static Mat SimplestColorBalance(Mat img, int percent) {
-        if (percent <= 0)
-            percent = 5;
-        img.convertTo(img, CvType.CV_32F);
-        List<Mat> channels = new ArrayList<>();
-        int rows = img.rows(); // number of rows of image
-        int cols = img.cols(); // number of columns of image
-        int chnls = img.channels(); //  number of channels of image
-        double halfPercent = percent / 200.0;
-        if (chnls >= 3) Core.split(img, channels);
-        else channels.add(img);
-        List<Mat> results = new ArrayList<>();
-        for (int i = 0; i < chnls; i++) {
-            // find the low and high precentile values (based on the input percentile)
-            Mat flat = new Mat();
-            channels.get(i).reshape(1, 1).copyTo(flat);
-            Core.sort(flat, flat, Core.SORT_ASCENDING);
-            double lowVal = flat.get(0, (int) Math.floor(flat.cols() * halfPercent))[0];
-            double topVal = flat.get(0, (int) Math.ceil(flat.cols() * (1.0 - halfPercent)))[0];
-            // saturate below the low percentile and above the high percentile
-            Mat channel = channels.get(i);
-            for (int m = 0; m < rows; m++) {
-                for (int n = 0; n < cols; n++) {
-                    if (channel.get(m, n)[0] < lowVal)
-                        channel.put(m, n, lowVal);
-                    if (channel.get(m, n)[0] > topVal)
-                        channel.put(m, n, topVal);
-                }
-            }
-            Core.normalize(channel, channel, 0.0, 255.0 / 2, Core.NORM_MINMAX);
-            channel.convertTo(channel, CvType.CV_32F);
-            results.add(channel);
-        }
-        Mat outval = new Mat();
-        Core.merge(results, outval);
-        return outval;
-    }
 
     public static void showAlert(Context context, String msg) {
         AlertDialog alertDialog = new AlertDialog.Builder(context).create();
