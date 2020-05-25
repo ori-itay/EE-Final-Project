@@ -88,7 +88,7 @@ public class StdImageSampler implements ImageSamplerInf{
 		//return this.getPixelMatrix()[rowPixel][colPixel];
 		return tempOrigPixelMatrix[rowPixel][colPixel]; // TODO revert to original case in comment
 	}
-	public int getPixel(double rowPixel, double colPixel, boolean duplicateChannels) {
+	public int getPixel(double rowPixel, double colPixel, boolean duplicateChannels, boolean radiusSample) {
 		return 0;
 	}
 	

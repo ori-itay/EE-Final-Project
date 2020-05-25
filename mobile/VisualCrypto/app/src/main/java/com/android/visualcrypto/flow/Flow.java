@@ -30,20 +30,22 @@ import javax.crypto.spec.SecretKeySpec;
 import static com.android.visualcrypto.openCvUtils.DistortedImageSampler.errCounter;
 
 public class Flow{
+    public static Mat delete;
 
     public static Bitmap executeAndroidFlow(Mat capturedImg, Bitmap encodedBitmap, Context context) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidAlgorithmParameterException, InvalidKeyException, IOException {
 
         DistortedImageSampler distortedImageSampler = new DistortedImageSampler(capturedImg, encodedBitmap, context);
+
+        //delete from here
+        InputStream encodedStream = context.getAssets().open("encoded_50_50.jpg");
+        Bitmap origEncodedBitmap = BitmapFactory.decodeStream(encodedStream);
+        distortedImageSampler.tempOrigPixelMatrix = MainActivity.get2DPixelArray(origEncodedBitmap);
+        errCounter = 0;
+        //to here
+
         if (distortedImageSampler.initParameters() != 0) {
             return null;
         }
-
-        //delete from here
-        InputStream encodedStream = context.getAssets().open("encodedImage.jpg");
-        Bitmap origEncodedBitmap = BitmapFactory.decodeStream(encodedStream);
-        distortedImageSampler.tempOrigPixelMatrix = MainActivity.get2DPixelArray(origEncodedBitmap);
-        //to here
-
 
         long start = System.currentTimeMillis();
         int[][] pixelArr = MainActivity.get2DPixelArray(encodedBitmap);

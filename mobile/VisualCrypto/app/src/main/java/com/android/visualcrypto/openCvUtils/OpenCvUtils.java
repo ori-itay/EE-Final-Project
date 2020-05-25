@@ -19,8 +19,8 @@ import static com.pc.configuration.Parameters.encodingColorLevels;
 
 public class OpenCvUtils {
 
-    private static final int BLACK_THRESHOLD = 80;
-    private static final int WHITE_THRESHOLD = 120;
+    private static final int BLACK_THRESHOLD = 127;
+    private static final int WHITE_THRESHOLD = 128;
     private static final int BLACK_PASSAGE = 1;
     private static final int WHITE_PASSAGE = 2;
 
@@ -90,15 +90,15 @@ public class OpenCvUtils {
     }
 
 
-    public static double[] getPixelChannels(Mat unDistortedImageMatCord, Mat inverseH, Mat capturedImg) {
-        Point distortedIndex = undistortedToDistortedIndexes(unDistortedImageMatCord, inverseH);
-        int indexRow = (int) distortedIndex.x; int indexCol = (int) distortedIndex.y;
-        double[] channels = capturedImg.get(indexCol, indexRow);
-        return channels;
-    }
+//    public static double[] getPixelChannels(Mat unDistortedImageMatCord, Mat inverseH, Mat capturedImg) {
+//        Point distortedIndex = undistortedToDistortedIndexes(unDistortedImageMatCord, inverseH);
+//        int indexRow = (int) distortedIndex.x; int indexCol = (int) distortedIndex.y;
+//        double[] channels = capturedImg.get(indexCol, indexRow);
+//        return channels;
+//    }
 
     /* for pixel stride */
-    public static Point findAlignmentBottomRight(double estimatedModuleSize, double pixelStride, Mat inverseH, Mat capturedImg) {
+    public static Point findAlignmentBottomRight(DistortedImageSampler distortedImageSampler, double estimatedModuleSize, double pixelStride, Mat inverseH, Mat capturedImg) {
         double startingPoint = 90 * estimatedModuleSize;
         double undistortedLoc = startingPoint;
 
@@ -106,31 +106,51 @@ public class OpenCvUtils {
         unDistortedImageMatCord1.put(0, 0, undistortedLoc);
         unDistortedImageMatCord1.put(0, 1, undistortedLoc);
         unDistortedImageMatCord1.put(0, 2, 1);
-        double[] channels = getPixelChannels(unDistortedImageMatCord1, inverseH, capturedImg);
+        //double[] channels = getPixelChannels(unDistortedImageMatCord1, inverseH, capturedImg);
+        int pixelValue = distortedImageSampler.getPixel(undistortedLoc, undistortedLoc, false, false);
+        double[] channels = pixelToChannels(pixelValue);
 
         while (undistortedLoc < 1) {
             while (!isBlack(channels)) {
                 undistortedLoc += pixelStride;
                 if (undistortedLoc > 1) return null;
-                channels = getNewPixel(unDistortedImageMatCord1, undistortedLoc, inverseH, capturedImg);
+                //channels = getNewPixel(unDistortedImageMatCord1, undistortedLoc, inverseH, capturedImg);
+                pixelValue = distortedImageSampler.getPixel(undistortedLoc, undistortedLoc, false, false);
+                channels = pixelToChannels(pixelValue);
             }
 
-            Point endOfPattern = isStartOfPattern(undistortedLoc, pixelStride, inverseH, capturedImg);
+            Mat m = new Mat(1, 3, CvType.CV_64F); m.put(0,0,undistortedLoc,undistortedLoc,1);
+            Point p = undistortedToDistortedIndexes(m,inverseH);
+            Point endOfPattern = isStartOfPattern(distortedImageSampler, undistortedLoc, pixelStride, inverseH, capturedImg);
             if (endOfPattern != null) {
                 return endOfPattern;
             } else {
                 undistortedLoc += pixelStride;
                 if (undistortedLoc > 1) return null;
-                channels = getNewPixel(unDistortedImageMatCord1, undistortedLoc, inverseH, capturedImg);
+                //channels = getNewPixel(unDistortedImageMatCord1, undistortedLoc, inverseH, capturedImg);
+                pixelValue = distortedImageSampler.getPixel(undistortedLoc, undistortedLoc, false, false);
+                channels = pixelToChannels(pixelValue);
             }
         }
         return null;
     }
 
-    private static Point isStartOfPattern(double undistortedLoc, double pixelStride, Mat inverseH, Mat capturedImg) {
+    private static double[] pixelToChannels(int pixelValue) {
+        double[] channels = new double[Constants.CHANNELS];
+
+        channels[0] = pixelValue & 0xff;
+        channels[1] = (pixelValue & 0xff00) >> 8;
+        channels[2] = (pixelValue & 0xff0000) >> 16;
+
+        return channels;
+    }
+
+    private static Point isStartOfPattern(DistortedImageSampler distortedImageSampler, double undistortedLoc, double pixelStride, Mat inverseH, Mat capturedImg) {
         Mat unDistortedImageMatCord = new Mat(1, 3, CvType.CV_64F);
         unDistortedImageMatCord.put(0, 2, 1);
-        double[] channels = getNewPixel(unDistortedImageMatCord, undistortedLoc, inverseH, capturedImg);
+        //double[] channels = getNewPixel(unDistortedImageMatCord, undistortedLoc, inverseH, capturedImg);
+        int pixelValue = distortedImageSampler.getPixel(undistortedLoc, undistortedLoc, false, false);
+        double[] channels = pixelToChannels(pixelValue);
 
         int blackAndWhitePassageCounter = 0;
         while (undistortedLoc < 1) {
@@ -138,10 +158,12 @@ public class OpenCvUtils {
             while (isBlack(channels)) {
                 undistortedLoc += pixelStride;
                 if (undistortedLoc > 1) return null;
-                channels = getNewPixel(unDistortedImageMatCord, undistortedLoc, inverseH, capturedImg);
+                //channels = getNewPixel(unDistortedImageMatCord, undistortedLoc, inverseH, capturedImg);
+                pixelValue = distortedImageSampler.getPixel(undistortedLoc, undistortedLoc, false, false);
+                channels = pixelToChannels(pixelValue);
             }
 
-            Pair pair = isPassage(WHITE_PASSAGE, undistortedLoc, inverseH, capturedImg, pixelStride);
+            Pair pair = isPassage(distortedImageSampler, WHITE_PASSAGE, undistortedLoc, inverseH, capturedImg, pixelStride);
             assert pair != null;
             if (!((boolean) pair.first)) {
                 return null;
@@ -149,14 +171,18 @@ public class OpenCvUtils {
             undistortedLoc = (double) pair.second - pixelStride*7;// ORIs MODIFCATION FROM ITAYS TEAMVIEWER
             unDistortedImageMatCord.put(0, 0, undistortedLoc, undistortedLoc); // advance the pixels
             blackAndWhitePassageCounter++;
-            channels = getNewPixel(unDistortedImageMatCord, undistortedLoc, inverseH, capturedImg);
+            //channels = getNewPixel(unDistortedImageMatCord, undistortedLoc, inverseH, capturedImg);
+            pixelValue = distortedImageSampler.getPixel(undistortedLoc, undistortedLoc, false, false);
+            channels = pixelToChannels(pixelValue);
             while (isWhite(channels)) {
                 undistortedLoc += pixelStride;
                 if (undistortedLoc > 1) return null;
-                channels = getNewPixel(unDistortedImageMatCord, undistortedLoc, inverseH, capturedImg);
+                //channels = getNewPixel(unDistortedImageMatCord, undistortedLoc, inverseH, capturedImg);
+                pixelValue = distortedImageSampler.getPixel(undistortedLoc, undistortedLoc, false, false);
+                channels = pixelToChannels(pixelValue);
             }
 
-            pair = isPassage(BLACK_PASSAGE, undistortedLoc, inverseH, capturedImg, pixelStride);
+            pair = isPassage(distortedImageSampler, BLACK_PASSAGE, undistortedLoc, inverseH, capturedImg, pixelStride);
             assert pair != null;
             if (!((boolean) pair.first)) {
                 return null;
@@ -168,7 +194,9 @@ public class OpenCvUtils {
 
             undistortedLoc = (double) pair.second - 7*pixelStride; // ORIs MODIFCATION FROM ITAYS TEAMVIEWER
             unDistortedImageMatCord.put(0, 0, undistortedLoc, undistortedLoc); // advance the pixels
-            channels = getNewPixel(unDistortedImageMatCord, undistortedLoc, inverseH, capturedImg);
+            //channels = getNewPixel(unDistortedImageMatCord, undistortedLoc, inverseH, capturedImg);
+            pixelValue = distortedImageSampler.getPixel(undistortedLoc, undistortedLoc, false, false);
+            channels = pixelToChannels(pixelValue);
             blackAndWhitePassageCounter++;
         }
         return null;
@@ -177,7 +205,8 @@ public class OpenCvUtils {
     private static final int TOTAL_PIXELS_CHECKED = 11;
     private static final int IS_COLOR_THRESHOLD = 3;
 
-    private static Pair<Boolean, Number> isPassage(int passage,
+    private static Pair<Boolean, Number> isPassage(DistortedImageSampler distortedImageSampler,
+                                                   int passage,
                                                    double undistortedLoc, Mat inverseH, Mat capturedImg, double pixelStride) {
         Mat unDistortedImageMatCord = new Mat(1, 3, CvType.CV_64F);
         unDistortedImageMatCord.put(0, 0, undistortedLoc, undistortedLoc, 1);
@@ -185,7 +214,9 @@ public class OpenCvUtils {
         if (passage == WHITE_PASSAGE) {
             int isWhiteCounter = 0;
             for (int i = 0; i < TOTAL_PIXELS_CHECKED; i++) {
-                double[] channels = getNewPixel(unDistortedImageMatCord, undistortedLoc, inverseH, capturedImg);
+                //double[] channels = getNewPixel(unDistortedImageMatCord, undistortedLoc, inverseH, capturedImg);
+                int pixelValue = distortedImageSampler.getPixel(undistortedLoc, undistortedLoc, false, false);
+                double[] channels = pixelToChannels(pixelValue);
                 if (isWhite(channels)) {
                     isWhiteCounter++;
                 }
@@ -196,7 +227,9 @@ public class OpenCvUtils {
         } else if (passage == BLACK_PASSAGE) {
             int isBlackCounter = 0;
             for (int i = 0; i < TOTAL_PIXELS_CHECKED; i++) {
-                double[] channels = getNewPixel(unDistortedImageMatCord, undistortedLoc, inverseH, capturedImg);
+                //double[] channels = getNewPixel(unDistortedImageMatCord, undistortedLoc, inverseH, capturedImg);
+                int pixelValue = distortedImageSampler.getPixel(undistortedLoc, undistortedLoc, false, false);
+                double[] channels = pixelToChannels(pixelValue);
                 if (isBlack(channels)) {
                     isBlackCounter++;
                 }
@@ -208,10 +241,10 @@ public class OpenCvUtils {
         return null;
     }
 
-    private static double[] getNewPixel(Mat unDistortedImageMatCord, double undistortedLoc, Mat inverseH, Mat capturedImg) {
-        unDistortedImageMatCord.put(0, 0, undistortedLoc, undistortedLoc);
-        return getPixelChannels(unDistortedImageMatCord, inverseH, capturedImg);
-    }
+//    private static double[] getNewPixel(Mat unDistortedImageMatCord, double undistortedLoc, Mat inverseH, Mat capturedImg) {
+//        unDistortedImageMatCord.put(0, 0, undistortedLoc, undistortedLoc);
+//        return getPixelChannels(unDistortedImageMatCord, inverseH, capturedImg);
+//    }
 
 
     private static boolean isBlack(double[] channels) {

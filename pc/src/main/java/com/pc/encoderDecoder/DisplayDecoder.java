@@ -143,7 +143,7 @@ public class DisplayDecoder {
 		double rowPixel = (0.5 + pos.rowModule) * imageSampler.getModuleSize(); //  (imageSampler.getModuleSize() / 2) + (pos.rowModule * imageSampler.getModuleSize())
 		double colPixel = (0.5 + pos.colModule) * imageSampler.getModuleSize();
 		//int currPixelSample = imageSampler.getPixel(rowPixel, colPixel);
-		int currPixelSample = imageSampler.getPixel(colPixel, rowPixel, duplicateChannels);
+		int currPixelSample = imageSampler.getPixel(colPixel, rowPixel, duplicateChannels, true);
 		int[] RGB = new int[3];
 
 		RGB[0] = (currPixelSample) & 0xFF; //red

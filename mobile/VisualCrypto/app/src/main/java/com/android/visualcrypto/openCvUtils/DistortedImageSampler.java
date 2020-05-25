@@ -7,8 +7,8 @@ import android.util.Log;
 
 import androidx.core.util.Pair;
 
+import com.android.visualcrypto.flow.Flow;
 import com.pc.configuration.Constants;
-import com.pc.configuration.Parameters;
 import com.pc.encoderDecoder.StdImageSampler;
 
 import org.opencv.calib3d.Calib3d;
@@ -20,6 +20,7 @@ import org.opencv.core.MatOfInt;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
 import org.opencv.core.Rect;
+import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
@@ -155,6 +156,7 @@ public class DistortedImageSampler extends StdImageSampler {
         int yMax = (int) Math.ceil(yValues[3]);
 
         long start = System.currentTimeMillis();// performance
+        /********************ROI****************************/
         try {
             Rect roi = new Rect(new Point(xMin-10, yMin-10), new Point(xMax+10, yMax+10));
             DistortedImageSampler.distortedImage = new Mat(DistortedImageSampler.distortedImage, roi);
@@ -163,6 +165,7 @@ public class DistortedImageSampler extends StdImageSampler {
             Log.d("roi", "roi threw exception");
             return 1;
         }
+        /***************************************************/
 
         start = System.currentTimeMillis(); //performance
         Mat bw = new Mat();
@@ -199,24 +202,41 @@ public class DistortedImageSampler extends StdImageSampler {
         double normalizedEstimatedModuleSize = 1 / (Math.floor(1.0 / estimatedModuleSize));
         start = System.currentTimeMillis();
 
-        Point alignmentBottomRight = OpenCvUtils.findAlignmentBottomRight(normalizedEstimatedModuleSize, minPixelStride, inverseH, DistortedImageSampler.distortedImage);
-        if (alignmentBottomRight == null) {
-            String folderPath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + Instant.now().toString();
-            Path path = Paths.get(folderPath);
-            try {
-                Files.createDirectory(path);
-                Imgcodecs.imwrite(folderPath + "/bw.jpg", bw);
-                Imgcodecs.imwrite(folderPath + "/afterRoi.jpg", DistortedImageSampler.distortedImage);
-                FileWriter fw = new FileWriter(folderPath + "/parameters.txt");
-                String upperRowPts = String.format("leftUpperPoint: %f,%f\t\trightUpperPoint: %f,%f\n", pts[0].x,pts[0].y, pts[1].x, pts[1].y);
-                String lowerRowPts = String.format("leftLowerrPoint: %f,%f\t\trightLowerPoint: %f,%f", pts[3].x,pts[3].y, pts[2].x, pts[2].y);
-                fw.write(upperRowPts);
-                fw.write(lowerRowPts);
-                fw.close();
 
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+        String folderPath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + Instant.now().toString();
+        Path path = Paths.get(folderPath);
+        try (FileWriter fw = new FileWriter(folderPath + "/parameters.txt")){
+            Files.createDirectory(path);
+            Imgcodecs.imwrite(folderPath + "/bw.jpg", bw);
+            Imgcodecs.imwrite(folderPath + "/afterRoi.jpg", DistortedImageSampler.distortedImage);
+            String upperRowPts = String.format("leftUpperPoint: %f,%f\t\trightUpperPoint: %f,%f\n", pts[0].x,pts[0].y, pts[1].x, pts[1].y);
+            String lowerRowPts = String.format("leftLowerrPoint: %f,%f\t\trightLowerPoint: %f,%f", pts[3].x,pts[3].y, pts[2].x, pts[2].y);
+            fw.write(upperRowPts);
+            fw.write(lowerRowPts);
+        }catch(Exception e){
+            Log.d("writing_file", e.getMessage());
+        }
+
+        Flow.delete = distortedImage.clone();
+        Point alignmentBottomRight = OpenCvUtils.findAlignmentBottomRight(this, normalizedEstimatedModuleSize, minPixelStride, inverseH, DistortedImageSampler.distortedImage);
+        Imgcodecs.imwrite(folderPath + "/pathTaken.jpg", Flow.delete);
+        if (alignmentBottomRight == null) {
+//            String folderPath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + Instant.now().toString();
+//            Path path = Paths.get(folderPath);
+//            try {
+//                Files.createDirectory(path);
+//                Imgcodecs.imwrite(folderPath + "/bw.jpg", bw);
+//                Imgcodecs.imwrite(folderPath + "/afterRoi.jpg", DistortedImageSampler.distortedImage);
+//                FileWriter fw = new FileWriter(folderPath + "/parameters.txt");
+//                String upperRowPts = String.format("leftUpperPoint: %f,%f\t\trightUpperPoint: %f,%f\n", pts[0].x,pts[0].y, pts[1].x, pts[1].y);
+//                String lowerRowPts = String.format("leftLowerrPoint: %f,%f\t\trightLowerPoint: %f,%f", pts[3].x,pts[3].y, pts[2].x, pts[2].y);
+//                fw.write(upperRowPts);
+//                fw.write(lowerRowPts);
+//                fw.close();
+//
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
 
 
             Log.d("DistortedImageSampler", "findAlignmentBottomRight returned null");
@@ -226,10 +246,24 @@ public class DistortedImageSampler extends StdImageSampler {
         Mat alignmentBottomRightMat = new Mat(1, 3, CvType.CV_64F);
         alignmentBottomRightMat.put(0, 0, alignmentBottomRight.x, alignmentBottomRight.y, 1);
         Point distortedPoint = undistortedToDistortedIndexes(alignmentBottomRightMat, inverseH);
+
         start = System.currentTimeMillis();
         this.setModuleSize(computeModuleSize(pts[0], distortedPoint, H, Math.sqrt(2 * 99 * 99)));
         Log.d("performance", "computeModuleSize took: " + (System.currentTimeMillis() - start));
         int effectiveModulesInDim = (int) Math.round(1.0 / this.getModuleSize());
+
+        try (FileWriter fw = new FileWriter(folderPath + "/information.txt")) {
+            fw.write("alignment: " + distortedPoint.x +"," + distortedPoint.y);
+            String upperRowPts = String.format("\n\nleftUpperPoint: %f,%f\t\trightUpperPoint: %f,%f\n", pts[0].x,pts[0].y, pts[1].x, pts[1].y);
+            String lowerRowPts = String.format("leftLowerrPoint: %f,%f\t\trightLowerPoint: %f,%f", pts[3].x,pts[3].y, pts[2].x, pts[2].y);
+            fw.write(upperRowPts);
+            fw.write(lowerRowPts);
+            fw.write("\nModules in dim: " + (1.0/this.getModuleSize()));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+
         this.setModulesInDim(effectiveModulesInDim);
 
         Log.d("ModulesInDim", "modules in dim: " + Float.toString(this.getModulesInDim()));
@@ -314,13 +348,13 @@ public class DistortedImageSampler extends StdImageSampler {
         boolean accumulate = false;
         int countR = 0, countG = 0, countB = 0;
 
-        final int lowPercentileRed = (int) Math.floor(0.01*(tileWidth*tileHeight));
+        final int lowPercentileRed = (int) Math.floor(0.0*(tileWidth*tileHeight));
         final int highPercentileRed = (int) Math.floor(0.9*(tileWidth*tileHeight));
 
-        final int lowPercentileGreen = (int) Math.floor(0.01*(tileWidth*tileHeight));
+        final int lowPercentileGreen = (int) Math.floor(0.0*(tileWidth*tileHeight));
         final int highPercentileGreen = (int) Math.floor(0.9*(tileWidth*tileHeight));
 
-        final int lowPercentileBlue = (int) Math.floor(0.01*(tileWidth*tileHeight));
+        final int lowPercentileBlue = (int) Math.floor(0.0*(tileWidth*tileHeight));
         final int highPercentileBlue = (int) Math.floor(0.9*(tileWidth*tileHeight));
 
         int high, low, left, right;
@@ -362,20 +396,6 @@ public class DistortedImageSampler extends StdImageSampler {
                 }
             }
         }
-
-
-//        int lowPercentileRed = (int) Math.floor(0.05*(capturedImage.width()*capturedImage.height()));
-//        int highPercentileRed = (int) Math.floor(0.5*(capturedImage.width()*capturedImage.height()));
-//
-//        int lowPercentileGreen = (int) Math.floor(0.03*(capturedImage.width()*capturedImage.height()));
-//        int highPercentileGreen = (int) Math.floor(0.5*(capturedImage.width()*capturedImage.height()));
-//
-//        int lowPercentileBlue = (int) Math.floor(0.05*(capturedImage.width()*capturedImage.height()));
-//        int highPercentileBlue = (int) Math.floor(0.5*(capturedImage.width()*capturedImage.height()));
-
-
-
-
     }
 
     private void convertBoofToOpenPoints(Polygon2D_F64 polygon, Point[] pts) {
@@ -390,23 +410,31 @@ public class DistortedImageSampler extends StdImageSampler {
     }
 
     @Override
-    public int getPixel(double rowLoc, double colLoc, boolean duplicateChannels) {
+    public int getPixel(double rowLoc, double colLoc, boolean duplicateChannels, boolean radiusSample) {
         Mat unDistortedImageMatCord = new Mat(1, 3, CvType.CV_64F);
         unDistortedImageMatCord.put(0, 0, rowLoc);
         unDistortedImageMatCord.put(0, 1, colLoc);
         unDistortedImageMatCord.put(0, 2, 1);
         Point distortedIndex = undistortedToDistortedIndexes(unDistortedImageMatCord, inverseH);
+        Imgproc.circle(Flow.delete, distortedIndex, 1, new Scalar(0,0,255), 1);
         int indexCol = (int) distortedIndex.x; int indexRow = (int) distortedIndex.y;
         //double[] channels = DistortedImageSampler.distortedImage.get(indexRow, indexCol);
-        double[] channels1 = DistortedImageSampler.distortedImage.get((int)Math.round(indexRow+.51), (int)Math.round(indexCol+.51));
-        double[] channels2 = DistortedImageSampler.distortedImage.get((int)Math.round(indexRow-.5), (int)Math.round(indexCol-.51));
-        double[] channels3 = DistortedImageSampler.distortedImage.get((int)Math.round(indexRow+.51), (int)Math.round(indexCol-.51));
-        double[] channels4 = DistortedImageSampler.distortedImage.get((int)Math.round(indexRow-.51), (int)Math.round(indexCol+.51));
         double[] avgChannels = new double[Constants.CHANNELS];
-        for (int i = 0; i < avgChannels.length; i++) {
-            avgChannels[i] = (channels1[i]+channels2[i]+channels3[i]+channels4[i])/4;
+        if(radiusSample) {
+            double[] channels1 = DistortedImageSampler.distortedImage.get((int) Math.round(indexRow + .51), (int) Math.round(indexCol + .51));
+            double[] channels2 = DistortedImageSampler.distortedImage.get((int) Math.round(indexRow - .51), (int) Math.round(indexCol - .51));
+            double[] channels3 = DistortedImageSampler.distortedImage.get((int) Math.round(indexRow + .51), (int) Math.round(indexCol - .51));
+            double[] channels4 = DistortedImageSampler.distortedImage.get((int) Math.round(indexRow - .51), (int) Math.round(indexCol + .51));
+            for (int i = 0; i < avgChannels.length; i++) {
+                if (channels1 == null || channels2 == null || channels3 == null || channels4 == null) {
+                    Log.d("null", distortedIndex.x + "," + distortedIndex.y);
+                }
+                avgChannels[i] = (channels1[i] + channels2[i] + channels3[i] + channels4[i]) / 4;
+            }
         }
-
+        else{
+            avgChannels = DistortedImageSampler.distortedImage.get((int) Math.round(indexRow), (int) Math.round(indexCol));
+        }
         int[] processedChannels = thresholdAndNormalizeChannels(avgChannels, minPixelVal, maxPixelVal, indexRow, indexCol);
         // set all values to the majority
         if (duplicateChannels) {
@@ -420,7 +448,7 @@ public class DistortedImageSampler extends StdImageSampler {
         }
 
         int pixelValue = (processedChannels[0]) |(processedChannels[1] << 8) | (processedChannels[2] << 16);
-
+/*
         // debugging code for comparison to original image
         int rowPixel = (int) Math.round((Parameters.modulesInMargin + rowLoc/this.getModuleSize()) * Parameters.pixelsInModule);
         int colPixel = (int) Math.round((Parameters.modulesInMargin + colLoc/this.getModuleSize()) * Parameters.pixelsInModule);
@@ -433,432 +461,9 @@ public class DistortedImageSampler extends StdImageSampler {
             Point distortedPoint = OpenCvUtils.undistortedToDistortedIndexes(unDistortedImageMatCord, inverseH);
             //Log.d("DistortedImageSampler", "Module pixel value different than expected");
         }
-
+*/
 
         return pixelValue;
     }
 
-//    private Point getCornerFromCenter(Point pt, Mat inverseH, double stride, boolean left, boolean upper) {
-//        Mat unDistortedImageMatCord = new Mat(1, 3, CvType.CV_64F);
-//        unDistortedImageMatCord.put(0, 2, 1);
-//        if (left) {
-//            unDistortedImageMatCord.put(0, 0, -3.5 * stride);
-//        } else {
-//            unDistortedImageMatCord.put(0, 0, 3.5 * stride);
-//        }
-//
-//        if (upper) {
-//            unDistortedImageMatCord.put(0, 1, -3.5 * stride);
-//        } else {
-//            unDistortedImageMatCord.put(0, 1, 3.5 * stride);
-//        }
-//
-//        Mat distortedImageMatCord = new Mat();
-//        Core.gemm(inverseH, unDistortedImageMatCord.t(), 1.0, new Mat(), 0, distortedImageMatCord, 0);
-//        double x = distortedImageMatCord.get(0, 0)[0];
-//        double y = distortedImageMatCord.get(1, 0)[0];
-//        double z = distortedImageMatCord.get(2, 0)[0];
-//        x = x / z;
-//        y = y / z;
-//        z = z / z;
-//
-//        int indexRow = (int) (Math.round(x));
-//        int indexCol = (int) (Math.round(y));
-//
-//        return new Point(indexRow, indexCol);
-//    }
-
-//    public boolean detect(Mat img){
-//        Mat imgBW = new Mat();
-//        cvtColor(img, imgBW, Imgproc.COLOR_BGR2GRAY);
-//        adaptiveThreshold(imgBW, imgBW, 255, Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C , Imgproc.THRESH_BINARY, 51, 0);
-//        Bitmap bp = MainActivity.convertMatToBitmap(imgBW);
-//
-//        boolean found = find(imgBW);
-//        double x3 = this.possibleCenters.toArray()[2].x +
-//                (this.possibleCenters.toArray()[1].x - this.possibleCenters.toArray()[0].x);
-//        double y3 = this.possibleCenters.toArray()[2].y +
-//                (this.possibleCenters.toArray()[1].y - this.possibleCenters.toArray()[0].y);
-//        List<Point> temp = possibleCenters.toList();
-//        List<Point> centers = new ArrayList<>();
-//
-//        centers.add(temp.get(0));centers.add(temp.get(1)); centers.add(new Point(x3, y3)); centers.add(temp.get(2));
-//        //possibleCenters.push_back(new MatOfPoint2f(new Point(x3, y3)));
-//        possibleCenters.fromList(centers);
-//        return found;
-//    }
-//
-//    private boolean find(Mat img) {
-//
-//        int skipRows = 3;
-//
-//        int stateCount[] = new int[5];
-//        int currentState = 0;
-//        for(int row=skipRows-1; row<img.height(); row+=skipRows){
-//            stateCount[0] = 0;
-//            stateCount[1] = 0;
-//            stateCount[2] = 0;
-//            stateCount[3] = 0;
-//            stateCount[4] = 0;
-//            currentState = 0;
-////            Mat a = img.row(row);
-////            List<Integer> b = new ArrayList<>();
-////            int[] c = b.stream().mapToInt(i->i).toArray();
-////            Converters.Mat_to_vector_int(a,b);
-//            //const uchar* ptr = img.ptr<uchar>(row);
-//            for(int col=0; col<img.width(); col++) {
-//                double a[] = img.get(row,col);
-//                if(a[0]<128) // ptr[col]
-//                {
-//                    // We're at a black pixel
-//                    if((currentState & 0x1)==1)
-//                    {
-//                        // We were counting white pixels
-//                        // So change the state now
-//
-//                        // W->B transition
-//                        currentState++;
-//                    }
-//
-//                    // Works for boths W->B and B->B
-//                    stateCount[currentState]++;
-//                }
-//                else
-//                {
-//                    // We got to a white pixel...
-//                    if((currentState & 0x1)==1)
-//                    {
-//                        // W->W change
-//                        stateCount[currentState]++;
-//                    }
-//                    else {
-//                        // ...but, we were counting black pixels
-//                        if (currentState == 4) {
-//                            // We found the 'white' area AFTER the finder patter
-//                            // Do processing for it here
-//                            if(checkRatio(stateCount))
-//                            {
-//                                boolean confirmed = handlePossibleCenter(img, stateCount, row, col);
-//                            }
-//                            else
-//                            {
-//                                currentState = 3;
-//                                stateCount[0] = stateCount[2];
-//                                stateCount[1] = stateCount[3];
-//                                stateCount[2] = stateCount[4];
-//                                stateCount[3] = 1;
-//                                stateCount[4] = 0;
-//                                continue;
-//                            }
-//                            currentState = 0;
-//                            stateCount[0] = 0;
-//                            stateCount[1] = 0;
-//                            stateCount[2] = 0;
-//                            stateCount[3] = 0;
-//                            stateCount[4] = 0;
-//                        }
-//                        else
-//                        {
-//                            // We still haven't go 'out' of the finder pattern yet
-//                            // So increment the state
-//                            // B->W transition
-//                            currentState++;
-//                            stateCount[currentState]++;
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//        return (possibleCenters.width()>0);//was possibleCenters.size()
-//    }
-//
-//    private boolean handlePossibleCenter(Mat img, int[] stateCount, int row, int col) {
-//        int stateCountTotal = 0;
-//        for(int i=0;i<5;i++) {
-//            stateCountTotal += stateCount[i];
-//        }
-//
-//        // Cross check along the vertical axis
-//        float centerCol = centerFromEnd(stateCount, col);
-//        float centerRow = crossCheckVertical(img, row, (int)centerCol, stateCount[2], stateCountTotal);
-//        if(Float.isNaN(centerRow)) {
-//            return false;
-//        }
-//
-//        // Cross check along the horizontal axis with the new center-row
-//        centerCol = crossCheckHorizontal(img, (int) centerRow, (int) centerCol, stateCount[2], stateCountTotal);
-//        if(Float.isNaN(centerCol)) {
-//            return false;
-//        }
-//
-//        // Cross check along the diagonal with the new center row and col
-//        boolean validPattern = crossCheckDiagonal(img, centerRow, centerCol, stateCount[2], stateCountTotal);
-//        if(!validPattern) {
-//            return false;
-//        }
-//
-//
-//        Point ptNew = new Point(centerCol, centerRow); // was: Point2f ptNew(centerCol, centerRow);
-//        double newEstimatedModuleSize = stateCountTotal / 7.0D;
-//        boolean found = false;
-//        int idx = 0;
-//
-//        // Definitely a finder pattern - but have we seen it before?
-//        for (int i = 0 ; i < possibleCenters.toArray().length; i++){
-//            Point pt = possibleCenters.toArray()[i];
-////            MatOfPoint2f diff = pt - ptNew;
-////            float dist = (float)Math.sqrt((diff.dot(diff));
-//            double dist = calcDistance(pt, ptNew);
-//
-//            // If the distance between two centers is less than 10px, they're the same.
-//            if(dist < 10) {
-//                //pt = pt + ptNew;
-//                pt.x = (pt.x + ptNew.x) / 2.0f;
-//                pt.y = (pt.y + ptNew.y) / 2.0f;
-//                estimatedModuleSize.set(idx, (estimatedModuleSize.get(idx) + newEstimatedModuleSize)/2.0f);
-//                found = true;
-//                break;
-//            }
-//            idx++;
-//        }
-//        if(!found) {
-//            MatOfPoint2f a = new MatOfPoint2f(ptNew);
-//            possibleCenters.push_back(a);
-//            estimatedModuleSize.add(newEstimatedModuleSize);
-//            //estimatedModuleSize.push_back(newEstimatedModuleSize);
-//        }
-//
-//        return false;
-//    }
-//
-//    private boolean crossCheckDiagonal(Mat img, float centerRow, float centerCol, int maxCount, int stateCountTotal) {
-//
-//        int stateCount[] = new int[5];
-//
-//        int i=0;
-//        while(centerRow>=i && centerCol>=i && img.get((int)centerRow-i, (int)centerCol-i)[0]<128) {
-//            stateCount[2]++;
-//            i++;
-//        }
-//        if(centerRow<i || centerCol<i) {
-//            return false;
-//        }
-//
-//        while(centerRow>=i && centerCol>=i && img.get((int)centerRow-i, (int)centerCol-i)[0]>=128 && stateCount[1]<=maxCount) {
-//            stateCount[1]++;
-//            i++;
-//        }
-//        if(centerRow<i || centerCol<i || stateCount[1]>maxCount) {
-//            return false;
-//        }
-//
-//        while(centerRow>=i && centerCol>=i && img.get((int)centerRow-i, (int)centerCol-i)[0]<128 && stateCount[0]<=maxCount) {
-//            stateCount[0]++;
-//            i++;
-//        }
-//        if(stateCount[0]>maxCount) {
-//            return false;
-//        }
-//
-//        int maxCols = img.width();
-//        int maxRows = img.height();
-//        i=1;
-//        while((centerRow+i)<maxRows && (centerCol+i)<maxCols && img.get((int)centerRow+i, (int)centerCol+i)[0]<128) {
-//            stateCount[2]++;
-//            i++;
-//        }
-//        if((centerRow+i)>=maxRows || (centerCol+i)>=maxCols) {
-//            return false;
-//        }
-//
-//        while((centerRow+i)<maxRows && (centerCol+i)<maxCols && img.get((int)centerRow+i, (int)centerCol+i)[0]>=128 && stateCount[3]<maxCount) {
-//            stateCount[3]++;
-//            i++;
-//        }
-//        if((centerRow+i)>=maxRows || (centerCol+i)>=maxCols || stateCount[3]>maxCount) {
-//            return false;
-//        }
-//
-//        while((centerRow+i)<maxRows && (centerCol+i)<maxCols && img.get((int)centerRow+i, (int)centerCol+i)[0]<128 && stateCount[4]<maxCount) {
-//            stateCount[4]++;
-//            i++;
-//        }
-//        if((centerRow+i)>=maxRows || (centerCol+i)>=maxCols || stateCount[4]>maxCount) {
-//            return false;
-//        }
-//
-//        int newStateCountTotal = 0;
-//        for(int j=0;j<5;j++) {
-//            newStateCountTotal += stateCount[j];
-//        }
-//
-//        return (Math.abs(stateCountTotal - newStateCountTotal) < 2*stateCountTotal) && checkRatio(stateCount);
-//    }
-//
-//    private float crossCheckHorizontal(Mat img, int centerRow, int startCol, int centerCount, int stateCountTotal) {
-//        int maxCols = img.width();
-//        int stateCount[] = new int[5];
-//
-//        int col = startCol;
-//        //const uchar* ptr = img.ptr<uchar>(centerRow);
-//        while(col>=0 && img.get(centerRow ,col)[0]<128) {
-//        //while(col>=0 && ptr[col]<128) {
-//            stateCount[2]++;
-//            col--;
-//        }
-//        if(col<0) {
-//            return Float.NaN;
-//        }
-//
-//        while(col>=0 && img.get(centerRow ,col)[0]>=128 && stateCount[1]<centerCount) {
-//            stateCount[1]++;
-//            col--;
-//        }
-//        if(col<0 || stateCount[1]==centerCount) {
-//            return Float.NaN;
-//        }
-//
-//        while(col>=0 && img.get(centerRow ,col)[0]<128 && stateCount[0]<centerCount) {
-//            stateCount[0]++;
-//            col--;
-//        }
-//        if(col<0 || stateCount[0]==centerCount) {
-//            return Float.NaN;
-//        }
-//
-//        col = startCol + 1;
-//        while(col<maxCols && img.get(centerRow ,col)[0]<128) {
-//            stateCount[2]++;
-//            col++;
-//        }
-//        if(col==maxCols) {
-//            return Float.NaN;
-//        }
-//
-//        while(col<maxCols && img.get(centerRow ,col)[0]>=128 && stateCount[3]<centerCount) {
-//            stateCount[3]++;
-//            col++;
-//        }
-//        if(col==maxCols || stateCount[3]==centerCount) {
-//            return Float.NaN;
-//        }
-//
-//        while(col<maxCols && img.get(centerRow ,col)[0]<128 && stateCount[4]<centerCount) {
-//            stateCount[4]++;
-//            col++;
-//        }
-//        if(col==maxCols || stateCount[4]==centerCount) {
-//            return Float.NaN;
-//        }
-//
-//        int newStateCountTotal = 0;
-//        for(int i=0;i<5;i++) {
-//            newStateCountTotal += stateCount[i];
-//        }
-//
-//        if(5*Math.abs(stateCountTotal-newStateCountTotal) >= stateCountTotal) {
-//            return Float.NaN;
-//        }
-//
-//        return checkRatio(stateCount)?centerFromEnd(stateCount, col):Float.NaN;
-//    }
-//
-//
-//    private float crossCheckVertical(Mat img, int startRow, int centerCol, int centralCount, int stateCountTotal) {
-//        int maxRows = img.height();
-//        int crossCheckStateCount[] = new int[5];
-//        int row = startRow;
-//        while(row>=0 && img.get(row, centerCol)[0]<128) {
-//            crossCheckStateCount[2]++;
-//            row--;
-//        }
-//        if(row<0) {
-//            return Float.NaN;// #define nan std::numeric_limits<float>::quiet_NaN();
-//        }
-//
-//
-//        while(row>=0 && img.get(row, centerCol)[0]>=128 && crossCheckStateCount[1]<centralCount) {
-//            crossCheckStateCount[1]++;
-//            row--;
-//        }
-//        if(row<0 || crossCheckStateCount[1]>=centralCount) {
-//            return Float.NaN;
-//        }
-//
-//        while(row>=0 && img.get(row, centerCol)[0]<128 && crossCheckStateCount[0]<centralCount) {
-//            crossCheckStateCount[0]++;
-//            row--;
-//        }
-//        if(row<0 || crossCheckStateCount[0]>=centralCount) {
-//            return Float.NaN;
-//        }
-//
-//        // Now we traverse down the center
-//        row = startRow+1;
-//        while(row<maxRows && img.get(row, centerCol)[0]<128) {
-//            crossCheckStateCount[2]++;
-//            row++;
-//        }
-//        if(row==maxRows) {
-//            return Float.NaN;
-//        }
-//
-//        while(row<maxRows && img.get(row, centerCol)[0]>=128 && crossCheckStateCount[3]<centralCount) {
-//            crossCheckStateCount[3]++;
-//            row++;
-//        }
-//        if(row==maxRows || crossCheckStateCount[3]>=stateCountTotal) {
-//            return Float.NaN;
-//        }
-//
-//        while(row<maxRows && img.get(row, centerCol)[0]<128 && crossCheckStateCount[4]<centralCount) {
-//            crossCheckStateCount[4]++;
-//            row++;
-//        }
-//        if(row==maxRows || crossCheckStateCount[4]>=centralCount) {
-//            return Float.NaN;
-//        }
-//
-//        int crossCheckStateCountTotal = 0;
-//        for(int i=0;i<5;i++) {
-//            crossCheckStateCountTotal += crossCheckStateCount[i];
-//        }
-//
-//        if(5*Math.abs(crossCheckStateCountTotal-stateCountTotal) >= 2*stateCountTotal) {
-//            return Float.NaN;
-//        }
-//
-//        float center = centerFromEnd(crossCheckStateCount, row);
-//        return checkRatio(crossCheckStateCount)?center:Float.NaN;
-//    }
-//
-//    private float centerFromEnd(int[] stateCount, int end) {
-//        return (float)(end-stateCount[4]-stateCount[3])-(float)stateCount[2]/2.0f;
-//    }
-//
-//    private boolean checkRatio(int[] stateCount) {
-//        int totalFinderSize = 0;
-//        for(int i=0; i<5; i++)
-//        {
-//            int count = stateCount[i];
-//            totalFinderSize += count;
-//            if(count==0)
-//                return false;
-//        }
-//
-//        if(totalFinderSize<7)
-//            return false;
-//
-//        // Calculate the size of one module
-//        int moduleSize = (int) Math.ceil(totalFinderSize / 7.0);
-//        int maxVariance = moduleSize/2;
-//
-//        boolean retVal= ((Math.abs(moduleSize - (stateCount[0])) < maxVariance) &&
-//                (Math.abs(moduleSize - (stateCount[1])) < maxVariance) &&
-//                (Math.abs(3*moduleSize - (stateCount[2])) < 3*maxVariance) &&
-//                (Math.abs(moduleSize - (stateCount[3])) < maxVariance) &&
-//                (Math.abs(moduleSize - (stateCount[4])) < maxVariance));
-//
-//        return retVal;
-//    }
 }

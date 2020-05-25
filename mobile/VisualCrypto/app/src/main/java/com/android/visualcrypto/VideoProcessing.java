@@ -21,6 +21,7 @@ import androidx.camera.core.Preview;
 import androidx.camera.core.PreviewConfig;
 
 import com.android.visualcrypto.flow.Flow;
+import com.android.visualcrypto.openCvUtils.OpenCvUtils;
 
 import org.opencv.android.Utils;
 import org.opencv.core.Mat;
@@ -83,10 +84,14 @@ public class VideoProcessing extends AppCompatActivity {
             Mat mat = new Mat();
             Utils.bitmapToMat(bp, mat);
 
-            //Camera Calibration
-            //Mat afterCalibrationMatrix = OpenCvUtils.calibrateImage(mat);
-            //Utils.matToBitmap(afterCalibrationMatrix, bp); // update bitmap as well
-            Mat afterCalibrationMatrix = mat;
+            /*********WITH CALIBRATION**************/
+            Mat afterCalibrationMatrix = OpenCvUtils.calibrateImage(mat);
+            Utils.matToBitmap(afterCalibrationMatrix, bp); // update bitmap as well
+            /***************************************/
+
+            /*********NO CALIBRATION**************/
+            //Mat afterCalibrationMatrix = mat;
+            /***************************************/
 
             try {
                 final Bitmap finalBitmap = Flow.executeAndroidFlow(afterCalibrationMatrix, bp, this);
