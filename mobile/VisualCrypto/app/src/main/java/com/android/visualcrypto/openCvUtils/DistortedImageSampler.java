@@ -193,14 +193,14 @@ public class DistortedImageSampler extends StdImageSampler {
         Point2D_F64 center2 = pointsQueue.get(1).center;
         Point2D_F64 center3 = pointsQueue.get(2).center;
         Point2D_F64 center4 = pointsQueue.get(3).center;
-        double[] center1Channels = OpenCvUtils.getAvgQrCornerColor(center1);
-        double[] center2Channels = OpenCvUtils.getAvgQrCornerColor(center2);
-        double[] center3Channels = OpenCvUtils.getAvgQrCornerColor(center3);
-        double[] center4Channels = OpenCvUtils.getAvgQrCornerColor(center4);
+        double[] center0Channels = OpenCvUtils.getAvgQrCornerColor(center1);
+        double[] center1Channels = OpenCvUtils.getAvgQrCornerColor(center2);
+        double[] center2Channels = OpenCvUtils.getAvgQrCornerColor(center3);
+        double[] center3Channels = OpenCvUtils.getAvgQrCornerColor(center4);
         double[] topLeft; double[] topRight; double[] bottomLeft;
 
-        double[][] indexes = OpenCvUtils.getCentersOrder(center1Channels, center2Channels, center3Channels, center4Channels); // indexes[0] == R, indexes[1] = G, indexes[2] = B
-        if (indexes != null || indexes.length < 3) {
+        double[][] indexes = OpenCvUtils.getCentersOrder(center0Channels, center1Channels, center2Channels, center3Channels); // indexes[0] == R, indexes[1] = G, indexes[2] = B
+        if (indexes == null) {
             Log.d("getCentersOrder", "ERROR IN getCentersOrder()");
         } else {
             topLeft = indexes[0];

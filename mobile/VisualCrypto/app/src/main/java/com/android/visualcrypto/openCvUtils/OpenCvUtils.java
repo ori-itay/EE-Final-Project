@@ -15,6 +15,9 @@ import org.opencv.core.Mat;
 import org.opencv.core.Point;
 import org.opencv.core.Scalar;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import georegression.struct.point.Point2D_F64;
 
 import static com.pc.configuration.Parameters.encodingColorLevels;
@@ -302,17 +305,63 @@ public class OpenCvUtils {
 
     /**
      * Decides which center accounts for which color
+     * @param center0Channels
      * @param center1Channels
      * @param center2Channels
      * @param center3Channels
-     * @param center4Channels
      * @return
      */
-    public static double[][] getCentersOrder(double[] center1Channels, double[] center2Channels, double[] center3Channels, double[] center4Channels) {
-        return null;
+    static double[][] getCentersOrder(double[] center0Channels, double[] center1Channels, double[] center2Channels, double[] center3Channels) {
+        double[][] indexes = new double[3][]; // one of the array suppose to be null (=not a qr pattern)
+        double[] maxR = new double[1], maxG = new double[1], maxB = new double[1]; // arrays are used to allow modification in function
+        int[] indexOfR = new int[1], indexOfG = new int[1], indexOfB = new int[1]; // arrays are used to allow modification in function
+
+        Map<Integer, double[]> mapping = new HashMap<>();
+
+        if (center0Channels != null) {
+            mapping.put(0, center0Channels);
+            processChannel(center0Channels, 0, maxR, maxG, maxB, indexOfR, indexOfG, indexOfB);
+        }
+        if (center1Channels != null) {
+            mapping.put(1, center1Channels);
+            processChannel(center1Channels, 1, maxR, maxG, maxB, indexOfR, indexOfG, indexOfB);
+        }
+        if (center2Channels != null) {
+            mapping.put(2, center2Channels);
+            processChannel(center2Channels, 2, maxR, maxG, maxB, indexOfR, indexOfG, indexOfB);
+        }
+        if (center3Channels != null) {
+            mapping.put(3, center3Channels);
+            processChannel(center3Channels, 3, maxR, maxG, maxB, indexOfR, indexOfG, indexOfB);
+        }
+
+        indexes[0] = mapping.get(indexOfR[0]); // represents red qr
+        indexes[1] = mapping.get(indexOfG[0]); // represents green qr
+        indexes[2] = mapping.get(indexOfB[0]); // represents blue qr
+
+        if (indexOfR[0] == indexOfG[0] || indexOfR[0] == indexOfB[0] || indexOfB[0] == indexOfG[0]) {
+            return null;
+        }
+        else {
+            return indexes;
+        }
     }
 
-
+    private static void processChannel(double[] center, int centerNum, double[] maxR, double[] maxG,
+                                       double[] maxB, int[] indexOfR, int[] indexOfG, int[] indexOfB) {
+        if (center[0] > maxR[0]) {
+            maxR[0] = center[0];
+            indexOfR[0] = centerNum;
+        }
+        if (center[1] > maxG[0]) {
+            maxG[0] = center[1];
+            indexOfG[0] = centerNum;
+        }
+        if (center[2] > maxB[0]) {
+            maxB[0] = center[2];
+            indexOfB[0] = centerNum;
+        }
+    }
 }
 
 
