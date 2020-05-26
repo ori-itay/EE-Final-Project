@@ -24,9 +24,9 @@ public class DisplayEncoder {
 		Graphics2D g = (Graphics2D) image.getGraphics();
 		g.setBackground(Color.WHITE);
 		g.clearRect(0, 0, MODULES_IN_ENCODED_IMAGE_DIM*Parameters.pixelsInModule, MODULES_IN_ENCODED_IMAGE_DIM*Parameters.pixelsInModule);
-		g.setColor(Color.BLACK);
 		//create position detector
 		createPositionDetectors(g);
+		g.setColor(Color.BLACK);
 		createAlignmentPattern(g);
 		Position pos = new Position(Parameters.modulesInMargin, Parameters.modulesInMargin + MODULES_IN_POS_DET_DIM);
 		encodeData(g, IV, pos, true); //encode IV first time
@@ -175,14 +175,25 @@ public class DisplayEncoder {
 		for(rowModuleOffset = 0; rowModuleOffset< MODULES_IN_POS_DET_DIM - 1; rowModuleOffset++) {
 			for(colModuleOffset = 0; colModuleOffset< MODULES_IN_POS_DET_DIM - 1; colModuleOffset++) {
 
-				if( !((rowModuleOffset == MID_LAYER_OFFSET_1 || rowModuleOffset == MID_LAYER_OFFSET_2) &&
-						(colModuleOffset >= MID_LAYER_OFFSET_1 && colModuleOffset <= MID_LAYER_OFFSET_2)) &&
-						!((rowModuleOffset > MID_LAYER_OFFSET_1 && rowModuleOffset < MID_LAYER_OFFSET_2) &&
-								(colModuleOffset == MID_LAYER_OFFSET_1 || colModuleOffset == MID_LAYER_OFFSET_2))) {
+				if(rowModuleOffset == 0 || rowModuleOffset == MODULES_IN_POS_DET_DIM - 2
+						|| colModuleOffset == 0 || colModuleOffset == MODULES_IN_POS_DET_DIM - 2){
+					g.setColor(Color.BLACK);
 					g.fillRect(colTopLeft + colModuleOffset * Parameters.pixelsInModule,
 							rowTopLeft + rowModuleOffset * Parameters.pixelsInModule, Parameters.pixelsInModule, Parameters.pixelsInModule);
 					g.fillRect(colTopRight + colModuleOffset * Parameters.pixelsInModule,
 							rowTopRight + rowModuleOffset * Parameters.pixelsInModule, Parameters.pixelsInModule, Parameters.pixelsInModule);
+					g.fillRect(colBottomLeft + colModuleOffset * Parameters.pixelsInModule,
+							rowBottomLeft + rowModuleOffset * Parameters.pixelsInModule, Parameters.pixelsInModule, Parameters.pixelsInModule);
+				}
+				else if(rowModuleOffset >= 2 && rowModuleOffset <= 4
+						&& colModuleOffset >= 2 && colModuleOffset <= 4){
+					g.setColor(Color.RED);
+					g.fillRect(colTopLeft + colModuleOffset * Parameters.pixelsInModule,
+							rowTopLeft + rowModuleOffset * Parameters.pixelsInModule, Parameters.pixelsInModule, Parameters.pixelsInModule);
+					g.setColor(Color.GREEN);
+					g.fillRect(colTopRight + colModuleOffset * Parameters.pixelsInModule,
+							rowTopRight + rowModuleOffset * Parameters.pixelsInModule, Parameters.pixelsInModule, Parameters.pixelsInModule);
+					g.setColor(Color.BLUE);
 					g.fillRect(colBottomLeft + colModuleOffset * Parameters.pixelsInModule,
 							rowBottomLeft + rowModuleOffset * Parameters.pixelsInModule, Parameters.pixelsInModule, Parameters.pixelsInModule);
 				}

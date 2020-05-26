@@ -9,6 +9,7 @@ import androidx.core.util.Pair;
 
 import com.android.visualcrypto.flow.Flow;
 import com.pc.configuration.Constants;
+import com.pc.configuration.Parameters;
 import com.pc.encoderDecoder.StdImageSampler;
 
 import org.opencv.calib3d.Calib3d;
@@ -471,20 +472,24 @@ public class DistortedImageSampler extends StdImageSampler {
         }
 
         int pixelValue = (processedChannels[0]) |(processedChannels[1] << 8) | (processedChannels[2] << 16);
-/*
+
         // debugging code for comparison to original image
-        int rowPixel = (int) Math.round((Parameters.modulesInMargin + rowLoc/this.getModuleSize()) * Parameters.pixelsInModule);
-        int colPixel = (int) Math.round((Parameters.modulesInMargin + colLoc/this.getModuleSize()) * Parameters.pixelsInModule);
-        int encodedPixelValue = super.getPixel(colPixel, rowPixel);
-        int GBR = Integer.reverseBytes(encodedPixelValue) >>> 8;
-        if(GBR != pixelValue){
-            errCounter++;
-//            Mat alignmentBottomRightMat = new Mat(1, 3, CvType.CV_64F);
-//            alignmentBottomRightMat.put(0, 0, alignmentBottomRight.x, alignmentBottomRight.y, 1);
-            Point distortedPoint = OpenCvUtils.undistortedToDistortedIndexes(unDistortedImageMatCord, inverseH);
-            //Log.d("DistortedImageSampler", "Module pixel value different than expected");
-        }
-*/
+            if(radiusSample) {
+                int rowPixel = (int) Math.round((Parameters.modulesInMargin + rowLoc / this.getModuleSize()) * Parameters.pixelsInModule);
+                int colPixel = (int) Math.round((Parameters.modulesInMargin + colLoc / this.getModuleSize()) * Parameters.pixelsInModule);
+                if(rowPixel >= 0 && rowPixel < this.tempOrigPixelMatrix.length && colPixel >=0 && colPixel < this.tempOrigPixelMatrix[0].length) {
+                    int encodedPixelValue = super.getPixel(colPixel, rowPixel);
+                    int GBR = Integer.reverseBytes(encodedPixelValue) >>> 8;
+                    if (GBR != pixelValue) {
+                        errCounter++;
+                        //            Mat alignmentBottomRightMat = new Mat(1, 3, CvType.CV_64F);
+                        //            alignmentBottomRightMat.put(0, 0, alignmentBottomRight.x, alignmentBottomRight.y, 1);
+                        Point distortedPoint = OpenCvUtils.undistortedToDistortedIndexes(unDistortedImageMatCord, inverseH);
+                        //Log.d("DistortedImageSampler", "Module pixel value different than expected");
+                    }
+                }
+            }
+
 
         return pixelValue;
     }
