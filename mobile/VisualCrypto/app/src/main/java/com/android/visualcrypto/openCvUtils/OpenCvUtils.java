@@ -80,19 +80,20 @@ public class OpenCvUtils {
         return processedChannels;
     }
 
-    public static Point undistortedToDistortedIndexes(Mat unDistortedImageMatCord, Mat inverseH) {
-        Mat distortedImageMatCord = new Mat();
-        Core.gemm(inverseH, unDistortedImageMatCord.t(), 1.0, new Mat(), 0, distortedImageMatCord, 0); // res = inverseH.t() * undistortedImageMatCord
-        double x = distortedImageMatCord.get(0, 0)[0];
-        double y = distortedImageMatCord.get(1, 0)[0];
-        double z = distortedImageMatCord.get(2, 0)[0];
+    public static Point switchCoordinates(Mat oneSideCord, Mat homographyWay) {
+        Mat secondSideCord = new Mat();
+        Core.gemm(homographyWay, oneSideCord.t(), 1.0, new Mat(), 0, secondSideCord, 0); // res = inverseH.t() * undistortedImageMatCord
+        double x = secondSideCord.get(0, 0)[0];
+        double y = secondSideCord.get(1, 0)[0];
+        double z = secondSideCord.get(2, 0)[0];
         x = x / z;
         y = y / z;
         z = z / z;
 
-        int indexRow = (int) (Math.round(x));
-        int indexCol = (int) (Math.round(y));
-        return new Point(indexRow, indexCol);
+//        int indexRow = (int) (Math.round(x));
+//        int indexCol = (int) (Math.round(y));
+//        return new Point(indexRow, indexCol);
+        return new Point(x, y);
     }
 
 
@@ -107,11 +108,10 @@ public class OpenCvUtils {
     public static Point findAlignmentBottomRight(DistortedImageSampler distortedImageSampler, double estimatedModuleSize, double pixelStride, Mat inverseH, Mat capturedImg) {
         double startingPoint = 90 * estimatedModuleSize;
         double undistortedLoc = startingPoint;
-
-        Mat unDistortedImageMatCord1 = new Mat(1, 3, CvType.CV_64F);
-        unDistortedImageMatCord1.put(0, 0, undistortedLoc);
-        unDistortedImageMatCord1.put(0, 1, undistortedLoc);
-        unDistortedImageMatCord1.put(0, 2, 1);
+//        Mat unDistortedImageMatCord1 = new Mat(1, 3, CvType.CV_64F);
+//        unDistortedImageMatCord1.put(0, 0, undistortedLoc);
+//        unDistortedImageMatCord1.put(0, 1, undistortedLoc);
+//        unDistortedImageMatCord1.put(0, 2, 1);
         //double[] channels = getPixelChannels(unDistortedImageMatCord1, inverseH, capturedImg);
         int pixelValue = distortedImageSampler.getPixel(undistortedLoc, undistortedLoc, false, false);
         double[] channels = pixelToChannels(pixelValue);
@@ -125,9 +125,9 @@ public class OpenCvUtils {
                 channels = pixelToChannels(pixelValue);
             }
 
-            Mat m = new Mat(1, 3, CvType.CV_64F); m.put(0,0,undistortedLoc,undistortedLoc,1);
-            Point p = undistortedToDistortedIndexes(m,inverseH);
-            Point endOfPattern = isStartOfPattern(distortedImageSampler, undistortedLoc, pixelStride, inverseH, capturedImg);
+            //Mat m = new Mat(1, 3, CvType.CV_64F); m.put(0,0,undistortedLoc,undistortedLoc,1);
+            //Point p = undistortedToDistortedIndexes(m,inverseH);
+            Point endOfPattern = isStartOfPattern(distortedImageSampler, undistortedLoc, pixelStride);
             if (endOfPattern != null) {
                 return endOfPattern;
             } else {
@@ -151,9 +151,9 @@ public class OpenCvUtils {
         return channels;
     }
 
-    private static Point isStartOfPattern(DistortedImageSampler distortedImageSampler, double undistortedLoc, double pixelStride, Mat inverseH, Mat capturedImg) {
-        Mat unDistortedImageMatCord = new Mat(1, 3, CvType.CV_64F);
-        unDistortedImageMatCord.put(0, 2, 1);
+    private static Point isStartOfPattern(DistortedImageSampler distortedImageSampler, double undistortedLoc, double pixelStride) {
+        //Mat unDistortedImageMatCord = new Mat(1, 3, CvType.CV_64F);
+        //unDistortedImageMatCord.put(0, 2, 1);
         //double[] channels = getNewPixel(unDistortedImageMatCord, undistortedLoc, inverseH, capturedImg);
         int pixelValue = distortedImageSampler.getPixel(undistortedLoc, undistortedLoc, false, false);
         double[] channels = pixelToChannels(pixelValue);
@@ -169,13 +169,13 @@ public class OpenCvUtils {
                 channels = pixelToChannels(pixelValue);
             }
 
-            Pair pair = isPassage(distortedImageSampler, WHITE_PASSAGE, undistortedLoc, inverseH, capturedImg, pixelStride);
+            Pair pair = isPassage(distortedImageSampler, WHITE_PASSAGE, undistortedLoc, pixelStride);
             assert pair != null;
             if (!((boolean) pair.first)) {
                 return null;
             }
             undistortedLoc = (double) pair.second - pixelStride*7;// ORIs MODIFCATION FROM ITAYS TEAMVIEWER
-            unDistortedImageMatCord.put(0, 0, undistortedLoc, undistortedLoc); // advance the pixels
+            //unDistortedImageMatCord.put(0, 0, undistortedLoc, undistortedLoc); // advance the pixels
             blackAndWhitePassageCounter++;
             //channels = getNewPixel(unDistortedImageMatCord, undistortedLoc, inverseH, capturedImg);
             pixelValue = distortedImageSampler.getPixel(undistortedLoc, undistortedLoc, false, false);
@@ -188,7 +188,7 @@ public class OpenCvUtils {
                 channels = pixelToChannels(pixelValue);
             }
 
-            pair = isPassage(distortedImageSampler, BLACK_PASSAGE, undistortedLoc, inverseH, capturedImg, pixelStride);
+            pair = isPassage(distortedImageSampler, BLACK_PASSAGE, undistortedLoc, pixelStride);
             assert pair != null;
             if (!((boolean) pair.first)) {
                 return null;
@@ -199,7 +199,7 @@ public class OpenCvUtils {
             }
 
             undistortedLoc = (double) pair.second - 7*pixelStride; // ORIs MODIFCATION FROM ITAYS TEAMVIEWER
-            unDistortedImageMatCord.put(0, 0, undistortedLoc, undistortedLoc); // advance the pixels
+            //unDistortedImageMatCord.put(0, 0, undistortedLoc, undistortedLoc); // advance the pixels
             //channels = getNewPixel(unDistortedImageMatCord, undistortedLoc, inverseH, capturedImg);
             pixelValue = distortedImageSampler.getPixel(undistortedLoc, undistortedLoc, false, false);
             channels = pixelToChannels(pixelValue);
@@ -213,7 +213,7 @@ public class OpenCvUtils {
 
     private static Pair<Boolean, Number> isPassage(DistortedImageSampler distortedImageSampler,
                                                    int passage,
-                                                   double undistortedLoc, Mat inverseH, Mat capturedImg, double pixelStride) {
+                                                   double undistortedLoc, double pixelStride) {
         Mat unDistortedImageMatCord = new Mat(1, 3, CvType.CV_64F);
         unDistortedImageMatCord.put(0, 0, undistortedLoc, undistortedLoc, 1);
 
@@ -298,9 +298,37 @@ public class OpenCvUtils {
      * @param centerOfQr
      * @return
      */
-    public static double[] getAvgQrCornerColor(Point2D_F64 centerOfQr) {
+    static double[] getAvgQrCornerColor(Point2D_F64 centerOfQr, double pixelStride, Mat H,
+                                        Mat inverseH, Mat distortedImage, int sampledPixelsDimension) {
+        double[] pixelChannels = new double[4];
+        Mat distortedImageMatCord = new Mat(1, 3, CvType.CV_64F);
+        distortedImageMatCord.put(0, 0, centerOfQr.x); //TODO verify that it's not the opposite
+        distortedImageMatCord.put(0, 1, centerOfQr.y);
+        distortedImageMatCord.put(0, 2, 1);
 
-        return null;
+        Point undistortedIndex = switchCoordinates(distortedImageMatCord, H);
+        Point startingPoint = new Point(undistortedIndex.x - (sampledPixelsDimension/2)*pixelStride,
+                undistortedIndex.y - (sampledPixelsDimension/2)*pixelStride);
+
+        int totalSampledPixels = sampledPixelsDimension * sampledPixelsDimension;
+
+        double sumR = 0, sumG = 0, sumB = 0;
+
+        for (double row = 0; row < (sampledPixelsDimension*pixelStride); row += pixelStride) {
+            for (double col = 0; col < (sampledPixelsDimension*pixelStride); col += pixelStride) {
+                distortedImageMatCord.put(0,0, startingPoint.x + row);
+                distortedImageMatCord.put(0, 1, startingPoint.y + col);
+
+                Point distortedIndex = switchCoordinates(distortedImageMatCord, inverseH);
+                pixelChannels = distortedImage.get((int) Math.round(distortedIndex.y), (int) Math.round(distortedIndex.x));
+                sumR += pixelChannels[0]; sumG += pixelChannels[1]; sumB += pixelChannels[2];
+               // TODO ADD check for different pixels and quit if so..this is not a qr square
+            }
+        }
+
+        pixelChannels[0] = sumR / totalSampledPixels; pixelChannels[1] = sumG / totalSampledPixels;
+        pixelChannels[2] = sumB / totalSampledPixels;
+        return pixelChannels;
     }
 
     /**

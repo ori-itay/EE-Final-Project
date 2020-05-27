@@ -48,8 +48,8 @@ import georegression.struct.shapes.Polygon2D_F64;
 import static boofcv.android.ConvertBitmap.bitmapToGray;
 import static com.android.visualcrypto.openCvUtils.OpenCvUtils.calcDistance;
 import static com.android.visualcrypto.openCvUtils.OpenCvUtils.getMaxDistance;
+import static com.android.visualcrypto.openCvUtils.OpenCvUtils.switchCoordinates;
 import static com.android.visualcrypto.openCvUtils.OpenCvUtils.thresholdAndNormalizeChannels;
-import static com.android.visualcrypto.openCvUtils.OpenCvUtils.undistortedToDistortedIndexes;
 import static org.opencv.imgproc.Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C;
 import static org.opencv.imgproc.Imgproc.adaptiveThreshold;
 import static org.opencv.imgproc.Imgproc.cvtColor;
@@ -187,16 +187,38 @@ public class DistortedImageSampler extends StdImageSampler {
 
         DistortedImageSampler.inverseH = inverseH;
 
+        double minPixelStride = 1 / getMaxDistance(pts[0], pts[1], pts[2], pts[3]);
+
+        /******DEBUGGING***************/
+        String folderPath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + Instant.now().toString();
+        Path path = Paths.get(folderPath);
+        try {
+            Files.createDirectory(path);
+            FileWriter fw = new FileWriter(folderPath + "/parameters.txt");
+            Imgcodecs.imwrite(folderPath + "/bw.jpg", bw);
+            Imgcodecs.imwrite(folderPath + "/afterRoi.jpg", DistortedImageSampler.distortedImage);
+            String upperRowPts = String.format("leftUpperPoint: %f,%f\t\trightUpperPoint: %f,%f\n", pts[0].x,pts[0].y, pts[1].x, pts[1].y);
+            String lowerRowPts = String.format("leftLowerrPoint: %f,%f\t\trightLowerPoint: %f,%f", pts[3].x,pts[3].y, pts[2].x, pts[2].y);
+            fw.write(upperRowPts);
+            fw.write(lowerRowPts);
+            fw.close();
+        }catch(Exception e){
+            Log.d("writing_file", e.getMessage());
+        }
+        /*****************************/
 
         /***********INSERT HERE THE ROTATION + CALCULATION OF THE MATRIX "A" (COLOR BALANCING)**********/
-        Point2D_F64 center1 = pointsQueue.get(0).center;
-        Point2D_F64 center2 = pointsQueue.get(1).center;
-        Point2D_F64 center3 = pointsQueue.get(2).center;
-        Point2D_F64 center4 = pointsQueue.get(3).center;
-        double[] center0Channels = OpenCvUtils.getAvgQrCornerColor(center1);
-        double[] center1Channels = OpenCvUtils.getAvgQrCornerColor(center2);
-        double[] center2Channels = OpenCvUtils.getAvgQrCornerColor(center3);
-        double[] center3Channels = OpenCvUtils.getAvgQrCornerColor(center4);
+        Point2D_F64 center0 = pointsQueue.get(0).center; // TODO: fetch all centers and get our 3 qrs (or read relevant info in doc)
+        Point2D_F64 center1 = pointsQueue.get(1).center;
+        Point2D_F64 center2 = pointsQueue.get(2).center;
+        Point2D_F64 center3 = pointsQueue.get(3).center;
+        center0.x -= (xMin - 10); center1.x -= (xMin - 10); center2.x -= (xMin - 10); center3.x -= (xMin - 10);
+        center0.y -= (yMin - 10); center1.y -= (yMin - 10); center2.y -= (yMin - 10); center3.y -= (yMin - 10);
+
+        double[] center0Channels = OpenCvUtils.getAvgQrCornerColor(center0, minPixelStride, H, inverseH, distortedImage, 20);
+        double[] center1Channels = OpenCvUtils.getAvgQrCornerColor(center1, minPixelStride, H, inverseH, distortedImage, 20);
+        double[] center2Channels = OpenCvUtils.getAvgQrCornerColor(center2, minPixelStride, H, inverseH, distortedImage, 20);
+        double[] center3Channels = OpenCvUtils.getAvgQrCornerColor(center3, minPixelStride, H, inverseH, distortedImage, 20);
         double[] topLeft; double[] topRight; double[] bottomLeft;
 
         double[][] indexes = OpenCvUtils.getCentersOrder(center0Channels, center1Channels, center2Channels, center3Channels); // indexes[0] == R, indexes[1] = G, indexes[2] = B
@@ -213,10 +235,6 @@ public class DistortedImageSampler extends StdImageSampler {
         /***********************************************************************************************/
 
 
-        double minPixelStride = 1 / getMaxDistance(pts[0], pts[1], pts[2], pts[3]);
-
-
-
         start = System.currentTimeMillis(); // performance
         findMinMaxPixelVals(DistortedImageSampler.distortedImage);
         Log.d("performance", "findMinMaxPixelVals took: " + (System.currentTimeMillis() - start));
@@ -229,21 +247,6 @@ public class DistortedImageSampler extends StdImageSampler {
         start = System.currentTimeMillis();
 
 
-        String folderPath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + Instant.now().toString();
-        Path path = Paths.get(folderPath);
-        try {
-            Files.createDirectory(path);
-            FileWriter fw = new FileWriter(folderPath + "/parameters.txt");
-            Imgcodecs.imwrite(folderPath + "/bw.jpg", bw);
-            Imgcodecs.imwrite(folderPath + "/afterRoi.jpg", DistortedImageSampler.distortedImage);
-            String upperRowPts = String.format("leftUpperPoint: %f,%f\t\trightUpperPoint: %f,%f\n", pts[0].x,pts[0].y, pts[1].x, pts[1].y);
-            String lowerRowPts = String.format("leftLowerrPoint: %f,%f\t\trightLowerPoint: %f,%f", pts[3].x,pts[3].y, pts[2].x, pts[2].y);
-            fw.write(upperRowPts);
-            fw.write(lowerRowPts);
-            fw.close();
-        }catch(Exception e){
-            Log.d("writing_file", e.getMessage());
-        }
 
         Flow.delete = distortedImage.clone();
         Point alignmentBottomRight = OpenCvUtils.findAlignmentBottomRight(this, normalizedEstimatedModuleSize, minPixelStride, inverseH, DistortedImageSampler.distortedImage);
@@ -273,7 +276,7 @@ public class DistortedImageSampler extends StdImageSampler {
         Log.d("performance", "FindAlignmentBottomRight took: " + (System.currentTimeMillis() - start));
         Mat alignmentBottomRightMat = new Mat(1, 3, CvType.CV_64F);
         alignmentBottomRightMat.put(0, 0, alignmentBottomRight.x, alignmentBottomRight.y, 1);
-        Point distortedPoint = undistortedToDistortedIndexes(alignmentBottomRightMat, inverseH);
+        Point distortedPoint = switchCoordinates(alignmentBottomRightMat, inverseH);
 
         start = System.currentTimeMillis();
         this.setModuleSize(computeModuleSize(pts[0], distortedPoint, H, Math.sqrt(2 * 99 * 99)));
@@ -439,7 +442,7 @@ public class DistortedImageSampler extends StdImageSampler {
         unDistortedImageMatCord.put(0, 0, rowLoc);
         unDistortedImageMatCord.put(0, 1, colLoc);
         unDistortedImageMatCord.put(0, 2, 1);
-        Point distortedIndex = undistortedToDistortedIndexes(unDistortedImageMatCord, inverseH);
+        Point distortedIndex = switchCoordinates(unDistortedImageMatCord, inverseH);
         Imgproc.circle(Flow.delete, distortedIndex, 1, new Scalar(0,0,255), 1);
         int indexCol = (int) distortedIndex.x; int indexRow = (int) distortedIndex.y;
         //double[] channels = DistortedImageSampler.distortedImage.get(indexRow, indexCol);
@@ -484,7 +487,7 @@ public class DistortedImageSampler extends StdImageSampler {
                         errCounter++;
                         //            Mat alignmentBottomRightMat = new Mat(1, 3, CvType.CV_64F);
                         //            alignmentBottomRightMat.put(0, 0, alignmentBottomRight.x, alignmentBottomRight.y, 1);
-                        Point distortedPoint = OpenCvUtils.undistortedToDistortedIndexes(unDistortedImageMatCord, inverseH);
+                        Point distortedPoint = OpenCvUtils.switchCoordinates(unDistortedImageMatCord, inverseH);
                         //Log.d("DistortedImageSampler", "Module pixel value different than expected");
                     }
                 }
