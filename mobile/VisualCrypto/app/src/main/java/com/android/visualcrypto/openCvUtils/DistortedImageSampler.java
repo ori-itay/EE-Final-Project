@@ -208,32 +208,33 @@ public class DistortedImageSampler extends StdImageSampler {
         /*****************************/
 
         /***********INSERT HERE THE ROTATION + CALCULATION OF THE MATRIX "A" (COLOR BALANCING)**********/
-        Point2D_F64 center0 = pointsQueue.get(0).center; // TODO: fetch all centers and get our 3 qrs (or read relevant info in doc)
-        Point2D_F64 center1 = pointsQueue.get(1).center;
-        Point2D_F64 center2 = pointsQueue.get(2).center;
-        Point2D_F64 center3 = pointsQueue.get(3).center;
-        center0.x -= (xMin - 10); center1.x -= (xMin - 10); center2.x -= (xMin - 10); center3.x -= (xMin - 10);
-        center0.y -= (yMin - 10); center1.y -= (yMin - 10); center2.y -= (yMin - 10); center3.y -= (yMin - 10);
-
-        double[] center0Channels = OpenCvUtils.getAvgQrCornerColor(center0, minPixelStride, H, inverseH, distortedImage, 20);
-        double[] center1Channels = OpenCvUtils.getAvgQrCornerColor(center1, minPixelStride, H, inverseH, distortedImage, 20);
-        double[] center2Channels = OpenCvUtils.getAvgQrCornerColor(center2, minPixelStride, H, inverseH, distortedImage, 20);
-        double[] center3Channels = OpenCvUtils.getAvgQrCornerColor(center3, minPixelStride, H, inverseH, distortedImage, 20);
+        List<double[]> potentialsCenters = new ArrayList<>();
+        for (PositionPatternNode center : pointsQueue) {
+            Point2D_F64 centerPoint = center.center;
+            centerPoint.x -= (xMin - 10);
+            centerPoint.y -= (yMin - 10);
+            double[] centerChannels = OpenCvUtils.getAvgQrCornerColor(centerPoint, minPixelStride, H, inverseH, distortedImage, 20);
+            if (centerChannels != null)
+                potentialsCenters.add(centerChannels);
+        }
+        if (pointsQueue.size() != 3) {
+            Log.d("potentialsCenters", "Found " + pointsQueue.size() + "centers");
+            return 1;
+        }
         double[] topLeft; double[] topRight; double[] bottomLeft;
 
-        double[][] indexes = OpenCvUtils.getCentersOrder(center0Channels, center1Channels, center2Channels, center3Channels); // indexes[0] == R, indexes[1] = G, indexes[2] = B
-        if (indexes == null) {
-            Log.d("getCentersOrder", "ERROR IN getCentersOrder()");
+        if (!OpenCvUtils.getCentersOrder(potentialsCenters)) {  // indexes[0] == R, indexes[1] = G, indexes[2] = B
+            Log.d("getCentersOrder", "Error in getCentersOrder()");
+            return 1;
         } else {
-            topLeft = indexes[0];
-            topRight = indexes[1];
-            bottomLeft = indexes[2];
+            topLeft = potentialsCenters.get(0);
+            topRight = potentialsCenters.get(1);
+            bottomLeft = potentialsCenters.get(2);
             Mat colorBalancingMat = OpenCvUtils.getColorBalancingMatrix(topLeft, topRight, bottomLeft); // TODO: integrate colorbalancingMat with getpixel?
         }
 
         //rotate(topLeft, topRight, bottomLeft);
         /***********************************************************************************************/
-
 
         start = System.currentTimeMillis(); // performance
         findMinMaxPixelVals(DistortedImageSampler.distortedImage);
@@ -339,30 +340,14 @@ public class DistortedImageSampler extends StdImageSampler {
 
 
     private double computeModuleSize(Point upperLeft, Point lowerRight, Mat H, double expectedModulesDistance) {
-        Mat upperPoint = new Mat(1, 3, CvType.CV_64F);
+        Mat mat = new Mat(1, 3, CvType.CV_64F);
+        mat.put(0, 0, upperLeft.x,  upperLeft.y, 1);
+        Point upperLeftPt = switchCoordinates(mat, H);
 
-        upperPoint.put(0, 0, upperLeft.x);
-        upperPoint.put(0, 1, upperLeft.y);
-        upperPoint.put(0, 2, 1);
+        mat.put(0, 0, lowerRight.x, lowerRight.y);
 
-
-        Mat undistortedUpperPoint = new Mat();
-        Core.gemm(H, upperPoint.t(), 1.0, new Mat(), 0, undistortedUpperPoint, 0);
-
-        double zUpper = undistortedUpperPoint.get(2, 0)[0];
-        double xUpper = undistortedUpperPoint.get(0, 0)[0] / zUpper;
-        double yUpper = undistortedUpperPoint.get(1, 0)[0] / zUpper;
-
-
-        upperPoint.put(0, 0, lowerRight.x);
-        upperPoint.put(0, 1, lowerRight.y);
-        undistortedUpperPoint = new Mat();
-        Core.gemm(H, upperPoint.t(), 1.0, new Mat(), 0, undistortedUpperPoint, 0);
-        double zLower = undistortedUpperPoint.get(2, 0)[0];
-        double xLower = undistortedUpperPoint.get(0, 0)[0] / zLower;
-        double yLower = undistortedUpperPoint.get(1, 0)[0] / zLower;
-
-        return calcDistance(new Point(xLower, yLower), new Point(xUpper, yUpper)) / expectedModulesDistance;
+        Point lowerPt = switchCoordinates(mat, H);
+        return calcDistance(upperLeftPt, lowerPt) / expectedModulesDistance;
     }
 
     private void findMinMaxPixelVals(Mat capturedImage) {

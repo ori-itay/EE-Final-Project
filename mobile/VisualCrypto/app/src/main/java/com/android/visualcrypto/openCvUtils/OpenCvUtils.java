@@ -16,6 +16,7 @@ import org.opencv.core.Point;
 import org.opencv.core.Scalar;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import georegression.struct.point.Point2D_F64;
@@ -322,6 +323,10 @@ public class OpenCvUtils {
                 Point distortedIndex = switchCoordinates(distortedImageMatCord, inverseH);
                 pixelChannels = distortedImage.get((int) Math.round(distortedIndex.y), (int) Math.round(distortedIndex.x));
                 sumR += pixelChannels[0]; sumG += pixelChannels[1]; sumB += pixelChannels[2];
+                if ((pixelChannels[0] > 100 && pixelChannels[1] > 100) || (pixelChannels[0] > 100 && pixelChannels[2] > 100) ||
+                        (pixelChannels[1] > 100 && pixelChannels[2] > 100)) {
+                    return null;
+                }
                // TODO ADD check for different pixels and quit if so..this is not a qr square
             }
         }
@@ -333,45 +338,38 @@ public class OpenCvUtils {
 
     /**
      * Decides which center accounts for which color
-     * @param center0Channels
-     * @param center1Channels
-     * @param center2Channels
-     * @param center3Channels
+     * @param centers
      * @return
      */
-    static double[][] getCentersOrder(double[] center0Channels, double[] center1Channels, double[] center2Channels, double[] center3Channels) {
-        double[][] indexes = new double[3][]; // one of the array suppose to be null (=not a qr pattern)
+    static boolean getCentersOrder(List<double[]> centers) {
         double[] maxR = new double[1], maxG = new double[1], maxB = new double[1]; // arrays are used to allow modification in function
         int[] indexOfR = new int[1], indexOfG = new int[1], indexOfB = new int[1]; // arrays are used to allow modification in function
 
         Map<Integer, double[]> mapping = new HashMap<>();
 
-        if (center0Channels != null) {
-            mapping.put(0, center0Channels);
-            processChannel(center0Channels, 0, maxR, maxG, maxB, indexOfR, indexOfG, indexOfB);
+        if (centers.get(0) != null) {
+            mapping.put(0, centers.get(0));
+            processChannel(centers.get(0), 0, maxR, maxG, maxB, indexOfR, indexOfG, indexOfB);
         }
-        if (center1Channels != null) {
-            mapping.put(1, center1Channels);
-            processChannel(center1Channels, 1, maxR, maxG, maxB, indexOfR, indexOfG, indexOfB);
+        if (centers.get(1) != null) {
+            mapping.put(1, centers.get(1));
+            processChannel(centers.get(1), 1, maxR, maxG, maxB, indexOfR, indexOfG, indexOfB);
         }
-        if (center2Channels != null) {
-            mapping.put(2, center2Channels);
-            processChannel(center2Channels, 2, maxR, maxG, maxB, indexOfR, indexOfG, indexOfB);
-        }
-        if (center3Channels != null) {
-            mapping.put(3, center3Channels);
-            processChannel(center3Channels, 3, maxR, maxG, maxB, indexOfR, indexOfG, indexOfB);
+        if (centers.get(2) != null) {
+            mapping.put(2, centers.get(2));
+            processChannel(centers.get(2), 2, maxR, maxG, maxB, indexOfR, indexOfG, indexOfB);
         }
 
-        indexes[0] = mapping.get(indexOfR[0]); // represents red qr
-        indexes[1] = mapping.get(indexOfG[0]); // represents green qr
-        indexes[2] = mapping.get(indexOfB[0]); // represents blue qr
+        centers.set(0, mapping.get(indexOfR[0]));
+        centers.set(1, mapping.get(indexOfG[0]));
+        centers.set(2, mapping.get(indexOfB[0]));
 
         if (indexOfR[0] == indexOfG[0] || indexOfR[0] == indexOfB[0] || indexOfB[0] == indexOfG[0]) {
-            return null;
+            Log.d("getCentersOrder", "Found two candidates for same color!");
+            return false; // failure
         }
         else {
-            return indexes;
+            return true; // success
         }
     }
 
