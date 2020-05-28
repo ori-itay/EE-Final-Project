@@ -37,7 +37,7 @@ public class Flow{
         DistortedImageSampler distortedImageSampler = new DistortedImageSampler(capturedImg, encodedBitmap, context);
 
         //delete from here
-        InputStream encodedStream = context.getAssets().open("encodedColorPosDet.jpg");
+        InputStream encodedStream = context.getAssets().open("colored_50_50.jpg");
         Bitmap origEncodedBitmap = BitmapFactory.decodeStream(encodedStream);
         distortedImageSampler.tempOrigPixelMatrix = MainActivity.get2DPixelArray(origEncodedBitmap);
         errCounter = 0;

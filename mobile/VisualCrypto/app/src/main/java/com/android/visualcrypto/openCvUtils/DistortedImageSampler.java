@@ -56,7 +56,7 @@ import static org.opencv.imgproc.Imgproc.cvtColor;
 
 
 public class DistortedImageSampler extends StdImageSampler {
-    private static final int gridSplitSize = 1;
+    private static final int gridSplitSize = 8;
     private static final double[][][] minPixelVal = new double[gridSplitSize][gridSplitSize][Constants.CHANNELS];
     private static final double[][][] maxPixelVal = new double[gridSplitSize][gridSplitSize][Constants.CHANNELS];
     static int tileHeight;
@@ -71,6 +71,7 @@ public class DistortedImageSampler extends StdImageSampler {
     public static final Mat orisCamConfigMtx = new Mat(3,3 ,CvType.CV_64F);
     public static final Mat itaysCamConfigDst = new Mat(1,5 ,CvType.CV_64F);
     public static final Mat orisCamConfigDst = new Mat(1,5 ,CvType.CV_64F);
+    private static Mat colorBalancingMat;
 
 
     static {
@@ -217,8 +218,8 @@ public class DistortedImageSampler extends StdImageSampler {
             if (centerChannels != null)
                 potentialsCenters.add(centerChannels);
         }
-        if (pointsQueue.size() != 3) {
-            Log.d("potentialsCenters", "Found " + pointsQueue.size() + "centers");
+        if (potentialsCenters.size() != 3) {
+            Log.d("potentialsCenters", "Error: Found " + potentialsCenters.size() + "centers");
             return 1;
         }
         double[] topLeft; double[] topRight; double[] bottomLeft;
@@ -231,6 +232,7 @@ public class DistortedImageSampler extends StdImageSampler {
             topRight = potentialsCenters.get(1);
             bottomLeft = potentialsCenters.get(2);
             Mat colorBalancingMat = OpenCvUtils.getColorBalancingMatrix(topLeft, topRight, bottomLeft); // TODO: integrate colorbalancingMat with getpixel?
+            DistortedImageSampler.colorBalancingMat = colorBalancingMat;
         }
 
         //rotate(topLeft, topRight, bottomLeft);
@@ -295,7 +297,6 @@ public class DistortedImageSampler extends StdImageSampler {
         this.setModulesInDim(effectiveModulesInDim);
 
         Log.d("ModulesInDim", "modules in dim: " + Float.toString(this.getModulesInDim()));
-        Log.d("ModulesInDim", "left lower: " + rightLowerOfPts0.x + "," + rightLowerOfPts0.y);
         return 0;
     }
 
@@ -360,14 +361,14 @@ public class DistortedImageSampler extends StdImageSampler {
         boolean accumulate = false;
         int countR = 0, countG = 0, countB = 0;
 
-        final int lowPercentileRed = (int) Math.floor(0.0*(tileWidth*tileHeight));
-        final int highPercentileRed = (int) Math.floor(0.9*(tileWidth*tileHeight));
+        final int lowPercentileRed = (int) Math.floor(0.07*(tileWidth*tileHeight));
+        final int highPercentileRed = (int) Math.floor(0.99*(tileWidth*tileHeight));
 
-        final int lowPercentileGreen = (int) Math.floor(0.0*(tileWidth*tileHeight));
-        final int highPercentileGreen = (int) Math.floor(0.9*(tileWidth*tileHeight));
+        final int lowPercentileGreen = (int) Math.floor(0.07*(tileWidth*tileHeight));
+        final int highPercentileGreen = (int) Math.floor(0.90*(tileWidth*tileHeight));
 
-        final int lowPercentileBlue = (int) Math.floor(0.0*(tileWidth*tileHeight));
-        final int highPercentileBlue = (int) Math.floor(0.9*(tileWidth*tileHeight));
+        final int lowPercentileBlue = (int) Math.floor(0.07*(tileWidth*tileHeight));
+        final int highPercentileBlue = (int) Math.floor(0.87*(tileWidth*tileHeight));
 
         int high, low, left, right;
         for(int i = 0; i < gridSplitSize; i++){
@@ -447,7 +448,13 @@ public class DistortedImageSampler extends StdImageSampler {
         else{
             avgChannels = DistortedImageSampler.distortedImage.get((int) Math.round(indexRow), (int) Math.round(indexCol));
         }
+
+        Mat balancedColors = new Mat();
+        Mat unbalancedColors = new Mat(1,3, CvType.CV_64F); unbalancedColors.put(0,0, avgChannels[0], avgChannels[1], avgChannels[2]);
+        Core.gemm(DistortedImageSampler.colorBalancingMat, unbalancedColors.t(), 1.0, new Mat(), 0, balancedColors, 0);
+        avgChannels[0] = balancedColors.get(0,0)[0]; avgChannels[1] = balancedColors.get(1,0)[0]; avgChannels[2] = balancedColors.get(2,0)[0];
         int[] processedChannels = thresholdAndNormalizeChannels(avgChannels, minPixelVal, maxPixelVal, indexRow, indexCol);
+
         // set all values to the majority
         if (duplicateChannels) {
             if (processedChannels[0] == processedChannels[1]) {

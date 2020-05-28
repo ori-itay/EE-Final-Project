@@ -29,6 +29,7 @@ import com.pc.configuration.Constants;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
 import org.opencv.core.Mat;
+import org.opencv.imgproc.Imgproc;
 
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
@@ -200,23 +201,23 @@ public class MainActivity extends AppCompatActivity {
         try {
             //long startTime = System.currentTimeMillis();
             /*******************DECODE BY FILE NAME*****************************************/
-//            String imageName = "afterRoi.jpg";
-//            InputStream encodedStream = getAssets().open(imageName);
-//            File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + imageName);
-//
-//            Bitmap encodedBitmap = BitmapFactory.decodeStream(encodedStream);
-//            /*           Bitmap rotatedBitmap = encodedBitmap; //del*/
-//            Bitmap rotatedBitmap = CameraRotationFix.fixRotation(encodedBitmap, file.getAbsolutePath());
-//            Mat temp = new Mat();
-//            Utils.bitmapToMat(rotatedBitmap, temp);
-//            Imgproc.cvtColor(temp, temp, Imgproc.COLOR_BGR2RGB);
-//            Utils.matToBitmap(temp, rotatedBitmap);
+            String imageName = "afterRoi.jpg";
+            InputStream encodedStream = getAssets().open(imageName);
+            File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + imageName);
+
+            Bitmap encodedBitmap = BitmapFactory.decodeStream(encodedStream);
+            /*           Bitmap rotatedBitmap = encodedBitmap; //del*/
+            Bitmap rotatedBitmap = CameraRotationFix.fixRotation(encodedBitmap, file.getAbsolutePath());
+            Mat temp = new Mat();
+            Utils.bitmapToMat(rotatedBitmap, temp);
+            Imgproc.cvtColor(temp, temp, Imgproc.COLOR_BGR2RGB);
+            Utils.matToBitmap(temp, rotatedBitmap);
 
             /*******************************************************************************/
 
             /*******************DECODE LAST TAKEN FILE AUTOMATICALLY************************/
-            Bitmap encodedBitmap = BitmapFactory.decodeFile(currentPhotoPath);
-            Bitmap rotatedBitmap = CameraRotationFix.fixRotation(encodedBitmap, currentPhotoPath);
+//            Bitmap encodedBitmap = BitmapFactory.decodeFile(currentPhotoPath);
+//            Bitmap rotatedBitmap = CameraRotationFix.fixRotation(encodedBitmap, currentPhotoPath);
             /*******************************************************************************/
 
             Mat capturedImage = new Mat();

@@ -93,12 +93,12 @@ public class VideoProcessing extends AppCompatActivity {
             Utils.bitmapToMat(bp, mat);
 
             /*********WITH CALIBRATION**************/
-            Mat afterCalibrationMatrix = OpenCvUtils.calibrateImage(mat);
-            Utils.matToBitmap(afterCalibrationMatrix, bp); // update bitmap as well
+//            Mat afterCalibrationMatrix = OpenCvUtils.calibrateImage(mat);
+//            Utils.matToBitmap(afterCalibrationMatrix, bp); // update bitmap as well
             /***************************************/
 
             /*********NO CALIBRATION**************/
-            //Mat afterCalibrationMatrix = mat;
+            Mat afterCalibrationMatrix = mat;
             /***************************************/
 
             try {

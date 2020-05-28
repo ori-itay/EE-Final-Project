@@ -282,14 +282,14 @@ public class OpenCvUtils {
     }
 
     public static Mat getColorBalancingMatrix(double[] topLeft, double[] topRight, double[] bottomLeft) {
-        Mat M = new Mat(3,3, CvType.CV_32F);
+        Mat M = new Mat(3,3, CvType.CV_64F);
 
         M.put(0,0, topLeft[0], topRight[0], bottomLeft[0]);
         M.put(1,0, topLeft[1], topRight[1], bottomLeft[1]);
         M.put(2,0, topLeft[2], topRight[2], bottomLeft[2]);
 
         Mat A = new Mat();
-        Core.multiply(M.inv(), new Scalar(1/255.0), A);
+        Core.multiply(M.inv(), new Scalar(255.0), A); // 1/
 
         return A;
     }
