@@ -79,8 +79,8 @@ public class DistortedImageSampler extends StdImageSampler {
         orisCamConfigMtx.put(0,0, 3.54906380e+03, 0D, 2.28702762e+03,   0D, 3.55130312e+03, 1.69588285e+03,    0D, 0D, 1.0D);
 
         itaysCamConfigDst.put(0,0,   0.51539854, -0.00120593, 0.00206427, -0.69356642 ,0.24467169);
-        itaysCamConfigDst.put(0,0,   0.24467169, -0.69356642, 0.00206427, -0.00120593 ,0.51539854);
-        itaysCamConfigMtx.put(0,0, 3.14068354e+03, 0, 1.91008252e+03,              0, 3.14439719e+03, 1.59031581e+03,                0, 0, 1);
+        itaysCamConfigDst.put(0,0,   3.90420233e-01, -1.54381552e+00, -9.02378490e-04, 1.83526192e-03 ,1.79797055e+00);
+        itaysCamConfigMtx.put(0,0, 3.14574313e+03, 0, 1.49381470e+03, 0, 3.14831362e+03, 1.95266442e+03, 0, 0, 1);
     }
 
 
@@ -361,13 +361,13 @@ public class DistortedImageSampler extends StdImageSampler {
         boolean accumulate = false;
         int countR = 0, countG = 0, countB = 0;
 
-        final int lowPercentileRed = (int) Math.floor(0.07*(tileWidth*tileHeight));
-        final int highPercentileRed = (int) Math.floor(0.99*(tileWidth*tileHeight));
+        final int lowPercentileRed = (int) Math.floor(0.01*(tileWidth*tileHeight));
+        final int highPercentileRed = (int) Math.floor(0.87*(tileWidth*tileHeight));
 
-        final int lowPercentileGreen = (int) Math.floor(0.07*(tileWidth*tileHeight));
-        final int highPercentileGreen = (int) Math.floor(0.90*(tileWidth*tileHeight));
+        final int lowPercentileGreen = (int) Math.floor(0.01*(tileWidth*tileHeight));
+        final int highPercentileGreen = (int) Math.floor(0.87*(tileWidth*tileHeight));
 
-        final int lowPercentileBlue = (int) Math.floor(0.07*(tileWidth*tileHeight));
+        final int lowPercentileBlue = (int) Math.floor(0.01*(tileWidth*tileHeight));
         final int highPercentileBlue = (int) Math.floor(0.87*(tileWidth*tileHeight));
 
         int high, low, left, right;
@@ -431,7 +431,6 @@ public class DistortedImageSampler extends StdImageSampler {
         Point distortedIndex = switchCoordinates(unDistortedImageMatCord, inverseH);
         Imgproc.circle(Flow.delete, distortedIndex, 1, new Scalar(0,0,255), 1);
         int indexCol = (int) distortedIndex.x; int indexRow = (int) distortedIndex.y;
-        //double[] channels = DistortedImageSampler.distortedImage.get(indexRow, indexCol);
         double[] avgChannels = new double[Constants.CHANNELS];
         if(radiusSample) {
             double[] channels1 = DistortedImageSampler.distortedImage.get((int) Math.round(indexRow + .51), (int) Math.round(indexCol + .51));
@@ -452,7 +451,7 @@ public class DistortedImageSampler extends StdImageSampler {
         Mat balancedColors = new Mat();
         Mat unbalancedColors = new Mat(1,3, CvType.CV_64F); unbalancedColors.put(0,0, avgChannels[0], avgChannels[1], avgChannels[2]);
         Core.gemm(DistortedImageSampler.colorBalancingMat, unbalancedColors.t(), 1.0, new Mat(), 0, balancedColors, 0);
-        avgChannels[0] = balancedColors.get(0,0)[0]; avgChannels[1] = balancedColors.get(1,0)[0]; avgChannels[2] = balancedColors.get(2,0)[0];
+        //avgChannels[0] = balancedColors.get(0,0)[0]; avgChannels[1] = balancedColors.get(1,0)[0]; avgChannels[2] = balancedColors.get(2,0)[0];
         int[] processedChannels = thresholdAndNormalizeChannels(avgChannels, minPixelVal, maxPixelVal, indexRow, indexCol);
 
         // set all values to the majority
@@ -469,21 +468,21 @@ public class DistortedImageSampler extends StdImageSampler {
         int pixelValue = (processedChannels[0]) |(processedChannels[1] << 8) | (processedChannels[2] << 16);
 
         // debugging code for comparison to original image
-            if(radiusSample) {
-                int rowPixel = (int) Math.round((Parameters.modulesInMargin + rowLoc / this.getModuleSize()) * Parameters.pixelsInModule);
-                int colPixel = (int) Math.round((Parameters.modulesInMargin + colLoc / this.getModuleSize()) * Parameters.pixelsInModule);
-                if(rowPixel >= 0 && rowPixel < this.tempOrigPixelMatrix.length && colPixel >=0 && colPixel < this.tempOrigPixelMatrix[0].length) {
-                    int encodedPixelValue = super.getPixel(colPixel, rowPixel);
-                    int GBR = Integer.reverseBytes(encodedPixelValue) >>> 8;
-                    if (GBR != pixelValue) {
-                        errCounter++;
-                        //            Mat alignmentBottomRightMat = new Mat(1, 3, CvType.CV_64F);
-                        //            alignmentBottomRightMat.put(0, 0, alignmentBottomRight.x, alignmentBottomRight.y, 1);
-                        Point distortedPoint = OpenCvUtils.switchCoordinates(unDistortedImageMatCord, inverseH);
-                        //Log.d("DistortedImageSampler", "Module pixel value different than expected");
-                    }
+        if(radiusSample) {
+            int rowPixel = (int) Math.round((Parameters.modulesInMargin + rowLoc / this.getModuleSize()) * Parameters.pixelsInModule);
+            int colPixel = (int) Math.round((Parameters.modulesInMargin + colLoc / this.getModuleSize()) * Parameters.pixelsInModule);
+            if(rowPixel >= 0 && rowPixel < this.tempOrigPixelMatrix.length && colPixel >=0 && colPixel < this.tempOrigPixelMatrix[0].length) {
+                int encodedPixelValue = super.getPixel(colPixel, rowPixel);
+                int GBR = Integer.reverseBytes(encodedPixelValue) >>> 8;
+                if (GBR != pixelValue) {
+                    errCounter++;
+                    //            Mat alignmentBottomRightMat = new Mat(1, 3, CvType.CV_64F);
+                    //            alignmentBottomRightMat.put(0, 0, alignmentBottomRight.x, alignmentBottomRight.y, 1);
+                    Point distortedPoint = OpenCvUtils.switchCoordinates(unDistortedImageMatCord, inverseH);
+                    //Log.d("DistortedImageSampler", "Module pixel value different than expected");
                 }
             }
+        }
 
 
         return pixelValue;

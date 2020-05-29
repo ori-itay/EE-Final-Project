@@ -24,12 +24,12 @@ import androidx.core.content.FileProvider;
 
 import com.android.visualcrypto.cameraUtils.CameraRotationFix;
 import com.android.visualcrypto.flow.Flow;
+import com.android.visualcrypto.openCvUtils.OpenCvUtils;
 import com.pc.configuration.Constants;
 
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
 import org.opencv.core.Mat;
-import org.opencv.imgproc.Imgproc;
 
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
@@ -211,8 +211,8 @@ public class MainActivity extends AppCompatActivity {
             /*******************************************************************************/
 
             /*******************DECODE LAST TAKEN FILE AUTOMATICALLY************************/
-            Bitmap encodedBitmap = BitmapFactory.decodeFile(currentPhotoPath);
-            Bitmap rotatedBitmap = CameraRotationFix.fixRotation(encodedBitmap, currentPhotoPath);
+//            Bitmap encodedBitmap = BitmapFactory.decodeFile(currentPhotoPath);
+//            Bitmap rotatedBitmap = CameraRotationFix.fixRotation(encodedBitmap, currentPhotoPath);
             /*******************************************************************************/
 
             Mat capturedImage = new Mat();
@@ -222,7 +222,7 @@ public class MainActivity extends AppCompatActivity {
 
             //TODO: pay attention whether calibrateimage is commented
             /**********NO CALIBRATION***************/
-            //Bitmap resBitmap = Flow.executeAndroidFlow(capturedImage, rotatedBitmap, this);
+//            Bitmap resBitmap = Flow.executeAndroidFlow(capturedImage, rotatedBitmap, this);
             /***************************************/
 
 
