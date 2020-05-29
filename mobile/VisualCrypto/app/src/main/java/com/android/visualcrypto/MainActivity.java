@@ -208,11 +208,6 @@ public class MainActivity extends AppCompatActivity {
             Bitmap encodedBitmap = BitmapFactory.decodeStream(encodedStream);
             /*           Bitmap rotatedBitmap = encodedBitmap; //del*/
             Bitmap rotatedBitmap = CameraRotationFix.fixRotation(encodedBitmap, file.getAbsolutePath());
-            Mat temp = new Mat();
-            Utils.bitmapToMat(rotatedBitmap, temp);
-            Imgproc.cvtColor(temp, temp, Imgproc.COLOR_BGR2RGB);
-            Utils.matToBitmap(temp, rotatedBitmap);
-
             /*******************************************************************************/
 
             /*******************DECODE LAST TAKEN FILE AUTOMATICALLY************************/
