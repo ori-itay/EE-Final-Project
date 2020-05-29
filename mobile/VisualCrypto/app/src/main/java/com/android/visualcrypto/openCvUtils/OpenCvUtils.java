@@ -1,13 +1,11 @@
 package com.android.visualcrypto.openCvUtils;
 
-import android.graphics.Bitmap;
 import android.util.Log;
 
 import androidx.core.util.Pair;
 
 import com.pc.configuration.Constants;
 
-import org.opencv.android.Utils;
 import org.opencv.calib3d.Calib3d;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
@@ -275,10 +273,10 @@ public class OpenCvUtils {
     }
 
     public static Mat calibrateImage(Mat capturedImage) {
-        Mat undistored = new Mat();
-        Calib3d.undistort(capturedImage, undistored, DistortedImageSampler.itaysCamConfigMtx, DistortedImageSampler.itaysCamConfigDst);
-        //Calib3d.undistort(capturedImage, undistored, DistortedImageSampler.orisCamConfigMtx, DistortedImageSampler.orisCamConfigDst);
-        return undistored;
+        Mat undistorted = new Mat();
+        Calib3d.undistort(capturedImage, undistorted, DistortedImageSampler.itaysCamConfigMtx, DistortedImageSampler.itaysCamConfigDst);
+        //Calib3d.undistort(capturedImage, undistorted, DistortedImageSampler.orisCamConfigMtx, DistortedImageSampler.orisCamConfigDst);
+        return undistorted;
     }
 
     public static Mat getColorBalancingMatrix(double[] topLeft, double[] topRight, double[] bottomLeft) {
