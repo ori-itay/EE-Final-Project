@@ -100,24 +100,27 @@ public class DistortedImageSampler extends StdImageSampler {
 
         GrayU8 gray = bitmapToGray(DistortedImageSampler.distortedBitmap, (GrayU8) null, null);
 
+        /*DEL*/
+        Imgcodecs.imwrite(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)  + "/calib_cap.jpg", DistortedImageSampler.distortedImage );
+         /***/
+
         ConfigQrCode config = new ConfigQrCode();
         QrCodePreciseDetector<GrayU8> detector = FactoryFiducial.qrcode(config, GrayU8.class);
         detector.process(gray);
 
+        QrCode boofCorners = null;
         Point[] pts = new Point[4]; //opencv Points
 
         List<QrCode> failures = detector.getFailures();
         if (failures.size() == 1) {
-            QrCode boofCorners = failures.get(0);
-            Polygon2D_F64 polygon = boofCorners.bounds;
-            convertBoofToOpenPoints(polygon, pts);
+            boofCorners = failures.get(0);
+            convertBoofToOpenPoints(boofCorners, pts);
         }
 
         List<QrCode> detections = detector.getDetections();
         if (detections.size() == 1) {
-            QrCode boofCorners = detections.get(0);
-            Polygon2D_F64 polygon = boofCorners.bounds;
-            convertBoofToOpenPoints(polygon, pts);
+            boofCorners = detections.get(0);
+            convertBoofToOpenPoints(boofCorners, pts);
         }
 
         List<PositionPatternNode> pointsQueue = detector.getDetectPositionPatterns().getPositionPatterns().toList();
@@ -212,6 +215,9 @@ public class DistortedImageSampler extends StdImageSampler {
         List<double[]> potentialsCenters = new ArrayList<>();
         for (PositionPatternNode center : pointsQueue) {
             Point2D_F64 centerPoint = center.center;
+            if (!inQrCenter(boofCorners, centerPoint)) {
+                continue;
+            }
             centerPoint.x -= (xMin - 10);
             centerPoint.y -= (yMin - 10);
             double[] centerChannels = OpenCvUtils.getAvgQrCornerColor(centerPoint, minPixelStride, H, inverseH, distortedImage, 20);
@@ -298,6 +304,18 @@ public class DistortedImageSampler extends StdImageSampler {
 
         Log.d("ModulesInDim", "modules in dim: " + Float.toString(this.getModulesInDim()));
         return 0;
+    }
+
+    private boolean inQrCenter(QrCode qrCode, Point2D_F64 centerPoint) {
+        if (qrCode == null) {
+            return false;
+        }
+
+        Polygon2D_F64 qr1 = qrCode.ppCorner;
+        Polygon2D_F64 qr2 = qrCode.ppRight;
+        Polygon2D_F64 qr3 = qrCode.ppDown;
+
+        return qr1.isInside(centerPoint) || qr2.isInside(centerPoint) || qr3.isInside(centerPoint);
     }
 
     private Point findCorner(Mat img, int val, boolean top, boolean left) {
@@ -411,7 +429,8 @@ public class DistortedImageSampler extends StdImageSampler {
         }
     }
 
-    private void convertBoofToOpenPoints(Polygon2D_F64 polygon, Point[] pts) {
+    private void convertBoofToOpenPoints(QrCode qrCode, Point[] pts) {
+        Polygon2D_F64 polygon = qrCode.bounds;
         Point2D_F64 boofPoint0 = polygon.get(0);
         Point2D_F64 boofPoint1 = polygon.get(1);
         Point2D_F64 boofPoint2 = polygon.get(2);
