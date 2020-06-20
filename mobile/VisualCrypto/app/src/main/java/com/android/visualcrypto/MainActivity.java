@@ -227,7 +227,7 @@ public class MainActivity extends AppCompatActivity {
 
 
             /*********WITH CALIBRATION**************/
-            Mat afterCalibrationMatrix = OpenCvUtils.calibrateImage(capturedImage);
+            Mat afterCalibrationMatrix = OpenCvUtils.calibrateImage(capturedImage, false);
             Utils.matToBitmap(afterCalibrationMatrix, rotatedBitmap);
             //rotatedBitmap = convertMatToBitmap(afterCalibrationMatrix); // update bitmap as well
             Bitmap resBitmap = Flow.executeAndroidFlow(afterCalibrationMatrix, rotatedBitmap, this);

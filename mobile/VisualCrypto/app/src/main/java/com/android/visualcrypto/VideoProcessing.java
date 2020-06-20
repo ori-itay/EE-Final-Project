@@ -21,7 +21,6 @@ import androidx.camera.core.Preview;
 import androidx.camera.core.PreviewConfig;
 
 import com.android.visualcrypto.flow.Flow;
-import com.android.visualcrypto.openCvUtils.OpenCvUtils;
 
 import org.opencv.android.Utils;
 import org.opencv.core.Mat;
@@ -32,8 +31,6 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 
 import javax.crypto.NoSuchPaddingException;
-
-import static com.android.visualcrypto.MainActivity.bitmapToFile;
 
 
 public class VideoProcessing extends AppCompatActivity {
@@ -93,7 +90,7 @@ public class VideoProcessing extends AppCompatActivity {
             Utils.bitmapToMat(bp, mat);
 
             /*********WITH CALIBRATION**************/
-//            Mat afterCalibrationMatrix = OpenCvUtils.calibrateImage(mat);
+//            Mat afterCalibrationMatrix = OpenCvUtils.calibrateImage(mat, true);
 //            Utils.matToBitmap(afterCalibrationMatrix, bp); // update bitmap as well
             /***************************************/
 

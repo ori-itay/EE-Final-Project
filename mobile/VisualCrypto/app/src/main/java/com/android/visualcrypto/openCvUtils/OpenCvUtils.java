@@ -53,8 +53,37 @@ public class OpenCvUtils {
         }
     }
 
+    public static int[] classifyPixelChannelsLevels(double[] channels, int indexRow, int indexCol){
+        int subMatIndRow = indexRow / DistortedImageSampler.tileHeight;
+        int subMatIndCol = indexCol / DistortedImageSampler.tileWidth;
+        //TODO: use the proper tile
+        int processedChannels[] = new int[Constants.CHANNELS];
+
+        double diffRed = 255, diffBlue = 255, diffGreen = 255;
+        int currDiff;
+        for(int level : DistortedImageSampler.percentileValuesMapTilesRed.get(subMatIndRow).get(subMatIndCol).keySet()){
+            currDiff = (int) Math.abs(channels[0] - DistortedImageSampler.percentileValuesMapTilesRed.get(subMatIndRow).get(subMatIndCol).get(level));
+            if(currDiff < diffRed){
+                diffRed = currDiff;
+                processedChannels[0] = level;
+            }
+            currDiff = (int) Math.abs(channels[1] - DistortedImageSampler.percentileValuesMapTilesGreen.get(subMatIndRow).get(subMatIndCol).get(level));
+            if(currDiff < diffGreen){
+                diffGreen = currDiff;
+                processedChannels[1] = level;
+            }
+            currDiff = (int) Math.abs(channels[2] - DistortedImageSampler.percentileValuesMapTilesBlue.get(subMatIndRow).get(subMatIndCol).get(level));
+            if(currDiff < diffBlue){
+                diffBlue = currDiff;
+                processedChannels[2] = level;
+            }
+        }
+        return processedChannels;
+    }
+
     public static int[] thresholdAndNormalizeChannels(double[] channels, double[][][] minPixelVal,
                                                          double[][][] maxPixelVal, int indexRow, int indexCol) {
+        final double GAMMA_ITAY = 1.37;
 
         int subMatIndRow = indexRow / DistortedImageSampler.tileHeight;
         int subMatIndCol = indexCol / DistortedImageSampler.tileWidth;
@@ -67,6 +96,8 @@ public class OpenCvUtils {
             else if (channels[i] > maxPixelVal[subMatIndRow][subMatIndCol][i]) normalizedChannel = 255;
             else normalizedChannel =  ((channels[i] - minPixelVal[subMatIndRow][subMatIndCol][i]) * 255.0 /
                         (maxPixelVal[subMatIndRow][subMatIndCol][i] - minPixelVal[subMatIndRow][subMatIndCol][i]));
+//            else normalizedChannel = 255* (Math.pow( (channels[i] - minPixelVal[subMatIndRow][subMatIndCol][i]), 1/GAMMA_ITAY) /
+//                        (maxPixelVal[subMatIndRow][subMatIndCol][i] - minPixelVal[subMatIndRow][subMatIndCol][i])) ;
             double diff = 255;
             for(int level :levelsArr){
                 if(Math.abs(normalizedChannel - level) < diff){
@@ -272,10 +303,15 @@ public class OpenCvUtils {
         return channels[0] > WHITE_THRESHOLD && channels[1] > WHITE_THRESHOLD && channels[2] > WHITE_THRESHOLD;
     }
 
-    public static Mat calibrateImage(Mat capturedImage) {
+    public static Mat calibrateImage(Mat capturedImage, boolean videoMode) {
         Mat undistorted = new Mat();
-        Calib3d.undistort(capturedImage, undistorted, DistortedImageSampler.itaysCamConfigMtx, DistortedImageSampler.itaysCamConfigDst);
-        //Calib3d.undistort(capturedImage, undistorted, DistortedImageSampler.orisCamConfigMtx, DistortedImageSampler.orisCamConfigDst);
+        if(videoMode){
+            Calib3d.undistort(capturedImage, undistorted, DistortedImageSampler.itaysCamConfigMtx, DistortedImageSampler.itaysCamConfigDst);
+        }
+        else {
+            Calib3d.undistort(capturedImage, undistorted, DistortedImageSampler.itaysCamConfigMtx, DistortedImageSampler.itaysCamConfigDst);
+            //Calib3d.undistort(capturedImage, undistorted, DistortedImageSampler.orisCamConfigMtx, DistortedImageSampler.orisCamConfigDst);
+        }
         return undistorted;
     }
 
@@ -321,11 +357,10 @@ public class OpenCvUtils {
                 Point distortedIndex = switchCoordinates(distortedImageMatCord, inverseH);
                 pixelChannels = distortedImage.get((int) Math.round(distortedIndex.y), (int) Math.round(distortedIndex.x));
                 sumR += pixelChannels[0]; sumG += pixelChannels[1]; sumB += pixelChannels[2];
-                if ((pixelChannels[0] > 100 && pixelChannels[1] > 100) || (pixelChannels[0] > 100 && pixelChannels[2] > 100) ||
-                        (pixelChannels[1] > 100 && pixelChannels[2] > 100)) {
+                if ((pixelChannels[0] > 160 && pixelChannels[1] > 160) || (pixelChannels[0] > 160 && pixelChannels[2] > 160) ||
+                        (pixelChannels[1] > 160 && pixelChannels[2] > 160)) {
                     return null;
                 }
-               // TODO ADD check for different pixels and quit if so..this is not a qr square
             }
         }
 
