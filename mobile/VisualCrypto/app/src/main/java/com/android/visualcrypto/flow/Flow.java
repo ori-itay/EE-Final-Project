@@ -3,6 +3,7 @@ package com.android.visualcrypto.flow;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.os.Environment;
 import android.util.Log;
 
 import com.android.visualcrypto.MainActivity;
@@ -16,6 +17,7 @@ import com.pc.encryptorDecryptor.decryptor.Decryptor;
 import com.pc.shuffleDeshuffle.deshuffle.Deshuffle;
 
 import org.opencv.core.Mat;
+import org.opencv.imgcodecs.Imgcodecs;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -55,6 +57,9 @@ public class Flow{
         start = System.currentTimeMillis();
         DisplayDecoder.decodePixelMatrix(distortedImageSampler, pixelArr);
         Log.d("performance", "decodePixelMatrix took: " + (System.currentTimeMillis() - start));
+
+        Imgcodecs.imwrite(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/SAMPLED_PLACES.jpg", Flow.delete); //TODO: del
+
         //SNR
         double SNR = (double)errCounter / (distortedImageSampler.getModulesInDim()*distortedImageSampler.getModulesInDim());
         Log.d("SNR", "SNR is: " + SNR);
