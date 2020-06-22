@@ -562,8 +562,11 @@ public class DistortedImageSampler extends StdImageSampler {
         final int NUM_OF_SAMPLES_FOR_RADIUS_SMAPLING = 9;
         if(radiusSample) {
             double[] channels1 = DistortedImageSampler.distortedImage.get((int) Math.round(indexRow + .51), (int) Math.round(indexCol + .51));
+            Imgproc.rectangle(Flow.delete, new Point((int) Math.round(indexCol + .51), (int) Math.round(indexRow + .51)),new Point((int) Math.round(indexCol + .51), (int) Math.round(indexRow + .51)),  new Scalar(255-avgChannels[2],255-avgChannels[2],255-avgChannels[0]));
             double[] channels2 = DistortedImageSampler.distortedImage.get((int) Math.round(indexRow - .51), (int) Math.round(indexCol - .51));
+            Imgproc.rectangle(Flow.delete, new Point((int) Math.round(indexCol - .51), (int) Math.round(indexRow - .51)),new Point((int) Math.round(indexCol - .51), (int) Math.round(indexRow - .51)),  new Scalar(255-avgChannels[2],255-avgChannels[2],255-avgChannels[0]));
             double[] channels3 = DistortedImageSampler.distortedImage.get((int) Math.round(indexRow + .51), (int) Math.round(indexCol - .51));
+            Imgproc.rectangle(Flow.delete, new Point((int) Math.round(indexCol + .51), (int) Math.round(indexRow - .51)),new Point((int) Math.round(indexCol + .51), (int) Math.round(indexRow - .51)),  new Scalar(255-avgChannels[2],255-avgChannels[2],255-avgChannels[0]));
             double[] channels4 = DistortedImageSampler.distortedImage.get((int) Math.round(indexRow - .51), (int) Math.round(indexCol + .51));
             double[] channels5 = DistortedImageSampler.distortedImage.get((int) Math.round(indexRow), (int) Math.round(indexCol + .51));
             double[] channels6 = DistortedImageSampler.distortedImage.get((int) Math.round(indexRow), (int) Math.round(indexCol - .51));
@@ -575,6 +578,8 @@ public class DistortedImageSampler extends StdImageSampler {
                 double[] radiusValues = {channels1[i], channels2[i], channels3[i], channels4[i],
                         channels5[i], channels6[i], channels7[i], channels8[i], channels9[i]};
                 Arrays.sort(radiusValues);
+            Imgproc.rectangle(Flow.delete, new Point((int) Math.round(indexCol - .51), (int) Math.round(indexRow + .51)),new Point((int) Math.round(indexCol - .51), (int) Math.round(indexRow + .51)),  new Scalar(255-avgChannels[2],255-avgChannels[2],255-avgChannels[0]));
+            for (int i = 0; i < medianChannels.length; i++) {
                 if (channels1 == null || channels2 == null || channels3 == null || channels4 == null) {
                     Log.d("null", distortedIndex.x + "," + distortedIndex.y);
                 }
@@ -587,6 +592,10 @@ public class DistortedImageSampler extends StdImageSampler {
             medianChannels = DistortedImageSampler.distortedImage.get((int) Math.round(indexRow), (int) Math.round(indexCol));
 //            avgChannels = DistortedImageSampler.distortedImage.get((int) Math.round(indexRow), (int) Math.round(indexCol));
         }
+
+        //Imgproc.circle(Flow.delete, distortedIndex, 1, new Scalar(0,0,255), 1);
+
+          //  Imgproc.circle(Flow.delete, distortedIndex, 1, new Scalar(255-avgChannels[2],255-avgChannels[2],255-avgChannels[0]) , 1);
 
 //        Mat balancedColors = new Mat();
 //        Mat unbalancedColors = new Mat(1,3, CvType.CV_64F); unbalancedColors.put(0,0, avgChannels[0], avgChannels[1], avgChannels[2]);
@@ -633,7 +642,10 @@ public class DistortedImageSampler extends StdImageSampler {
 
                     //            Mat alignmentBottomRightMat = new Mat(1, 3, CvType.CV_64F);
                     //            alignmentBottomRightMat.put(0, 0, alignmentBottomRight.x, alignmentBottomRight.y, 1);
-                    Point distortedPoint = OpenCvUtils.switchCoordinates(unDistortedImageMatCord, inverseH);
+
+                   //double[] middleVals = DistortedImageSampler.distortedImage.get((int) Math.round(indexCol), (int) Math.round(indexRow));
+                   // Imgproc.rectangle(Flow.delete, new Point((int) Math.round(indexCol), (int) Math.round(indexRow)), new Point((int) Math.round(indexCol), (int) Math.round(indexRow)), new Scalar(255-middleVals[0],255-middleVals[1],255-middleVals[2]));
+                    Imgproc.rectangle(Flow.delete, new Point((int) Math.round(indexCol), (int) Math.round(indexRow)), new Point((int) Math.round(indexCol), (int) Math.round(indexRow)), new Scalar(0,0,0));
                     //Log.d("DistortedImageSampler", "Module pixel value different than expected");
                 }
             }
