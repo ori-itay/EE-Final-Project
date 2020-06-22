@@ -27,7 +27,10 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
-import static com.android.visualcrypto.openCvUtils.DistortedImageSampler.errCounter;
+import static com.android.visualcrypto.openCvUtils.DistortedImageSampler.errCounterBlue;
+import static com.android.visualcrypto.openCvUtils.DistortedImageSampler.errCounterGreen;
+import static com.android.visualcrypto.openCvUtils.DistortedImageSampler.errCounterRed;
+import static com.android.visualcrypto.openCvUtils.DistortedImageSampler.errCounterTotal;
 
 public class Flow{
     public static Mat delete;
@@ -40,7 +43,7 @@ public class Flow{
         InputStream encodedStream = context.getAssets().open("50_50_4Level_colorPos.jpg");
         Bitmap origEncodedBitmap = BitmapFactory.decodeStream(encodedStream);
         distortedImageSampler.tempOrigPixelMatrix = MainActivity.get2DPixelArray(origEncodedBitmap);
-        errCounter = 0;
+        errCounterTotal = 0; errCounterRed = 0; errCounterGreen = 0; errCounterBlue = 0;
         //to here
 
         if (distortedImageSampler.initParameters() != 0) {
@@ -56,8 +59,17 @@ public class Flow{
         DisplayDecoder.decodePixelMatrix(distortedImageSampler, pixelArr);
         Log.d("performance", "decodePixelMatrix took: " + (System.currentTimeMillis() - start));
         //SNR
-        double SNR = (double)errCounter / (distortedImageSampler.getModulesInDim()*distortedImageSampler.getModulesInDim());
-        Log.d("SNR", "SNR is: " + SNR);
+        int total_num_of_modules = distortedImageSampler.getModulesInDim()*distortedImageSampler.getModulesInDim();
+        double SNR = (double)errCounterTotal / total_num_of_modules;
+        Log.d("ALL CHANNELS SNR", "SNR is: " + SNR);
+        double AVG_SNR = (double)(errCounterRed+errCounterGreen+errCounterBlue) / (Constants.CHANNELS * total_num_of_modules);
+        Log.d("ALL CHANNELS (AVG) SNR", "SNR is: " + AVG_SNR);
+        double RED_SNR = (double)errCounterRed / total_num_of_modules;
+        Log.d("RED CHANNEL SNR", "SNR is: " + RED_SNR);
+        double GREEN_SNR = (double)errCounterGreen / total_num_of_modules;
+        Log.d("GREEN CHANNEL SNR", "SNR is: " + GREEN_SNR);
+        double BLUE_SNR = (double)errCounterBlue / total_num_of_modules;
+        Log.d("BLUE CHANNEL SNR", "SNR is: " + BLUE_SNR);
         /* decode */
         byte[] decodedBytes = distortedImageSampler.getDecodedData();
 

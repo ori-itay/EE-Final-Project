@@ -143,6 +143,15 @@ public class DisplayEncoder {
 		levelR = (currentDataR*COLOR_SCALE_DELTA) & 0xFF;
 		levelG = (currentDataG*COLOR_SCALE_DELTA) & 0xFF;
 		levelB = (currentDataB*COLOR_SCALE_DELTA) & 0xFF;
+
+		final double GAMMA_PARAMETER = 0.6;
+		levelR = (int) (Math.round(Math.pow( ((double)levelR/255), GAMMA_PARAMETER) * 255));
+		if(levelR>255){ levelR = 255;}
+		levelG = (int) (Math.round(Math.pow( ((double)levelG/255), GAMMA_PARAMETER) * 255));
+		if(levelG>255){ levelG = 255;}
+		levelB = (int) (Math.round(Math.pow( ((double)levelB/255), GAMMA_PARAMETER) * 255));
+		if(levelB>255){ levelB = 255;}
+
 		color = new Color(levelR, levelG, levelB);
 		g.setColor(color);
 		g.fillRect(pos.colModule * Parameters.pixelsInModule, pos.rowModule * Parameters.pixelsInModule,

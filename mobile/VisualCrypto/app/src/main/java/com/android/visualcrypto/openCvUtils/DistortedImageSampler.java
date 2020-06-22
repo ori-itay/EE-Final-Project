@@ -73,7 +73,13 @@ public class DistortedImageSampler extends StdImageSampler {
     private static Mat inverseH;
     private static Bitmap distortedBitmap;
     private static int d, row;
-    public static int errCounter = 0;
+    public static int errCounterTotal = 0;
+    public static int errCounterRed = 0;
+    public static int errCounterGreen = 0;
+    public static int errCounterBlue = 0;
+
+
+    public static Mat debugBW;
 
     public static final Mat itaysCamConfigMtx = new Mat(3,3 ,CvType.CV_64F);
     public static final Mat orisCamConfigMtx = new Mat(3,3 ,CvType.CV_64F);
@@ -122,20 +128,20 @@ public class DistortedImageSampler extends StdImageSampler {
 
         List<QrCode> failures = detector.getFailures();
         Log.d("fail", String.valueOf(failures.size()));//TODO Delete
-        if (failures.size() == 1) {
+        if (failures.size() >= 1) {
             boofCorners = failures.get(0);
             convertBoofToOpenPoints(boofCorners, pts);
         }
 
         List<QrCode> detections = detector.getDetections();
         Log.d("fail", String.valueOf(detections.size()));//TODO Delete
-        if (detections.size() == 1) {
+        if (detections.size() >= 1) {
             boofCorners = detections.get(0);
             convertBoofToOpenPoints(boofCorners, pts);
         }
 
         List<PositionPatternNode> pointsQueue = detector.getDetectPositionPatterns().getPositionPatterns().toList();
-        if (failures.size() != 1 && detections.size() != 1 && pointsQueue.size() == 3) {
+        if (failures.size() == 0 && detections.size() == 0 && pointsQueue.size() == 3) {
             //pointsQueue.get(0).
             Point2D_F64 boofPt0 = pointsQueue.get(0).square.get(3); // PT0         PT1
             //Point2D_F64 boofPt0 = pointsQueue.get(0).square.get(2);
@@ -192,7 +198,9 @@ public class DistortedImageSampler extends StdImageSampler {
 
         pts[0].x -= (xMin - 10); pts[1].x -= (xMin - 10); pts[2].x -= (xMin - 10); pts[3].x -= (xMin - 10);
         pts[0].y -= (yMin - 10); pts[1].y -= (yMin - 10); pts[2].y -= (yMin - 10); pts[3].y -= (yMin - 10);
+        DistortedImageSampler.debugBW = bw.clone();
         pts[2] = findCorner(bw, 0, false, false); //TODO: dynamically find what corner to find: pts[2].y < pts[1].y && pts[2].x < pts[3].x ?
+        Imgcodecs.imwrite(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/debugBW.jpg", DistortedImageSampler.debugBW);
         Log.d("performance", "bw cvtColors and findCorner took: " + (System.currentTimeMillis() - start));//performance
         MatOfPoint2f corners1 = new MatOfPoint2f(pts[0], pts[1], pts[2], pts[3]);
         MatOfPoint2f corners2 = new MatOfPoint2f(new Point(0, 0), new Point(1, 0), new Point(1, 1), new Point(0, 1));
@@ -260,7 +268,7 @@ public class DistortedImageSampler extends StdImageSampler {
 
         Rect roi = new Rect(new Point(pts[0].x+10+150, pts[0].y-10+150), new Point(pts[2].x+10-100, pts[2].y+10-100));
         Mat croppedMatForHisto = new Mat(DistortedImageSampler.distortedImage, roi);
-        Imgcodecs.imwrite(folderPath + "/for_histo.jpg", croppedMatForHisto);
+//        Imgcodecs.imwrite(folderPath + "/for_histo.jpg", croppedMatForHisto);
 
         //findPercentilesValues(DistortedImageSampler.distortedImage);
         DistortedImageSampler.tileHeight = distortedImage.height() / gridSplitSize;
@@ -340,8 +348,11 @@ public class DistortedImageSampler extends StdImageSampler {
 
     private Point findCorner(Mat img, int val, boolean top, boolean left) {
         Pair p = scanDiagonalFromCorner(img.size(), top, left);
-        while (img.get((int) p.first, (int) p.second)[0] != val)
+        while (img.get((int) p.first, (int) p.second)[0] != val) {
+            Point debugBWPoint = new Point((int) p.second, (int) p.first);
+            Imgproc.rectangle(DistortedImageSampler.debugBW, debugBWPoint,debugBWPoint, new Scalar(155,155,155));
             p = scanDiagonalFromCorner(img.size(), top, left);
+        }
         return new Point((int) p.second, (int) p.first);
     }
 
@@ -546,21 +557,35 @@ public class DistortedImageSampler extends StdImageSampler {
         Point distortedIndex = switchCoordinates(unDistortedImageMatCord, inverseH);
         Imgproc.circle(Flow.delete, distortedIndex, 1, new Scalar(0,0,255), 1);
         int indexCol = (int) distortedIndex.x; int indexRow = (int) distortedIndex.y;
-        double[] avgChannels = new double[Constants.CHANNELS];
+//        double[] avgChannels = new double[Constants.CHANNELS];
+        double[] medianChannels = new double[Constants.CHANNELS];
+        final int NUM_OF_SAMPLES_FOR_RADIUS_SMAPLING = 9;
         if(radiusSample) {
             double[] channels1 = DistortedImageSampler.distortedImage.get((int) Math.round(indexRow + .51), (int) Math.round(indexCol + .51));
             double[] channels2 = DistortedImageSampler.distortedImage.get((int) Math.round(indexRow - .51), (int) Math.round(indexCol - .51));
             double[] channels3 = DistortedImageSampler.distortedImage.get((int) Math.round(indexRow + .51), (int) Math.round(indexCol - .51));
             double[] channels4 = DistortedImageSampler.distortedImage.get((int) Math.round(indexRow - .51), (int) Math.round(indexCol + .51));
-            for (int i = 0; i < avgChannels.length; i++) {
+            double[] channels5 = DistortedImageSampler.distortedImage.get((int) Math.round(indexRow), (int) Math.round(indexCol + .51));
+            double[] channels6 = DistortedImageSampler.distortedImage.get((int) Math.round(indexRow), (int) Math.round(indexCol - .51));
+            double[] channels7 = DistortedImageSampler.distortedImage.get((int) Math.round(indexRow - .51), (int) Math.round(indexCol));
+            double[] channels8 = DistortedImageSampler.distortedImage.get((int) Math.round(indexRow + .51), (int) Math.round(indexCol));
+            double[] channels9 = DistortedImageSampler.distortedImage.get((int) Math.round(indexRow), (int) Math.round(indexCol));
+
+            for (int i = 0; i < medianChannels.length; i++) {
+                double[] radiusValues = {channels1[i], channels2[i], channels3[i], channels4[i],
+                        channels5[i], channels6[i], channels7[i], channels8[i], channels9[i]};
+                Arrays.sort(radiusValues);
                 if (channels1 == null || channels2 == null || channels3 == null || channels4 == null) {
                     Log.d("null", distortedIndex.x + "," + distortedIndex.y);
                 }
-                avgChannels[i] = (channels1[i] + channels2[i] + channels3[i] + channels4[i]) / 4;
+                medianChannels[i] = radiusValues[4];
+//                avgChannels[i] = (channels1[i] + channels2[i] + channels3[i] + channels4[i] + channels5[i] + channels6[i] +
+//                channels7[i] + channels8[i] + channels9[i]) / NUM_OF_SAMPLES_FOR_RADIUS_SMAPLING;
             }
         }
         else{
-            avgChannels = DistortedImageSampler.distortedImage.get((int) Math.round(indexRow), (int) Math.round(indexCol));
+            medianChannels = DistortedImageSampler.distortedImage.get((int) Math.round(indexRow), (int) Math.round(indexCol));
+//            avgChannels = DistortedImageSampler.distortedImage.get((int) Math.round(indexRow), (int) Math.round(indexCol));
         }
 
 //        Mat balancedColors = new Mat();
@@ -568,7 +593,7 @@ public class DistortedImageSampler extends StdImageSampler {
 //        Core.gemm(DistortedImageSampler.colorBalancingMat, unbalancedColors.t(), 1.0, new Mat(), 0, balancedColors, 0);
 //        avgChannels[0] = balancedColors.get(0,0)[0]; avgChannels[1] = balancedColors.get(1,0)[0]; avgChannels[2] = balancedColors.get(2,0)[0];
 //        int[] processedChannels = thresholdAndNormalizeChannels(avgChannels, minPixelVal, maxPixelVal, indexRow, indexCol);
-        int[] processedChannels = classifyPixelChannelsLevels(avgChannels, indexRow, indexCol);
+        int[] processedChannels = classifyPixelChannelsLevels(medianChannels, indexRow, indexCol);
 
         // set all values to the majority
         if (duplicateChannels) {
@@ -589,9 +614,23 @@ public class DistortedImageSampler extends StdImageSampler {
             int colPixel = (int) Math.round((Parameters.modulesInMargin + colLoc / this.getModuleSize()) * Parameters.pixelsInModule);
             if(rowPixel >= 0 && rowPixel < this.tempOrigPixelMatrix.length && colPixel >=0 && colPixel < this.tempOrigPixelMatrix[0].length) {
                 int encodedPixelValue = super.getPixel(colPixel, rowPixel);
-                int GBR = Integer.reverseBytes(encodedPixelValue) >>> 8;
-                if (GBR != pixelValue) {
-                    errCounter++;
+                int RGB = Integer.reverseBytes(encodedPixelValue) >>> 8;
+                int[] originalChannelVals = new int[Constants.CHANNELS];
+                originalChannelVals[0] = RGB & 0xff;
+                originalChannelVals[1] = (RGB >> 8) & 0xff;
+                originalChannelVals[2] = (RGB >> 16) & 0xff;
+                if (RGB != pixelValue) {
+                    errCounterTotal++;
+                    if(originalChannelVals[0] != processedChannels[0]){
+                        errCounterRed++;
+                    }
+                    if(originalChannelVals[1] != processedChannels[1]){
+                        errCounterGreen++;
+                    }
+                    if(originalChannelVals[2] != processedChannels[2]){
+                        errCounterBlue++;
+                    }
+
                     //            Mat alignmentBottomRightMat = new Mat(1, 3, CvType.CV_64F);
                     //            alignmentBottomRightMat.put(0, 0, alignmentBottomRight.x, alignmentBottomRight.y, 1);
                     Point distortedPoint = OpenCvUtils.switchCoordinates(unDistortedImageMatCord, inverseH);
