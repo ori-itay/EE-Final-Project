@@ -92,8 +92,8 @@ public class DistortedImageSampler extends StdImageSampler {
 
 
     static {
-        orisCamConfigDst.put(0,0,    2.37788419e-01, -1.05060973, -1.24226900e-03, -1.06977518e-03, 1.36988634);
-        orisCamConfigMtx.put(0,0, 3.54906380e+03, 0D, 2.28702762e+03,   0D, 3.55130312e+03, 1.69588285e+03,    0D, 0D, 1.0D);
+        orisCamConfigDst.put(0,0,    1.88976465e-01, -8.27046848e-01, -6.61431273e-04,  4.78026017e-04, 1.01532664e+00);
+        orisCamConfigMtx.put(0,0, 3.57877704e+03, 0D,1.73734294e+03,   0D, 3.58348580e+03, 2.30337522e+03,    0D, 0D, 1.0D);
 
         //itaysCamConfigDst.put(0,0,   0.51539854, -0.00120593, 0.00206427, -0.69356642 ,0.24467169);
         itaysCamConfigDst.put(0,0,   3.90420233e-01, -1.54381552e+00, -9.02378490e-04, 1.83526192e-03 ,1.79797055e+00);
@@ -561,24 +561,56 @@ public class DistortedImageSampler extends StdImageSampler {
         double[] medianChannels = new double[Constants.CHANNELS];
         final int NUM_OF_SAMPLES_FOR_RADIUS_SMAPLING = 9;
         if(radiusSample) {
-            double[] channels1 = DistortedImageSampler.distortedImage.get((int) Math.round(indexRow + .51), (int) Math.round(indexCol + .51));
-            Imgproc.rectangle(Flow.delete, new Point((int) Math.round(indexCol + .51), (int) Math.round(indexRow + .51)),new Point((int) Math.round(indexCol + .51), (int) Math.round(indexRow + .51)),  new Scalar(255-medianChannels[2],255-medianChannels[2],255-medianChannels[0]));
-            double[] channels2 = DistortedImageSampler.distortedImage.get((int) Math.round(indexRow - .51), (int) Math.round(indexCol - .51));
-            Imgproc.rectangle(Flow.delete, new Point((int) Math.round(indexCol - .51), (int) Math.round(indexRow - .51)),new Point((int) Math.round(indexCol - .51), (int) Math.round(indexRow - .51)),  new Scalar(255-medianChannels[2],255-medianChannels[2],255-medianChannels[0]));
-            double[] channels3 = DistortedImageSampler.distortedImage.get((int) Math.round(indexRow + .51), (int) Math.round(indexCol - .51));
-            Imgproc.rectangle(Flow.delete, new Point((int) Math.round(indexCol + .51), (int) Math.round(indexRow - .51)),new Point((int) Math.round(indexCol + .51), (int) Math.round(indexRow - .51)),  new Scalar(255-medianChannels[2],255-medianChannels[2],255-medianChannels[0]));
-            double[] channels4 = DistortedImageSampler.distortedImage.get((int) Math.round(indexRow - .51), (int) Math.round(indexCol + .51));
-            double[] channels5 = DistortedImageSampler.distortedImage.get((int) Math.round(indexRow), (int) Math.round(indexCol + .51));
-            double[] channels6 = DistortedImageSampler.distortedImage.get((int) Math.round(indexRow), (int) Math.round(indexCol - .51));
-            double[] channels7 = DistortedImageSampler.distortedImage.get((int) Math.round(indexRow - .51), (int) Math.round(indexCol));
-            double[] channels8 = DistortedImageSampler.distortedImage.get((int) Math.round(indexRow + .51), (int) Math.round(indexCol));
-            double[] channels9 = DistortedImageSampler.distortedImage.get((int) Math.round(indexRow), (int) Math.round(indexCol));
+            Point pt; int a, b;
+            a = (int) Math.round(indexRow + .51); b = (int) Math.round(indexCol + .51);
+            double[] channels1 = DistortedImageSampler.distortedImage.get(a, b);
+            pt =  new Point(b, a); Scalar scalar = new Scalar(255,255,255);
+            Imgproc.rectangle(Flow.delete, pt, pt,  scalar);
+
+            a = (int) Math.round(indexRow - .51); b = (int) Math.round(indexCol - .51);
+            double[] channels2 = DistortedImageSampler.distortedImage.get(a, b);
+            pt = new Point(b,a);
+            Imgproc.rectangle(Flow.delete, pt,pt, scalar);
+
+            a = (int) Math.round(indexRow + .51); b = (int) Math.round(indexCol - .51);
+            double[] channels3 = DistortedImageSampler.distortedImage.get(a, b);
+            pt = new Point(b,a);
+            Imgproc.rectangle(Flow.delete, pt,pt, scalar);
+
+            a = (int) Math.round(indexRow - .51); b = (int) Math.round(indexCol + .51);
+            double[] channels4 = DistortedImageSampler.distortedImage.get(a, b);
+            pt = new Point(b,a);
+            Imgproc.rectangle(Flow.delete, pt,pt, scalar);
+
+            a = (int) Math.round(indexRow); b = (int) Math.round(indexCol + .51);
+            double[] channels5 = DistortedImageSampler.distortedImage.get(a, b);
+            pt = new Point(b,a);
+            Imgproc.rectangle(Flow.delete, pt,pt, scalar);
+
+            a = (int) Math.round(indexRow); b = (int) Math.round(indexCol - .51);
+            double[] channels6 = DistortedImageSampler.distortedImage.get(a, b);
+            pt = new Point(b,a);
+            Imgproc.rectangle(Flow.delete, pt,pt, scalar);
+
+            a = (int) Math.round(indexRow - .51); b = (int) Math.round(indexCol);
+            double[] channels7 = DistortedImageSampler.distortedImage.get(a, b);
+            pt = new Point(b,a);
+            Imgproc.rectangle(Flow.delete, pt,pt, scalar);
+
+            a = (int) Math.round(indexRow + .51); b = (int) Math.round(indexCol);
+            double[] channels8 = DistortedImageSampler.distortedImage.get(a, b);
+            pt = new Point(b,a);
+            Imgproc.rectangle(Flow.delete, pt,pt, scalar);
+
+            a = (int) Math.round(indexRow); b = (int) Math.round(indexCol);
+            double[] channels9 = DistortedImageSampler.distortedImage.get(a, b);
+            pt = new Point(b,a);
+            Imgproc.rectangle(Flow.delete, pt,pt, scalar);
 
             for (int i = 0; i < medianChannels.length; i++) {
                 double[] radiusValues = {channels1[i], channels2[i], channels3[i], channels4[i],
                         channels5[i], channels6[i], channels7[i], channels8[i], channels9[i]};
                 Arrays.sort(radiusValues);
-                Imgproc.rectangle(Flow.delete, new Point((int) Math.round(indexCol - .51), (int) Math.round(indexRow + .51)),new Point((int) Math.round(indexCol - .51), (int) Math.round(indexRow + .51)),  new Scalar(255-medianChannels[2],255-medianChannels[2],255-medianChannels[0]));
 
                 if (channels1 == null || channels2 == null || channels3 == null || channels4 == null) {
                     Log.d("null", distortedIndex.x + "," + distortedIndex.y);
