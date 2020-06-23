@@ -21,9 +21,13 @@ import org.opencv.imgcodecs.Imgcodecs;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.time.Instant;
 
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
@@ -36,9 +40,19 @@ import static com.android.visualcrypto.openCvUtils.DistortedImageSampler.errCoun
 
 public class Flow{
     public static Mat delete;
+    public static Path DEBUG_FOLDER;
 
     public static Bitmap executeAndroidFlow(Mat capturedImg, Bitmap encodedBitmap, Context context) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidAlgorithmParameterException, InvalidKeyException, IOException {
-
+        //DEBUG
+        String folderPath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + Instant.now().toString();
+        Path path = Paths.get(folderPath);
+        try {
+            Files.createDirectory(path);
+            DEBUG_FOLDER = path;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        //
         DistortedImageSampler distortedImageSampler = new DistortedImageSampler(capturedImg, encodedBitmap, context);
 
         //delete from here
@@ -61,7 +75,7 @@ public class Flow{
         DisplayDecoder.decodePixelMatrix(distortedImageSampler, pixelArr);
         Log.d("performance", "decodePixelMatrix took: " + (System.currentTimeMillis() - start));
 
-        Imgcodecs.imwrite(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/SAMPLED_PLACES.jpg", Flow.delete); //TODO: del
+        Imgcodecs.imwrite(Flow.DEBUG_FOLDER + "/SAMPLED_PLACES.jpg", Flow.delete); //TODO: del
 
         //SNR
         int total_num_of_modules = distortedImageSampler.getModulesInDim()*distortedImageSampler.getModulesInDim();

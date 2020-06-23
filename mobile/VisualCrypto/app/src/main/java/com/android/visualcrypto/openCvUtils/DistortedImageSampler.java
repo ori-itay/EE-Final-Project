@@ -2,7 +2,6 @@ package com.android.visualcrypto.openCvUtils;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.os.Environment;
 import android.util.Log;
 
 import androidx.core.util.Pair;
@@ -27,10 +26,6 @@ import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 
 import java.io.FileWriter;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -189,7 +184,8 @@ public class DistortedImageSampler extends StdImageSampler {
         /***************************************************/
 
         start = System.currentTimeMillis(); //performance
-        Mat bw = new Mat();
+        Log.d("bw dimensions", DistortedImageSampler.distortedImage.size().toString());
+        Mat bw = new Mat(DistortedImageSampler.distortedImage.size(), CvType.CV_8UC4);
         cvtColor(DistortedImageSampler.distortedImage, bw, Imgproc.COLOR_BGR2GRAY);
         //adaptiveThreshold(bw, bw, 255, ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY, 7, 25);
         adaptiveThreshold(bw, bw, 255, ADAPTIVE_THRESH_GAUSSIAN_C, Imgproc.THRESH_BINARY, 31, 45);
@@ -200,7 +196,7 @@ public class DistortedImageSampler extends StdImageSampler {
         pts[0].y -= (yMin - 10); pts[1].y -= (yMin - 10); pts[2].y -= (yMin - 10); pts[3].y -= (yMin - 10);
         DistortedImageSampler.debugBW = bw.clone();
         pts[2] = findCorner(bw, 0, false, false); //TODO: dynamically find what corner to find: pts[2].y < pts[1].y && pts[2].x < pts[3].x ?
-        Imgcodecs.imwrite(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/debugBW.jpg", DistortedImageSampler.debugBW);
+        Imgcodecs.imwrite(Flow.DEBUG_FOLDER + "/debugBW.jpg", DistortedImageSampler.debugBW);
         Log.d("performance", "bw cvtColors and findCorner took: " + (System.currentTimeMillis() - start));//performance
         MatOfPoint2f corners1 = new MatOfPoint2f(pts[0], pts[1], pts[2], pts[3]);
         MatOfPoint2f corners2 = new MatOfPoint2f(new Point(0, 0), new Point(1, 0), new Point(1, 1), new Point(0, 1));
@@ -213,13 +209,10 @@ public class DistortedImageSampler extends StdImageSampler {
         double minPixelStride = 1 / getMaxDistance(pts[0], pts[1], pts[2], pts[3]);
 
 //        /******DEBUGGING***************/
-        String folderPath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + Instant.now().toString();
-        Path path = Paths.get(folderPath);
         try {
-            Files.createDirectory(path);
-            FileWriter fw = new FileWriter(folderPath + "/parameters.txt");
-            Imgcodecs.imwrite(folderPath + "/bw.jpg", bw);
-            Imgcodecs.imwrite(folderPath + "/afterRoi.jpg", DistortedImageSampler.distortedImage);
+            FileWriter fw = new FileWriter(Flow.DEBUG_FOLDER + "/parameters.txt");
+            Imgcodecs.imwrite(Flow.DEBUG_FOLDER + "/bw.jpg", bw);
+            Imgcodecs.imwrite(Flow.DEBUG_FOLDER + "/afterRoi.jpg", DistortedImageSampler.distortedImage);
             String upperRowPts = String.format("leftUpperPoint: %f,%f\t\trightUpperPoint: %f,%f\n", pts[0].x,pts[0].y, pts[1].x, pts[1].y);
             String lowerRowPts = String.format("leftLowerrPoint: %f,%f\t\trightLowerPoint: %f,%f", pts[3].x,pts[3].y, pts[2].x, pts[2].y);
             fw.write(upperRowPts);
@@ -231,34 +224,34 @@ public class DistortedImageSampler extends StdImageSampler {
         /*****************************/
 
         /***********INSERT HERE THE ROTATION + CALCULATION OF THE MATRIX "A" (COLOR BALANCING)**********/
-        List<double[]> potentialsCenters = new ArrayList<>();
-        for (PositionPatternNode center : pointsQueue) {
-            Point2D_F64 centerPoint = center.center;
-            if (!inQrCenter(boofCorners, centerPoint)) {
-                continue;
-            }
-            centerPoint.x -= (xMin - 10);
-            centerPoint.y -= (yMin - 10);
-            double[] centerChannels = OpenCvUtils.getAvgQrCornerColor(centerPoint, minPixelStride, H, inverseH, distortedImage, 7);// למה u need to do a video?
-            if (centerChannels != null)
-                potentialsCenters.add(centerChannels);
-        }
-        if (potentialsCenters.size() != 3) {
-            Log.d("potentialsCenters", "Error: Found " + potentialsCenters.size() + "centers");
-            return 1;
-        }
-        double[] topLeft; double[] topRight; double[] bottomLeft;
-
-        if (!OpenCvUtils.getCentersOrder(potentialsCenters)) {  // indexes[0] == R, indexes[1] = G, indexes[2] = B
-            Log.d("getCentersOrder", "Error in getCentersOrder()");
-            return 1;
-        } else {
-            topLeft = potentialsCenters.get(0);
-            topRight = potentialsCenters.get(1);
-            bottomLeft = potentialsCenters.get(2);
-            Mat colorBalancingMat = OpenCvUtils.getColorBalancingMatrix(topLeft, topRight, bottomLeft); // TODO: integrate colorbalancingMat with getpixel?
-            DistortedImageSampler.colorBalancingMat = colorBalancingMat;
-        }
+//        List<double[]> potentialsCenters = new ArrayList<>();
+//        for (PositionPatternNode center : pointsQueue) {
+//            Point2D_F64 centerPoint = center.center;
+//            if (!inQrCenter(boofCorners, centerPoint)) {
+//                continue;
+//            }
+//            centerPoint.x -= (xMin - 10);
+//            centerPoint.y -= (yMin - 10);
+//            double[] centerChannels = OpenCvUtils.getAvgQrCornerColor(centerPoint, minPixelStride, H, inverseH, distortedImage, 7);// למה u need to do a video?
+//            if (centerChannels != null)
+//                potentialsCenters.add(centerChannels);
+//        }
+//        if (potentialsCenters.size() != 3) {
+//            Log.d("potentialsCenters", "Error: Found " + potentialsCenters.size() + "centers");
+//            return 1;
+//        }
+//        double[] topLeft; double[] topRight; double[] bottomLeft;
+//
+//        if (!OpenCvUtils.getCentersOrder(potentialsCenters)) {  // indexes[0] == R, indexes[1] = G, indexes[2] = B
+//            Log.d("getCentersOrder", "Error in getCentersOrder()");
+//            return 1;
+//        } else {
+//            topLeft = potentialsCenters.get(0);
+//            topRight = potentialsCenters.get(1);
+//            bottomLeft = potentialsCenters.get(2);
+//            Mat colorBalancingMat = OpenCvUtils.getColorBalancingMatrix(topLeft, topRight, bottomLeft); // TODO: integrate colorbalancingMat with getpixel?
+//            DistortedImageSampler.colorBalancingMat = colorBalancingMat;
+//        }
 
         //rotate(topLeft, topRight, bottomLeft);
         /***********************************************************************************************/
@@ -268,7 +261,7 @@ public class DistortedImageSampler extends StdImageSampler {
 
         Rect roi = new Rect(new Point(pts[0].x+10+150, pts[0].y-10+150), new Point(pts[2].x+10-100, pts[2].y+10-100));
         Mat croppedMatForHisto = new Mat(DistortedImageSampler.distortedImage, roi);
-//        Imgcodecs.imwrite(folderPath + "/for_histo.jpg", croppedMatForHisto);
+//        Imgcodecs.imwrite(Flow.DEBUG_FOLDER + "/for_histo.jpg", croppedMatForHisto);
 
         //findPercentilesValues(DistortedImageSampler.distortedImage);
         DistortedImageSampler.tileHeight = distortedImage.height() / gridSplitSize;
@@ -287,14 +280,14 @@ public class DistortedImageSampler extends StdImageSampler {
 
         Flow.delete = distortedImage.clone();
         Point alignmentBottomRight = OpenCvUtils.findAlignmentBottomRight(this, normalizedEstimatedModuleSize, minPixelStride, inverseH, DistortedImageSampler.distortedImage);
-        Imgcodecs.imwrite(folderPath + "/pathTaken.jpg", Flow.delete);
+        Imgcodecs.imwrite(Flow.DEBUG_FOLDER + "/pathTaken.jpg", Flow.delete);
         if (alignmentBottomRight == null) {
 //            String folderPath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + Instant.now().toString();
-//            Path path = Paths.get(folderPath);
+//            Path path = Paths.get(Flow.DEBUG_FOLDER);
 //            try {
 //                Files.createDirectory(path);
-//                Imgcodecs.imwrite(folderPath + "/bw.jpg", bw);
-//                Imgcodecs.imwrite(folderPath + "/afterRoi.jpg", DistortedImageSampler.distortedImage);
+//                Imgcodecs.imwrite(Flow.DEBUG_FOLDER + "/bw.jpg", bw);
+//                Imgcodecs.imwrite(Flow.DEBUG_FOLDER + "/afterRoi.jpg", DistortedImageSampler.distortedImage);
 //                FileWriter fw = new FileWriter(folderPath + "/parameters.txt");
 //                String upperRowPts = String.format("leftUpperPoint: %f,%f\t\trightUpperPoint: %f,%f\n", pts[0].x,pts[0].y, pts[1].x, pts[1].y);
 //                String lowerRowPts = String.format("leftLowerrPoint: %f,%f\t\trightLowerPoint: %f,%f", pts[3].x,pts[3].y, pts[2].x, pts[2].y);
@@ -347,6 +340,7 @@ public class DistortedImageSampler extends StdImageSampler {
     }
 
     private Point findCorner(Mat img, int val, boolean top, boolean left) {
+        d = 0;
         Pair p = scanDiagonalFromCorner(img.size(), top, left);
         while (img.get((int) p.first, (int) p.second)[0] != val) {
             Point debugBWPoint = new Point((int) p.second, (int) p.first);

@@ -201,7 +201,7 @@ public class MainActivity extends AppCompatActivity {
         try {
             //long startTime = System.currentTimeMillis();
             /*******************DECODE BY FILE NAME*****************************************/
-//            String imageName = "checkBW.jpg";
+//            String imageName = "weird.jpg";
 //            InputStream encodedStream = getAssets().open(imageName);
 //            File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + imageName);
 //
