@@ -5,18 +5,14 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.os.Bundle;
-import android.os.Environment;
 import android.util.Log;
 import android.view.Surface;
 import android.view.TextureView;
-import android.view.View;
-import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-
 import androidx.camera.core.Camera;
 import androidx.camera.core.CameraSelector;
 import androidx.camera.core.ImageAnalysis;
@@ -24,38 +20,28 @@ import androidx.camera.core.ImageCapture;
 import androidx.camera.core.ImageCaptureException;
 import androidx.camera.core.ImageProxy;
 import androidx.camera.core.Preview;
+import androidx.camera.lifecycle.ProcessCameraProvider;
+import androidx.camera.view.PreviewView;
+import androidx.core.content.ContextCompat;
+import androidx.lifecycle.LifecycleOwner;
 
-
-import com.android.visualcrypto.cameraUtils.CameraRotationFix;
 import com.android.visualcrypto.flow.Flow;
+import com.android.visualcrypto.openCvUtils.OpenCvUtils;
 import com.google.common.util.concurrent.ListenableFuture;
 
-import java.io.File;
+import org.opencv.android.Utils;
+import org.opencv.core.Mat;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
-
-import androidx.camera.lifecycle.ProcessCameraProvider;
-import androidx.camera.view.PreviewView;
-import androidx.core.content.ContextCompat;
-import androidx.lifecycle.LifecycleOwner;
-
-import org.opencv.android.Utils;
-import org.opencv.core.CvType;
-import org.opencv.core.Mat;
-import org.opencv.core.MatOfByte;
-import org.opencv.imgcodecs.Imgcodecs;
-import org.opencv.imgproc.Imgproc;
-import org.opencv.utils.Converters;
 
 import javax.crypto.NoSuchPaddingException;
 
-import static androidx.camera.core.ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY;
 import static com.android.visualcrypto.MainActivity.bitmapToFile;
 
 
@@ -110,7 +96,9 @@ public class VideoProcessing extends AppCompatActivity {
 
         ImageCapture imageCapture = setImageCapture();
 
-        imageButton.setOnClickListener(v -> {
+
+        //imageButton.setOnClickListener(v -> {
+        imageButton.setOnLongClickListener(v->{
             imageCapture.takePicture(Executors.newCachedThreadPool(), new ImageCapture.OnImageCapturedCallback() { // TODO: FixedThreadPool?
                 @Override
                 public void onCaptureSuccess(@NonNull ImageProxy image) {
@@ -144,12 +132,12 @@ public class VideoProcessing extends AppCompatActivity {
                     }
 
                     /*********WITH CALIBRATION**************/
-//            Mat afterCalibrationMatrix = OpenCvUtils.calibrateImage(mat, true);
-//            Utils.matToBitmap(afterCalibrationMatrix, fixedBitmap); // update bitmap as well
+                    Mat afterCalibrationMatrix = OpenCvUtils.calibrateImage(mat, false);
+                    Utils.matToBitmap(afterCalibrationMatrix, bp); // update bitmap as well
                     /***************************************/
 
                     /*********NO CALIBRATION**************/
-                    Mat afterCalibrationMatrix = mat;
+//                    Mat afterCalibrationMatrix = mat;
                     /***************************************/
 
                     try {
@@ -164,6 +152,7 @@ public class VideoProcessing extends AppCompatActivity {
 
                         runOnUiThread(() -> {
                             processedImgView.setImageBitmap(finalBitmap);
+                            processedImgView.bringToFront();
                         });
                     } catch (IOException | NoSuchAlgorithmException | InvalidAlgorithmParameterException | InvalidKeyException | NoSuchPaddingException e) {
                         e.printStackTrace();
@@ -174,12 +163,13 @@ public class VideoProcessing extends AppCompatActivity {
                 }
 
 
-                    @Override
+                @Override
                 public void onError(@NonNull final ImageCaptureException exception) {
                     exception.printStackTrace();
                     Log.d("imageButton", "ImageCapture UseCase onError!");
                 }
             });
+            return true;
         });
 
         Camera camera = cameraProvider.bindToLifecycle((LifecycleOwner)this, cameraSelector, imageCapture, preview);
@@ -187,7 +177,7 @@ public class VideoProcessing extends AppCompatActivity {
 
     private ImageCapture setImageCapture() {
         ImageCapture imageCapture = new ImageCapture.Builder()
-                .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)//CAPTURE_MODE_MAXIMIZE_QUALITY
+                .setCaptureMode(ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY)////CAPTURE_MODE_MINIMIZE_LATENCY
                 .setTargetRotation(Surface.ROTATION_0)
                 //.setTargetRotation(view.getDisplay().getRotation())
                 .build();
