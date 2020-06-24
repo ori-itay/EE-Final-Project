@@ -21,6 +21,7 @@ import androidx.camera.core.Preview;
 import androidx.camera.core.PreviewConfig;
 
 import com.android.visualcrypto.flow.Flow;
+import com.android.visualcrypto.openCvUtils.OpenCvUtils;
 
 import org.opencv.android.Utils;
 import org.opencv.core.Mat;
@@ -31,6 +32,8 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 
 import javax.crypto.NoSuchPaddingException;
+
+import static com.android.visualcrypto.MainActivity.bitmapToFile;
 
 
 public class VideoProcessing extends AppCompatActivity {
@@ -67,6 +70,8 @@ public class VideoProcessing extends AppCompatActivity {
         analyzerThread.start();
 
         ImageAnalysisConfig imageAnalysisConfig = new ImageAnalysisConfig.Builder()
+                /*.setTargetAspectRatio(new Rational(3,4))*/
+                /*.setTargetResolution(new Size(3024 , 4032))*/
                 .setImageReaderMode(ImageAnalysis.ImageReaderMode.ACQUIRE_LATEST_IMAGE) // need to check for ACQUIRE_NEXT_IMAGE
                 .setCallbackHandler(new Handler(analyzerThread.getLooper()))
                 //.setTargetRotation(Surface.ROTATION_0) // has no effect :(
@@ -80,22 +85,22 @@ public class VideoProcessing extends AppCompatActivity {
             if (bp == null) {
                 return;
             }
-//            try {// debug: write the captured frame to file
-//                bitmapToFile(bp);
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//            }
+            try {// debug: write the captured frame to file
+                bitmapToFile(bp);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
 
             Mat mat = new Mat();
             Utils.bitmapToMat(bp, mat);
 
             /*********WITH CALIBRATION**************/
-//            Mat afterCalibrationMatrix = OpenCvUtils.calibrateImage(mat, true);
-//            Utils.matToBitmap(afterCalibrationMatrix, bp); // update bitmap as well
+            Mat afterCalibrationMatrix = OpenCvUtils.calibrateImage(mat, true);
+            Utils.matToBitmap(afterCalibrationMatrix, bp); // update bitmap as well
             /***************************************/
 
             /*********NO CALIBRATION**************/
-            Mat afterCalibrationMatrix = mat;
+//            Mat afterCalibrationMatrix = mat;
             /***************************************/
 
             try {

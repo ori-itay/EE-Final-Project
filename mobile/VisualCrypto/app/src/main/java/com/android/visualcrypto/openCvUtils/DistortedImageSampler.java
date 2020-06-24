@@ -309,7 +309,8 @@ public class DistortedImageSampler extends StdImageSampler {
         Point distortedPoint = switchCoordinates(alignmentBottomRightMat, inverseH);
 
         start = System.currentTimeMillis();
-        this.setModuleSize(computeModuleSize(pts[0], distortedPoint, H, Math.sqrt(2 * 99 * 99)));
+        this.setModuleSize(computeModuleSize(pts[0], distortedPoint, H, Math.sqrt(2 *
+                (Constants.MODULES_FROM_UPPER_LEFT_TO_ALIGNMENT_BOTTOM_RIGHT-1) * (Constants.MODULES_FROM_UPPER_LEFT_TO_ALIGNMENT_BOTTOM_RIGHT-1))));
         Log.d("performance", "computeModuleSize took: " + (System.currentTimeMillis() - start));
         int effectiveModulesInDim = (int) Math.round(1.0 / this.getModuleSize());
 //
