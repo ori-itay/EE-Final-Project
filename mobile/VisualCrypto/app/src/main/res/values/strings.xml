@@ -9,4 +9,5 @@
     <string name="displays_the_images">Displays the images</string>
     <string name="click_to_take_picture">Click to take picture</string>
     <string name="displays_processed_image">Displays processed image</string>
+    <string name="camera_button">camera button</string>
 </resources>
