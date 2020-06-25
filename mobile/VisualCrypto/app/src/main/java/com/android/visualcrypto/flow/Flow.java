@@ -42,7 +42,7 @@ public class Flow{
     public static Mat delete;
     public static Path DEBUG_FOLDER;
 
-    public static Bitmap executeAndroidFlow(Mat capturedImg, Bitmap encodedBitmap, Context context) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidAlgorithmParameterException, InvalidKeyException, IOException {
+    public static Bitmap executeAndroidFlow(Mat capturedImg, Bitmap encodedBitmap, Context context) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidAlgorithmParameterException, InvalidKeyException, IOException, InterruptedException {
         //DEBUG
         String folderPath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + Instant.now().toString();
         Path path = Paths.get(folderPath);
@@ -55,12 +55,12 @@ public class Flow{
         //
         DistortedImageSampler distortedImageSampler = new DistortedImageSampler(capturedImg, encodedBitmap, context);
 
-        //delete from here
+//        //delete from here snr
         InputStream encodedStream = context.getAssets().open("50_50_4Level_colorPos.jpg");
         Bitmap origEncodedBitmap = BitmapFactory.decodeStream(encodedStream);
         distortedImageSampler.tempOrigPixelMatrix = MainActivity.get2DPixelArray(origEncodedBitmap);
         errCounterTotal = 0; errCounterRed = 0; errCounterGreen = 0; errCounterBlue = 0;
-        //to here
+//        //to here
 
         if (distortedImageSampler.initParameters() != 0) {
             return null;

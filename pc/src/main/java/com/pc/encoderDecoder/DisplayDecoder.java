@@ -28,18 +28,72 @@ public class DisplayDecoder {
 //		return imageSampler;
 //	}
 
-	public static void decodePixelMatrix(StdImageSampler imageSampler, int[][] pixelMatrix)  {
+	public static void decodePixelMatrix(StdImageSampler imageSampler, int[][] pixelMatrix) throws IOException, InterruptedException {
+		long start = System.currentTimeMillis();
+		File f = new File("/storage/emulated/0/Download/" + start +"-times.txt");
+		//f.createNewFile();
+		FileWriter writer = new FileWriter(f);
+
+		start = System.nanoTime();
 
 		configureImage(imageSampler, pixelMatrix);
+		writer.write("configureImage: " + (System.nanoTime() - start)/1e6+ "\n");
+
 		Position pos = new Position(imageSampler.getModulesInMargin(), imageSampler.getModulesInMargin() + MODULES_IN_POS_DET_DIM);
+		start = System.nanoTime();
 		imageSampler.setIV1(decodeData(imageSampler, Parameters.ivLength, pos, true));
+		writer.write("setIV1: " + (System.nanoTime() - start)/1e6+ "\n");
+
+		start = System.nanoTime();
 		imageSampler.setIV1Checksum(decodeData(imageSampler, CHECKSUM_LENGTH, pos, true));
+		writer.write("setIV1Checksum: " + (System.nanoTime() - start)/1e6+ "\n");
+
+		start = System.nanoTime();
 		imageSampler.setDimsAndChecksum1(decodeData(imageSampler, IMAGE_DIMS_ENCODING_LENGTH + CHECKSUM_LENGTH, pos, true));
+		writer.write("setDimsAndChecksum1: " + (System.nanoTime() - start)/1e6+ "\n");
+
+		start = System.nanoTime();
 		int imageDataLength = computeMaxEncodedLength(imageSampler.getModulesInDim());
+		writer.write("computeMaxEncodedLength: " + (System.nanoTime() - start)/1e6+ "\n");
+
+		// TODO: find proper index for pos when splitting to threads
+// 		FixedThreadExecutor
+//		Runtime.getRuntime().availableProcessors();
+//		Position posT1 = new Position(pos.rowModule,pos.colModule);
+//		pos.rowModule = 62; pos.colModule = 32;
+//		int firstThreadDataLength = 5640;
+//		Thread t1 = new Thread(()->{
+//			decodeData(imageSampler, firstThreadDataLength, posT1, false);
+//		});
+//		Thread t2 = new Thread(()->{
+//			decodeData(imageSampler, imageDataLength - firstThreadDataLength, pos, false);
+//		});
+//
+//		start = System.nanoTime();
+//		t1.start();
+//		t2.start();
+//
+//		t1.join(); t2.join();
+//		writer.write("decodedData BOTH THREADS: " + (System.nanoTime() - start)/1e6+ "\n");
+
+
+		start = System.nanoTime();
 		imageSampler.setDecodedData(decodeData(imageSampler, imageDataLength, pos, false));
+		writer.write("setDecodedData: " + (System.nanoTime() - start)/1e6+ "\n");
+
+		start = System.nanoTime();
 		imageSampler.setIV2(decodeData(imageSampler, Parameters.ivLength, pos, true));
+		writer.write("setIV2: " + (System.nanoTime() - start)/1e6+ "\n");
+
+		start = System.nanoTime();
 		imageSampler.setIV2Checksum(decodeData(imageSampler, CHECKSUM_LENGTH, pos, true));
+		writer.write("setIV2Checksum: " + (System.nanoTime() - start)/1e6+ "\n");
+
+		start = System.nanoTime();
 		imageSampler.setDimsAndChecksum2(decodeData(imageSampler, IMAGE_DIMS_ENCODING_LENGTH + CHECKSUM_LENGTH, pos, true));
+		writer.write("setIV2Checksum: " + (System.nanoTime() - start)/1e6 );
+		writer.close();;
+
 		return;
 	}
 

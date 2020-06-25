@@ -247,7 +247,7 @@ public class MainActivity extends AppCompatActivity {
 
             /* display configuration information */
             //showConfigurationInfo(rotatedImageSampler, height, width);
-        } catch (InvalidAlgorithmParameterException | NoSuchAlgorithmException | InvalidKeyException | NoSuchPaddingException | IOException e) {
+        } catch (InvalidAlgorithmParameterException | NoSuchAlgorithmException | InvalidKeyException | NoSuchPaddingException | IOException | InterruptedException e) {
             showAlert(this, "Exception in decodeImage: " + e);
             Log.e("decodeImage", "decodeFile exception", e);
         }

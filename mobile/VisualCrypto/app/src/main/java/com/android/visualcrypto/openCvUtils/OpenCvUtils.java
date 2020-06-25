@@ -53,7 +53,7 @@ public class OpenCvUtils {
         }
     }
 
-    public static int[] classifyPixelChannelsLevels(double[] channels, int indexRow, int indexCol){
+    public static int[] classifyPixelChannelsLevels(int[] channels, int indexRow, int indexCol){
         int subMatIndRow = indexRow / DistortedImageSampler.tileHeight;
         int subMatIndCol = indexCol / DistortedImageSampler.tileWidth;
         //TODO: use the proper tile
