@@ -2,6 +2,7 @@ package com.pc.cli;
 
 import com.pc.checksum.Checksum;
 import com.pc.FlowUtils;
+import com.pc.configuration.Constants;
 import com.pc.configuration.Parameters;
 import com.pc.encoderDecoder.DisplayDecoder;
 import com.pc.encoderDecoder.DisplayEncoder;
@@ -40,8 +41,8 @@ public class EncodeDecodeCLI {
 
     		String[] splitedCommand = userCommand.split("\\s+");
     		if(splitedCommand.length < 2 && !splitedCommand[0].toLowerCase().equals("exit")) {
-	    		System.out.println("Usage: 'Encode [input image filepath] [output encoded image filepath]'\n"
-	    				+ "Usage: 'Decode [encoded input image filepath] [output decoded image filepath]'\n"
+				System.out.println("Usage: 'Encode [input image filepath] [output encoded image filepath] [optional - colorLevels]'\n"
+						+ "Usage: 'Decode [encoded input image filepath] [output decoded image filepath] [optional - colorLevels]'\n"
 	    				+ "Usage: 'Exit' to stop execution.");
     			continue;
     		}
@@ -52,7 +53,8 @@ public class EncodeDecodeCLI {
     			if(splitedCommand[0].toLowerCase().equals("encode")){
 					BufferedImage encodedImage = executeEncodingProccess(splitedCommand[1], const_key);
     				ImageIO.write(encodedImage, "png", new File(splitedCommand[2]));
-    				System.out.println("Encoded data was written to "+ splitedCommand[2]);
+					System.out.println((Constants.MODULES_IN_ENCODED_IMAGE_DIM - Parameters.modulesInMargin*2) +
+							" modules in dimension (without margins).");
     			}
 //    			else if(splitedCommand[0].toLowerCase().equals("decode")) {
 ////					BufferedImage decodedImage = executeDecodingProccess(splitedCommand[1], const_key);
@@ -65,10 +67,13 @@ public class EncodeDecodeCLI {
     				break;
     			}
     			else {
-					System.out.println("Usage: 'Encode [input image filepath] [output encoded image filepath]'\n"
-							+ "Usage: 'Decode [encoded input image filepath] [output decoded image filepath]'\n"
+					System.out.println("Usage: 'Encode [input image filepath] [output encoded image filepath] [optional - colorLevels]'\n"
+							+ "Usage: 'Decode [encoded input image filepath] [output decoded image filepath] [optional - colorLevels]'\n"
 							+ "Usage: 'Exit' to stop execution.");
     			}
+				if(splitedCommand.length == 4){
+					Parameters.encodingColorLevels = Integer.parseInt(splitedCommand[3]);
+				}
     		}
 	    }			    
 	    scanner.close();

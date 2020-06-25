@@ -136,7 +136,7 @@ public class OpenCvUtils {
 
     /* for pixel stride */
     public static Point findAlignmentBottomRight(DistortedImageSampler distortedImageSampler, double estimatedModuleSize, double pixelStride, Mat inverseH, Mat capturedImg) {
-        double startingPoint = 90 * estimatedModuleSize;
+        double startingPoint = (Constants.ALIGNMENT_PATTERN_UPPER_LEFT_MODULE - 10) * estimatedModuleSize;
         double undistortedLoc = startingPoint;
 //        Mat unDistortedImageMatCord1 = new Mat(1, 3, CvType.CV_64F);
 //        unDistortedImageMatCord1.put(0, 0, undistortedLoc);
