@@ -33,7 +33,16 @@ public class DisplayDecoder {
 		int totalBitsCovered = 0;
 		int currLineLength;
 
-		currLineLength = imageSampler.getModulesInDim() - MODULES_IN_POS_DET_DIM - posT2.colModule;
+		if(posT2.rowModule < MODULES_IN_POS_DET_DIM)
+			currLineLength = imageSampler.getModulesInDim() - MODULES_IN_POS_DET_DIM - posT2.colModule;
+		else if(posT2.rowModule + 1 >= imageSampler.getModulesInDim() - MODULES_IN_POS_DET_DIM)
+			currLineLength = imageSampler.getModulesInDim() - posT2.colModule;
+		else if(posT2.rowModule + 1 >= ALIGNMENT_PATTERN_UPPER_LEFT_MODULE &&
+				posT2.rowModule < ALIGNMENT_PATTERN_UPPER_LEFT_MODULE + MODULES_IN_ALIGNMENT_PATTERN_DIM)
+			currLineLength = imageSampler.getModulesInDim() - posT2.colModule - MODULES_IN_ALIGNMENT_PATTERN_DIM;
+		else
+			currLineLength = imageSampler.getModulesInDim();
+
 		totalBitsCovered+= currLineLength*ENCODING_BIT_GROUP_SIZE*CHANNELS;
 		posT2.rowModule++;
 
@@ -104,29 +113,48 @@ public class DisplayDecoder {
 		// TODO: find proper index for pos when splitting to threads
 
 		Position posT1 = new Position(pos.rowModule,pos.colModule);
-		int T1DataLength = proceedPosToMidDataLength(imageSampler, pos, imageDataLength*BITS_IN_BYTE);
-		int T2DataLength = imageDataLength - T1DataLength;
+		int FirstHalfDataLength = proceedPosToMidDataLength(imageSampler, pos, imageDataLength*BITS_IN_BYTE);
+		int SecondHalfDataLength = imageDataLength - FirstHalfDataLength;
+		Position posT2 = new Position(posT1.rowModule,posT1.colModule); //These are the OLD pos coordinates!
+		int T2DataLength = proceedPosToMidDataLength(imageSampler, posT2, FirstHalfDataLength*BITS_IN_BYTE);
+		int T1DataLength = FirstHalfDataLength - T2DataLength;
+		Position posT3 = new Position(pos.rowModule,pos.colModule); //These are the NEW pos coordinates!
+		int T3DataLength = proceedPosToMidDataLength(imageSampler, pos, SecondHalfDataLength*BITS_IN_BYTE);
+		int T4DataLength = SecondHalfDataLength - T3DataLength;
+
+
 // 		FixedThreadExecutor
 		Runtime.getRuntime().availableProcessors();
 //		pos.rowModule = 62; pos.colModule = 32;
 //		int firstThreadDataLength = 5640;
 		byte[] decodedData = new byte[imageDataLength];
 		Thread t1 = new Thread(()->{
-			System.arraycopy(decodeData(imageSampler, T1DataLength, posT1, false), 0, decodedData, 0, T1DataLength);
+			System.arraycopy(decodeData(imageSampler, T1DataLength, posT1, false), 0, decodedData,0, T1DataLength);
 		});
 		Thread t2 = new Thread(()->{
-			System.arraycopy(decodeData(imageSampler, T2DataLength, pos, false), 0, decodedData, T1DataLength, T2DataLength);
+			System.arraycopy(decodeData(imageSampler, T2DataLength, posT2, false), 0, decodedData, T1DataLength, T2DataLength);
+
+		});
+		Thread t3 = new Thread(()->{
+			System.arraycopy(decodeData(imageSampler, T3DataLength, posT3, false), 0, decodedData, FirstHalfDataLength, T3DataLength);
+
+		});
+		Thread t4 = new Thread(()->{
+			System.arraycopy(decodeData(imageSampler, T4DataLength, pos, false), 0, decodedData,
+					FirstHalfDataLength + T3DataLength, T4DataLength);
 
 		});
 
 		start = System.nanoTime();
 		t1.start();
 		t2.start();
+		t3.start();
+		t4.start();
 
-		t1.join(); t2.join();
+		t1.join(); t2.join(); t3.join(); t4.join();
 
 		imageSampler.setDecodedData(decodedData);
-		writer.write("decodedData BOTH THREADS: " + (System.nanoTime() - start)/1e6+ "\n");
+		writer.write("decodedData ALL THREADS: " + (System.nanoTime() - start)/1e6+ "\n");
 
 
 //		start = System.nanoTime();
