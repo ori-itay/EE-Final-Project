@@ -116,8 +116,8 @@ public class DisplayDecoder {
 		int FirstHalfDataLength = proceedPosToMidDataLength(imageSampler, pos, imageDataLength*BITS_IN_BYTE);
 		int SecondHalfDataLength = imageDataLength - FirstHalfDataLength;
 		Position posT2 = new Position(posT1.rowModule,posT1.colModule); //These are the OLD pos coordinates!
-		int T2DataLength = proceedPosToMidDataLength(imageSampler, posT2, FirstHalfDataLength*BITS_IN_BYTE);
-		int T1DataLength = FirstHalfDataLength - T2DataLength;
+		int T1DataLength = proceedPosToMidDataLength(imageSampler, posT2, FirstHalfDataLength*BITS_IN_BYTE);
+		int T2DataLength = FirstHalfDataLength - T1DataLength;
 		Position posT3 = new Position(pos.rowModule,pos.colModule); //These are the NEW pos coordinates!
 		int T3DataLength = proceedPosToMidDataLength(imageSampler, pos, SecondHalfDataLength*BITS_IN_BYTE);
 		int T4DataLength = SecondHalfDataLength - T3DataLength;
