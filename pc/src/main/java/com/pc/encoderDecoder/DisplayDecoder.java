@@ -28,6 +28,51 @@ public class DisplayDecoder {
 //		return imageSampler;
 //	}
 
+	private static int proceedPosToMidDataLength(StdImageSampler imageSampler, Position posT2, int dataLengthBits){
+		int wantedLengthBits = dataLengthBits / 2;
+		int totalBitsCovered = 0;
+		int currLineLength;
+
+		currLineLength = imageSampler.getModulesInDim() - MODULES_IN_POS_DET_DIM - posT2.colModule;
+		totalBitsCovered+= currLineLength*ENCODING_BIT_GROUP_SIZE*CHANNELS;
+		posT2.rowModule++;
+
+		while(totalBitsCovered < wantedLengthBits){
+			if(posT2.rowModule < MODULES_IN_POS_DET_DIM){
+				posT2.colModule = MODULES_IN_POS_DET_DIM;
+				currLineLength = imageSampler.getModulesInDim() - MODULES_IN_POS_DET_DIM - posT2.colModule;
+			}
+			else if(posT2.rowModule + 1 >= imageSampler.getModulesInDim() - MODULES_IN_POS_DET_DIM){
+				posT2.colModule = MODULES_IN_POS_DET_DIM;
+				currLineLength = imageSampler.getModulesInDim() - posT2.colModule;
+			}
+			else if(posT2.rowModule + 1 >= ALIGNMENT_PATTERN_UPPER_LEFT_MODULE &&
+					posT2.rowModule < ALIGNMENT_PATTERN_UPPER_LEFT_MODULE + MODULES_IN_ALIGNMENT_PATTERN_DIM){
+				posT2.colModule = 0;
+				currLineLength = imageSampler.getModulesInDim() - posT2.colModule - MODULES_IN_ALIGNMENT_PATTERN_DIM;
+			}
+			else{
+				posT2.colModule = 0;
+				currLineLength = imageSampler.getModulesInDim();
+			}
+			totalBitsCovered+= currLineLength*ENCODING_BIT_GROUP_SIZE*CHANNELS;
+			posT2.rowModule++;
+		}
+		while( (totalBitsCovered % BITS_IN_BYTE) != 0){
+			posT2.colModule++;
+			//skip alignment pattern
+			if(posT2.colModule == ALIGNMENT_PATTERN_UPPER_LEFT_MODULE &&
+					(posT2.rowModule >= ALIGNMENT_PATTERN_UPPER_LEFT_MODULE &&
+							posT2.rowModule < ALIGNMENT_PATTERN_UPPER_LEFT_MODULE + MODULES_IN_ALIGNMENT_PATTERN_DIM)){
+				posT2.colModule+=  MODULES_IN_ALIGNMENT_PATTERN_DIM;
+			}
+			totalBitsCovered+= ENCODING_BIT_GROUP_SIZE*CHANNELS;
+			imageSampler.imageCheckForColumnEnd(posT2, imageSampler.getModulesInDim(), 0);
+		}
+
+		return totalBitsCovered / BITS_IN_BYTE;
+	}
+
 	public static void decodePixelMatrix(StdImageSampler imageSampler, int[][] pixelMatrix) throws IOException, InterruptedException {
 		long start = System.currentTimeMillis();
 		File f = new File("/storage/emulated/0/Download/" + start +"-times.txt");
@@ -57,29 +102,36 @@ public class DisplayDecoder {
 		writer.write("computeMaxEncodedLength: " + (System.nanoTime() - start)/1e6+ "\n");
 
 		// TODO: find proper index for pos when splitting to threads
+
+		Position posT1 = new Position(pos.rowModule,pos.colModule);
+		int T1DataLength = proceedPosToMidDataLength(imageSampler, pos, imageDataLength*BITS_IN_BYTE);
+		int T2DataLength = imageDataLength - T1DataLength;
 // 		FixedThreadExecutor
-//		Runtime.getRuntime().availableProcessors();
-//		Position posT1 = new Position(pos.rowModule,pos.colModule);
+		Runtime.getRuntime().availableProcessors();
 //		pos.rowModule = 62; pos.colModule = 32;
 //		int firstThreadDataLength = 5640;
-//		Thread t1 = new Thread(()->{
-//			decodeData(imageSampler, firstThreadDataLength, posT1, false);
-//		});
-//		Thread t2 = new Thread(()->{
-//			decodeData(imageSampler, imageDataLength - firstThreadDataLength, pos, false);
-//		});
-//
-//		start = System.nanoTime();
-//		t1.start();
-//		t2.start();
-//
-//		t1.join(); t2.join();
-//		writer.write("decodedData BOTH THREADS: " + (System.nanoTime() - start)/1e6+ "\n");
+		byte[] decodedData = new byte[imageDataLength];
+		Thread t1 = new Thread(()->{
+			System.arraycopy(decodeData(imageSampler, T1DataLength, posT1, false), 0, decodedData, 0, T1DataLength);
+		});
+		Thread t2 = new Thread(()->{
+			System.arraycopy(decodeData(imageSampler, T2DataLength, pos, false), 0, decodedData, T1DataLength, T2DataLength);
 
+		});
 
 		start = System.nanoTime();
-		imageSampler.setDecodedData(decodeData(imageSampler, imageDataLength, pos, false));
-		writer.write("setDecodedData: " + (System.nanoTime() - start)/1e6+ "\n");
+		t1.start();
+		t2.start();
+
+		t1.join(); t2.join();
+
+		imageSampler.setDecodedData(decodedData);
+		writer.write("decodedData BOTH THREADS: " + (System.nanoTime() - start)/1e6+ "\n");
+
+
+//		start = System.nanoTime();
+//		imageSampler.setDecodedData(decodeData(imageSampler, imageDataLength, pos, false));
+//		writer.write("setDecodedData: " + (System.nanoTime() - start)/1e6+ "\n");
 
 		start = System.nanoTime();
 		imageSampler.setIV2(decodeData(imageSampler, Parameters.ivLength, pos, true));
