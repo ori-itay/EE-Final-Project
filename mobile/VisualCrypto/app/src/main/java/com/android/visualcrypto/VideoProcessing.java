@@ -2,48 +2,26 @@ package com.android.visualcrypto;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Surface;
-import android.view.View;
-import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.ToggleButton;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.camera.core.AspectRatio;
 import androidx.camera.core.Camera;
 import androidx.camera.core.CameraSelector;
 import androidx.camera.core.ImageCapture;
-import androidx.camera.core.ImageCaptureException;
-import androidx.camera.core.ImageProxy;
 import androidx.camera.core.Preview;
 import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.camera.view.PreviewView;
 import androidx.core.content.ContextCompat;
 
-import com.android.visualcrypto.flow.Flow;
-import com.android.visualcrypto.videoProcessingUtils.RepeatListener;
 import com.android.visualcrypto.videoProcessingUtils.TakePictureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
 
-import org.opencv.android.Utils;
-import org.opencv.core.Mat;
-
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
-import javax.crypto.NoSuchPaddingException;
-
-import static com.android.visualcrypto.MainActivity.bitmapToFile;
 
 
 public class VideoProcessing extends AppCompatActivity {
@@ -54,7 +32,7 @@ public class VideoProcessing extends AppCompatActivity {
     ImageCapture imageCapture;
 
     PreviewView previewView;
-    ImageButton imageButton;
+    ToggleButton toggleButton;
 
     private ListenableFuture<ProcessCameraProvider> cameraProviderFuture;
     Context context;
@@ -70,7 +48,7 @@ public class VideoProcessing extends AppCompatActivity {
         processedImgView.bringToFront();
 
         previewView = findViewById(R.id.previewView);
-        imageButton = findViewById(R.id.imageButtonUseCase);
+        toggleButton = findViewById(R.id.toggleButton);
 
 
         cameraProviderFuture = ProcessCameraProvider.getInstance(this);
@@ -85,7 +63,7 @@ public class VideoProcessing extends AppCompatActivity {
         }, ContextCompat.getMainExecutor(this));
     }
 
-    private static ExecutorService executor = Executors.newFixedThreadPool(2);
+    public static ExecutorService executor;
 
     @SuppressLint("ClickableViewAccessibility")
     private void bindPreviewAndCapture(ProcessCameraProvider cameraProvider) {
@@ -95,11 +73,19 @@ public class VideoProcessing extends AppCompatActivity {
                 .build();
 
         imageCapture = setImageCapture();
-        TakePictureCallback.setImageCaptureParams(executor, imageCapture, processedImgView, this);
+        TakePictureCallback.setImageCaptureParams(imageCapture, processedImgView, this);
 
-        //imageButton.setOnTouchListener(new RepeatListener(1000, 2000, (View.OnClickListener) v -> {
-        imageButton.setOnClickListener(v -> //TODO : 1) fix preview. 2) fix onclick, switch to disable etc
-            imageCapture.takePicture(executor, new TakePictureCallback()));
+//TODO : 1) fix preview.
+        toggleButton.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                executor = Executors.newFixedThreadPool(2);
+                imageCapture.takePicture(executor, new TakePictureCallback());
+            } else {
+                executor.shutdown();
+            }
+        });
+
+
 
 
 

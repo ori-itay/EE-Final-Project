@@ -1,6 +1,5 @@
 package com.android.visualcrypto.videoProcessingUtils;
 
-import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.util.Log;
@@ -22,9 +21,6 @@ import java.nio.ByteBuffer;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
 
 import javax.crypto.NoSuchPaddingException;
 
@@ -35,15 +31,14 @@ public class TakePictureCallback extends ImageCapture.OnImageCapturedCallback {
     private static ImageCapture imageCapture;
     private static ImageView processedImgView;
     private static VideoProcessing videoProcessing;
-    private static ExecutorService executor;
 
 
 
-    public static void setImageCaptureParams(ExecutorService executor,ImageCapture imageCapture, ImageView processedImgView, VideoProcessing videoProcessing) {
+
+    public static void setImageCaptureParams(ImageCapture imageCapture, ImageView processedImgView, VideoProcessing videoProcessing) {
         TakePictureCallback.imageCapture = imageCapture;
         TakePictureCallback.processedImgView = processedImgView;
         TakePictureCallback.videoProcessing = videoProcessing;
-        TakePictureCallback.executor = executor;
 
     }
 
@@ -60,7 +55,7 @@ public class TakePictureCallback extends ImageCapture.OnImageCapturedCallback {
         Log.d("time", "mili, buffer to bitmap: " + (System.nanoTime() - start) / 1e6);
         image.close();
 
-        imageCapture.takePicture(executor, new TakePictureCallback());
+        imageCapture.takePicture(VideoProcessing.executor, new TakePictureCallback());
 
 
 
@@ -125,7 +120,7 @@ public class TakePictureCallback extends ImageCapture.OnImageCapturedCallback {
 
         } catch (IOException | NoSuchAlgorithmException | InvalidAlgorithmParameterException | InvalidKeyException | NoSuchPaddingException e) {
             e.printStackTrace();
-        } catch (Exception rest) {
+        }  catch (Exception rest) {
             Log.d("onCaptureSuccess", "General exception occured!");
             rest.printStackTrace();
         }
