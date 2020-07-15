@@ -96,13 +96,9 @@ public class DistortedImageSampler extends StdImageSampler {
     }
 
 
-
-    private Context context;
-
-    public DistortedImageSampler(Mat distortedImage, Bitmap distortedBitmap, Context context) {
+    public DistortedImageSampler(Mat distortedImage, Bitmap distortedBitmap) {
         DistortedImageSampler.distortedImage = distortedImage;
         DistortedImageSampler.distortedBitmap = distortedBitmap;
-        this.context = context;
     }
 
     public int initParameters() {

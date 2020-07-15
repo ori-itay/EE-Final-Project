@@ -53,7 +53,7 @@ public class Flow{
             e.printStackTrace();
         }
         //
-        DistortedImageSampler distortedImageSampler = new DistortedImageSampler(capturedImg, encodedBitmap, context);
+        DistortedImageSampler distortedImageSampler = new DistortedImageSampler(capturedImg, encodedBitmap);
 
 //        //delete from here snr
         InputStream encodedStream = context.getAssets().open("50_50_4Level_colorPos.jpg");

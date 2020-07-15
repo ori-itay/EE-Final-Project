@@ -65,19 +65,9 @@ public class MainActivity extends AppCompatActivity {
         getPermissions(); // gets camera and write permissions
         showEncodedImage();
         Button captureImageBTN = this.findViewById(R.id.captureImageBTN);
-        captureImageBTN.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                takePicture();
-            }
-        });
+        captureImageBTN.setOnClickListener(v -> takePicture());
         Button decodeImageBTN = this.findViewById(R.id.decodeImgBtn);
-        decodeImageBTN.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                decodeImage();
-            }
-        });
+        decodeImageBTN.setOnClickListener(v -> decodeImage());
 
         Button videoProcessBTN = this.findViewById(R.id.videoProcessBtn);
         videoProcessBTN.setOnClickListener(new View.OnClickListener() {
