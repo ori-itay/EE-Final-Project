@@ -41,19 +41,6 @@
         app:layout_constraintTop_toTopOf="@+id/decodeImgBtn" />
 
     <Button
-        android:id="@+id/magicBTN"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="43dp"
-        android:onClick="test"
-        android:text="test"
-        app:layout_constraintBottom_toTopOf="@+id/videoProcessBtn"
-        app:layout_constraintEnd_toStartOf="@+id/decodeImgBtn"
-        app:layout_constraintHorizontal_bias="0.421"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/decodedImgId" />
-
-    <Button
         android:id="@+id/videoProcessBtn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

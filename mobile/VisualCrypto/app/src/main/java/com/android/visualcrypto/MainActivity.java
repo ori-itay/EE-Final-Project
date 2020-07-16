@@ -165,28 +165,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void test(View v) throws IOException, CameraAccessException {
-
-        InputStream is = this.getAssets().open("cap_50_50.jpg");
-        Bitmap b = BitmapFactory.decodeStream(is);
-
-        Mat capturedImage = new Mat();
-        Utils.bitmapToMat(b, capturedImage);
-
-
-
-
-
-//        DistortedImageSampler sampler = new DistortedImageSampler(capturedImage, b, this);
-//        boolean found = sampler.detect(capturedImage);
-//        int[] intArray = new int[b.getWidth()*b.getHeight()];
-//        //copy pixel data from the Bitmap into the 'intArray' array
-//        b.getPixels(intArray, 0, b.getWidth(), 0, 0, b.getWidth(), b.getHeight());
-
-        //Flow.executeAndroidFlow(capturedImage, )
-
-    }
-
     private void decodeImage() {
         try {
             //long startTime = System.currentTimeMillis();
