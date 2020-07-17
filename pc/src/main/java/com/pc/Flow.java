@@ -2,13 +2,14 @@ package com.pc;
 
 
 import com.pc.checksum.Checksum;
+import com.pc.configuration.Constants;
 import com.pc.configuration.Parameters;
 import com.pc.encoderDecoder.DisplayEncoder;
 import com.pc.encryptorDecryptor.EncryptorDecryptor;
 import com.pc.encryptorDecryptor.encryptor.Encryptor;
 import com.pc.shuffleDeshuffle.shuffle.Shuffle;
 
-import javax.crypto.SecretKey;
+import javax.crypto.*;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import javax.imageio.ImageIO;
@@ -17,17 +18,18 @@ import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ItemEvent;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.security.*;
 import java.security.cert.CertificateException;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Properties;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import static javax.swing.JOptionPane.showMessageDialog;
 
@@ -37,14 +39,15 @@ public class Flow {
 	
 	public static void main(String[] args) throws IOException, NoSuchAlgorithmException {
 		//load image
-		//sendUserSecretKey();
 		playWithUi();
-
 
 
 		try {
 			initKeyStore();
-			createDB();
+			if (!createDB()) {
+				System.out.println("No connection to DB");
+				return;
+			}
 			initServerThread();
 		} catch (SQLException | ClassNotFoundException e) {
 			e.printStackTrace();
@@ -52,41 +55,63 @@ public class Flow {
 
 		File inputFile = new File("200_200.jpg");		
 		
-		BufferedImage image = ImageIO.read(inputFile);
+		//BufferedImage image = ImageIO.read(inputFile);
+
+	}
+
+	public static void flow(BufferedImage image) {
 		byte[] imageBytes = FlowUtils.convertToBytesUsingGetRGB(image);
-		IvParameterSpec iv = Encryptor.generateIv(Parameters.ivLength); 
+		IvParameterSpec iv = Encryptor.generateIv(Parameters.ivLength);
 		System.out.println("IV:" + Arrays.toString(iv.getIV()));
 		byte[] chksumIV = Checksum.computeChecksum(iv.getIV());
 		byte[] dimsArr = FlowUtils.getDimensionsArray(image);
-		//SecretKey skey; 
+		//SecretKey skey;
 		BufferedImage encodedImage;
 		try {
 			//skey = Encryptor.generateSymmetricKey();
 			/* constant key */
-			byte[] const_key = new byte[] {100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115};
-			SecretKeySpec skeySpec = new SecretKeySpec(const_key, Parameters.encryptionAlgorithm);
+//			byte[] const_key = new byte[] {100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115};
+//			SecretKeySpec skeySpec = new SecretKeySpec(const_key, Parameters.encryptionAlgorithm);
 			/****************/
-			//SecretKeySpec skeySpec = new SecretKeySpec(skey.getEncoded(), Constants.ENCRYPTION_ALGORITHM);
+			SecretKeySpec skeySpec = new SecretKeySpec(userSecretKey.getEncoded(), Parameters.encryptionAlgorithm);
 			byte[] generatedXorBytes = EncryptorDecryptor.generateXorBytes(skeySpec, iv);
-			
+
 			byte[] encryptedImg = Encryptor.encryptImage(imageBytes, generatedXorBytes);
 			byte[] shuffledEncryptedImg = Shuffle.shuffleImgPixels(encryptedImg, iv);
-			
+
 
 			encodedImage = DisplayEncoder.encodeBytes(shuffledEncryptedImg, dimsArr, iv.getIV(),  chksumIV);
-			ImageIO.write(encodedImage, "png", new File(encodedFilePath));
+
+			frame.getContentPane().add(new JLabel(new ImageIcon(encodedImage)));
+			frame.pack();
+			frame.setVisible(true);
+			//ImageIO.write(encodedImage, "png", new File(encodedFilePath));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 
+	private static ScheduledExecutorService executor;
+	private static Robot robot = null;
+	private static final Rectangle screenRect = new Rectangle(300, 300, 50, 50);
+
+	static {
+		try {
+			robot = new Robot();
+		} catch (AWTException e) {
+			e.printStackTrace();
+		}
+	}
+	private static final JFrame frame = new JFrame("VisualCrypto");
+	static String username;
+	static SecretKey userSecretKey;
+
 	private static void playWithUi() {
-		JFrame frame = new JFrame("VisualCrypto");
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setSize(300,300);
 
 
-
+		JLabel loggedInAs = new JLabel("Logged in as: ");
 		JPanel panel = new JPanel(); // the panel is not visible in output
 		JLabel label = new JLabel("Username:");
 		JTextField tf = new JTextField(10); // accepts up to 10 characters
@@ -98,26 +123,64 @@ public class Flow {
 				return;
 			}
 			//TODO: cont
+			username = email;
+			userSecretKey = fetchUserKey(username);
+			loggedInAs.setText("Logged in as: " + email);
+			tf.setText("");
 		});
 		panel.add(label); // Components Added using Flow Layout
 		panel.add(tf);
 		panel.add(send);
 
 
+		JToggleButton toggleButton = new JToggleButton("Toggle");
+		toggleButton.addItemListener((itemEvent) -> {
+			int state = itemEvent.getStateChange();
+			if (state == ItemEvent.SELECTED) {
+				executor = Executors.newSingleThreadScheduledExecutor();
+
+
+				//ImageIO.write(capture, "jpeg", new File("ss.jpg"));
+
+				executor.scheduleAtFixedRate(()-> {
+					BufferedImage img = robot.createScreenCapture(screenRect);
+					flow(img);
+				}, 0, 100, TimeUnit.MILLISECONDS);
+			} else {
+				executor.shutdown();
+			}
+
+		});
+
+
+
+		frame.getContentPane().add(BorderLayout.NORTH, loggedInAs);
 		frame.getContentPane().add(BorderLayout.SOUTH, panel);
+		frame.getContentPane().add(BorderLayout.CENTER, toggleButton);
 		frame.setVisible(true);
 		int a=3;
+	}
+
+	private static SecretKey fetchUserKey(String username) {
+		String insetStr = "SELECT * FROM Users WHERE email = ?";
+
+		PreparedStatement getUserKey;
 		try {
-			Robot robot = new Robot();
-			//robot.
-			Graphics2D g2 =null;
-			//TODO: trying to make a rectangle shape, afterwards user press a button and we fetch the coordinates (50x50 rectangle), and use frames from that location for visualcrypto
-
-
-		} catch (AWTException e) {
+			getUserKey = Flow.conn.prepareStatement(insetStr);
+			getUserKey.setString(1, username);
+			ResultSet rs = getUserKey.executeQuery();
+			String pw = rs.getString("pw");
+			if (pw != null) {
+				byte[] bytesKeyEncrypted = Base64.getDecoder().decode(pw);
+				final Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+				cipher.init(Cipher.DECRYPT_MODE, privateSecretKey);
+				byte[] decrypted = cipher.doFinal(bytesKeyEncrypted);
+				return new SecretKeySpec(decrypted, 0, decrypted.length, "AES");
+			}
+		} catch (SQLException | InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException | IllegalBlockSizeException | BadPaddingException e) {
 			e.printStackTrace();
 		}
-
+		return null;
 	}
 
 	private static void initServerThread() {
@@ -131,7 +194,7 @@ public class Flow {
 	private static boolean openConnection() {
 		try {
 			Class.forName("com.mysql.cj.jdbc.Driver");
-			conn = DriverManager.getConnection("jdbc:mysql://localhost?useSSL=false&serverTimezone=Asia/Jerusalem","admin",password);
+			conn = DriverManager.getConnection("jdbc:mysql://localhost?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Jerusalem","admin",password);
 			return true;
 		} catch (Exception e) {
 			System.out.println(Arrays.toString(e.getStackTrace()));
