@@ -48,6 +48,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.net.InetAddress;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.security.InvalidAlgorithmParameterException;
@@ -68,7 +69,7 @@ public class MainActivity extends AppCompatActivity {
     private String currentPhotoPath;
     public static byte[] privateKey;
 
-    @SuppressLint("SetTextI18n")
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -78,7 +79,7 @@ public class MainActivity extends AppCompatActivity {
         }
         getPermissions(); // gets camera and write permissions
 
-        TextView loggedInAs = this.findViewById(R.id.loggedInAs);
+
         SharedPreferences sharedPref = this.getPreferences(Context.MODE_PRIVATE);
         if (sharedPref.contains("user")) { //TODO: change user to username (email) and display it to user..logged in as etc
             String val = sharedPref.getString("user", "");
@@ -96,7 +97,9 @@ public class MainActivity extends AppCompatActivity {
                 if (emailStr.isEmpty() || serverAddrStr.isEmpty() || !emailStr.contains("@")) {
                     showAlert(this, "Error: Invalid input!");
                 } else {
-                    requestSecretKey(serverAddrStr, emailStr);
+                    Thread sendKeyRequest = new Thread(()-> requestSecretKey(serverAddrStr, emailStr));
+                    sendKeyRequest.start();
+
                     AlertDialog.Builder builder = new AlertDialog.Builder(this);
                     builder.setTitle("Enter your secret key that you received in the email:");
 
@@ -111,11 +114,12 @@ public class MainActivity extends AppCompatActivity {
                         privateKey = Base64.getDecoder().decode(val);
                         SharedPreferences.Editor editor = sharedPref.edit();
                         editor.putString("user", val);
-                        editor.commit();
+                        editor.apply();
 
-                        loggedInAs.setText("Logged in as: " + emailStr);
+
                         setMainContentView();
-
+                        TextView loggedInAs = this.findViewById(R.id.loggedInAs);
+                        loggedInAs.setText("Logged in as: " + emailStr);
                     });
                     builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
                     builder.show();
@@ -125,7 +129,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void requestSecretKey(String serverAddr, String emailStr) {
-        try (Socket socket = new Socket(serverAddr, 32326)) {
+
+        try (Socket socket = new Socket(InetAddress.getByName(serverAddr), 32326)) {
             BufferedWriter out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
             out.write("keyrequest:" + emailStr + "\nover");
             out.close();

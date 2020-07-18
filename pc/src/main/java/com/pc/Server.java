@@ -1,6 +1,5 @@
 package com.pc;
 
-import com.pc.configuration.Constants;
 import com.pc.encryptorDecryptor.encryptor.Encryptor;
 
 import javax.crypto.*;
@@ -29,8 +28,7 @@ public class Server  extends Thread {
 
     @Override
     public void run() {
-        try
-        {
+        try {
             server = new ServerSocket(32326);
             server.setReuseAddress(true);
             System.out.println("Server started");
@@ -60,35 +58,25 @@ public class Server  extends Thread {
                                     continue;
                                 }
 
-                                //TODO: make the flow dependent of the specific user and his key etc
                                 SecretKey skey = Encryptor.generateSymmetricKey();
 
                                 insertEntry(userEmail, skey.getEncoded(), privateSecretKey);
 
                                 String content = "Welcome!\nYour secret key is (base64):\n" + Base64.getEncoder().encodeToString(skey.getEncoded());
                                 String subject = "VisualCrypto Secret Key";
-                                //sendMail(userEmail, subject, content);
+                                sendMail(userEmail, subject, content);
                             }
-
                         }
                         System.out.println(line);
-                    }
-                    catch(IOException e)
-                    {
-                        System.out.println(e);
-                        break;
-                    } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | BadPaddingException | IllegalBlockSizeException e) {
+                    } catch (NoSuchAlgorithmException  | IOException | NoSuchPaddingException | InvalidKeyException | BadPaddingException | IllegalBlockSizeException e) {
                         e.printStackTrace();
+                        break;
                     }
                 }
-
                 socket.close();
                 in.close();
             }
-
-        }
-        catch(IOException e)
-        {
+        } catch(IOException e) {
             e.printStackTrace();
         } finally {
             try {
@@ -145,11 +133,9 @@ public class Server  extends Thread {
 
 
         String insetStr = "INSERT INTO Users (email,pw) VALUES(?, ?)";
-        //String insetStr = "INSERT INTO Users email = ? key ="; + email + "," + Base64.getEncoder().encodeToString(encrypted) + ")";
 
-        PreparedStatement insert = null;
         try {
-            insert = Flow.conn.prepareStatement(insetStr);
+            PreparedStatement insert = Flow.conn.prepareStatement(insetStr);
             insert.setString(1, email);
             insert.setString(2, Base64.getEncoder().encodeToString(encrypted));
             insert.execute();

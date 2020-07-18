@@ -123,6 +123,9 @@ public class Flow {
 			}
 			username = email;
 			userSecretKey = fetchUserKey(username);
+			if (userSecretKey == null) {
+
+			}
 			loggedInAs.setText("Logged in as: " + email);
 			tf.setText("");
 		});
