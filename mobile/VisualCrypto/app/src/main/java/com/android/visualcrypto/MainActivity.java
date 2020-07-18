@@ -1,8 +1,11 @@
 package com.android.visualcrypto;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -11,10 +14,13 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.text.InputType;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -25,6 +31,8 @@ import androidx.core.content.FileProvider;
 import com.android.visualcrypto.cameraUtils.CameraRotationFix;
 import com.android.visualcrypto.flow.Flow;
 import com.android.visualcrypto.openCvUtils.OpenCvUtils;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
 import com.pc.configuration.Constants;
 
 import org.opencv.android.OpenCVLoader;
@@ -32,18 +40,23 @@ import org.opencv.android.Utils;
 import org.opencv.core.Mat;
 
 import java.io.BufferedOutputStream;
+import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
+import java.util.Base64;
 import java.util.Date;
+import java.util.Objects;
 
 import javax.crypto.NoSuchPaddingException;
 
@@ -53,7 +66,9 @@ public class MainActivity extends AppCompatActivity {
     private static final int CAMERA_REQUEST = 1888;
     private static final int VIDEO_PROCESS_INTENT = 5;
     private String currentPhotoPath;
+    public static byte[] privateKey;
 
+    @SuppressLint("SetTextI18n")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -61,28 +76,76 @@ public class MainActivity extends AppCompatActivity {
             showAlert(this, "OpenCV failed to load..Exiting");
             return;
         }
-        setContentView(R.layout.activity_main);
         getPermissions(); // gets camera and write permissions
-        showEncodedImage();
+
+        TextView loggedInAs = this.findViewById(R.id.loggedInAs);
+        SharedPreferences sharedPref = this.getPreferences(Context.MODE_PRIVATE);
+        if (sharedPref.contains("user")) { //TODO: change user to username (email) and display it to user..logged in as etc
+            String val = sharedPref.getString("user", "");
+            privateKey = Base64.getDecoder().decode(val);
+            //loggedInAs.setText("Logged in as: " + emailStr);
+            setMainContentView();
+        } else {
+            setContentView(R.layout.entry_window);
+            Button registerBTN = this.findViewById(R.id.registerBTN);
+            TextInputEditText email = this.findViewById(R.id.inputEmail);
+            TextInputEditText serverAddr = this.findViewById(R.id.serverAddr);
+            registerBTN.setOnClickListener((v)-> {
+                String emailStr = Objects.requireNonNull(email.getText()).toString();
+                String serverAddrStr = Objects.requireNonNull(serverAddr.getText()).toString();
+                if (emailStr.isEmpty() || serverAddrStr.isEmpty() || !emailStr.contains("@")) {
+                    showAlert(this, "Error: Invalid input!");
+                } else {
+                    requestSecretKey(serverAddrStr, emailStr);
+                    AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                    builder.setTitle("Enter your secret key that you received in the email:");
+
+
+                    final EditText input = new EditText(this);
+
+                    input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+                    builder.setView(input);
+
+                    builder.setPositiveButton("OK", (dialog, which) -> {
+                        String val = input.getText().toString();
+                        privateKey = Base64.getDecoder().decode(val);
+                        SharedPreferences.Editor editor = sharedPref.edit();
+                        editor.putString("user", val);
+                        editor.commit();
+
+                        loggedInAs.setText("Logged in as: " + emailStr);
+                        setMainContentView();
+
+                    });
+                    builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
+                    builder.show();
+                }
+            });
+        }
+    }
+
+    private void requestSecretKey(String serverAddr, String emailStr) {
+        try (Socket socket = new Socket(serverAddr, 32326)) {
+            BufferedWriter out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+            out.write("keyrequest:" + emailStr + "\nover");
+            out.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void setMainContentView() {
+        setContentView(R.layout.activity_main);
         Button captureImageBTN = this.findViewById(R.id.captureImageBTN);
         captureImageBTN.setOnClickListener(v -> takePicture());
         Button decodeImageBTN = this.findViewById(R.id.decodeImgBtn);
         decodeImageBTN.setOnClickListener(v -> decodeImage());
 
         Button videoProcessBTN = this.findViewById(R.id.videoProcessBtn);
-        videoProcessBTN.setOnClickListener(new View.OnClickListener() {
-
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(v.getContext(), VideoProcessing.class);
-                startActivityForResult(intent, VIDEO_PROCESS_INTENT);
-            }
+        videoProcessBTN.setOnClickListener(v -> {
+            Intent intent = new Intent(v.getContext(), VideoProcessing.class);
+            startActivityForResult(intent, VIDEO_PROCESS_INTENT);
         });
-
-
-        //zxing - maybe for next stage
-        //IntentIntegrator integrator = new IntentIntegrator(this);
-        //integrator.initiateScan();
     }
 
     private File createImageFile() throws IOException {
