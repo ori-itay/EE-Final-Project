@@ -11,6 +11,7 @@ import javax.mail.internet.MimeMessage;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.sql.PreparedStatement;
@@ -61,15 +62,12 @@ public class Server  extends Thread {
 
                                 //TODO: make the flow dependent of the specific user and his key etc
                                 SecretKey skey = Encryptor.generateSymmetricKey();
-                                String strKey = Base64.getEncoder().encodeToString(skey.getEncoded());
 
+                                insertEntry(userEmail, skey.getEncoded(), privateSecretKey);
 
-
-                                insertEntry(userEmail, strKey, privateSecretKey);
-
-                                String content = "Welcome!\nYour secret key is (base64):\n" + strKey;
+                                String content = "Welcome!\nYour secret key is (base64):\n" + Base64.getEncoder().encodeToString(skey.getEncoded());
                                 String subject = "VisualCrypto Secret Key";
-                                sendMail(userEmail, subject, content);
+                                //sendMail(userEmail, subject, content);
                             }
 
                         }
@@ -135,10 +133,15 @@ public class Server  extends Thread {
         }
     }
 
-    public static boolean insertEntry(String email, String userSecretKey, SecretKey privateSecretKey) throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
+    public static boolean insertEntry(String email, byte[] userSecretKey, SecretKey privateSecretKey) throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
         final Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-        cipher.init(Cipher.ENCRYPT_MODE, privateSecretKey);
-        byte[] encrypted = cipher.doFinal(userSecretKey.getBytes());
+        try {
+            cipher.init(Cipher.ENCRYPT_MODE, privateSecretKey, new IvParameterSpec(new byte[] {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}));
+        } catch (InvalidAlgorithmParameterException e) {
+            e.printStackTrace();
+            return false;
+        }
+        byte[] encrypted = cipher.doFinal(userSecretKey);
 
 
         String insetStr = "INSERT INTO Users (email,pw) VALUES(?, ?)";

@@ -61,7 +61,9 @@ public class Flow {
 
 	public static void flow(BufferedImage image) {
 		byte[] imageBytes = FlowUtils.convertToBytesUsingGetRGB(image);
-		IvParameterSpec iv = Encryptor.generateIv(Parameters.ivLength);
+		//IvParameterSpec iv = Encryptor.generateIv(Parameters.ivLength);
+		IvParameterSpec iv = new IvParameterSpec(new byte[]{1,2,3,4,5,6,7,8,9,10,11,12});
+
 		System.out.println("IV:" + Arrays.toString(iv.getIV()));
 		byte[] chksumIV = Checksum.computeChecksum(iv.getIV());
 		byte[] dimsArr = FlowUtils.getDimensionsArray(image);
@@ -79,13 +81,9 @@ public class Flow {
 			byte[] encryptedImg = Encryptor.encryptImage(imageBytes, generatedXorBytes);
 			byte[] shuffledEncryptedImg = Shuffle.shuffleImgPixels(encryptedImg, iv);
 
-
 			encodedImage = DisplayEncoder.encodeBytes(shuffledEncryptedImg, dimsArr, iv.getIV(),  chksumIV);
 
-			frame.getContentPane().add(new JLabel(new ImageIcon(encodedImage)));
-			frame.pack();
-			frame.setVisible(true);
-			//ImageIO.write(encodedImage, "png", new File(encodedFilePath));
+			imgLabel.setIcon(new ImageIcon(encodedImage));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -105,6 +103,7 @@ public class Flow {
 	private static final JFrame frame = new JFrame("VisualCrypto");
 	static String username;
 	static SecretKey userSecretKey;
+	static JLabel imgLabel;
 
 	private static void playWithUi() {
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -122,21 +121,21 @@ public class Flow {
 				showMessageDialog(null, "Error: username field is empty");
 				return;
 			}
-			//TODO: cont
 			username = email;
 			userSecretKey = fetchUserKey(username);
 			loggedInAs.setText("Logged in as: " + email);
 			tf.setText("");
 		});
-		panel.add(label); // Components Added using Flow Layout
-		panel.add(tf);
-		panel.add(send);
+
+		imgLabel = new JLabel("", SwingConstants.CENTER);
 
 
-		JToggleButton toggleButton = new JToggleButton("Toggle");
+
+		JToggleButton toggleButton = new JToggleButton("Off");
 		toggleButton.addItemListener((itemEvent) -> {
 			int state = itemEvent.getStateChange();
 			if (state == ItemEvent.SELECTED) {
+
 				executor = Executors.newSingleThreadScheduledExecutor();
 
 
@@ -146,17 +145,24 @@ public class Flow {
 					BufferedImage img = robot.createScreenCapture(screenRect);
 					flow(img);
 				}, 0, 100, TimeUnit.MILLISECONDS);
+				toggleButton.setText("On");
 			} else {
 				executor.shutdown();
+				toggleButton.setText("Off");
 			}
 
 		});
 
+		panel.add(label); // Components Added using Flow Layout
+		panel.add(tf);
+		panel.add(send);
+		panel.add(BorderLayout.WEST, toggleButton);
 
 
+		frame.getContentPane().add(BorderLayout.CENTER, imgLabel);
 		frame.getContentPane().add(BorderLayout.NORTH, loggedInAs);
 		frame.getContentPane().add(BorderLayout.SOUTH, panel);
-		frame.getContentPane().add(BorderLayout.CENTER, toggleButton);
+		frame.pack();
 		frame.setVisible(true);
 		int a=3;
 	}
@@ -169,15 +175,17 @@ public class Flow {
 			getUserKey = Flow.conn.prepareStatement(insetStr);
 			getUserKey.setString(1, username);
 			ResultSet rs = getUserKey.executeQuery();
-			String pw = rs.getString("pw");
-			if (pw != null) {
-				byte[] bytesKeyEncrypted = Base64.getDecoder().decode(pw);
-				final Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-				cipher.init(Cipher.DECRYPT_MODE, privateSecretKey);
-				byte[] decrypted = cipher.doFinal(bytesKeyEncrypted);
-				return new SecretKeySpec(decrypted, 0, decrypted.length, "AES");
+			if (rs.next()) {
+				String pw = rs.getString("pw");
+				if (pw != null) {
+					byte[] bytesKeyEncrypted = Base64.getDecoder().decode(pw);
+					final Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+					cipher.init(Cipher.DECRYPT_MODE, privateSecretKey, new IvParameterSpec(new byte[] {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}));
+					byte[] decrypted = cipher.doFinal(bytesKeyEncrypted);
+					return new SecretKeySpec(decrypted, 0, decrypted.length, "AES");
+				}
 			}
-		} catch (SQLException | InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException | IllegalBlockSizeException | BadPaddingException e) {
+		} catch (SQLException | InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException | IllegalBlockSizeException | BadPaddingException | InvalidAlgorithmParameterException e) {
 			e.printStackTrace();
 		}
 		return null;
