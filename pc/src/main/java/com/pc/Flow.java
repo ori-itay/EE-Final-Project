@@ -17,6 +17,7 @@ import javax.mail.*;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.image.BufferedImage;
@@ -31,6 +32,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import static java.awt.GridBagConstraints.VERTICAL;
 import static javax.swing.JOptionPane.showMessageDialog;
 
 public class Flow {
@@ -72,18 +74,18 @@ public class Flow {
 		try {
 			//skey = Encryptor.generateSymmetricKey();
 			/* constant key */
-//			byte[] const_key = new byte[] {100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115};
-//			SecretKeySpec skeySpec = new SecretKeySpec(const_key, Parameters.encryptionAlgorithm);
+			byte[] const_key = new byte[] {100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115};
+			SecretKeySpec skeySpec = new SecretKeySpec(const_key, Parameters.encryptionAlgorithm);
 			/****************/
-			SecretKeySpec skeySpec = new SecretKeySpec(userSecretKey.getEncoded(), Parameters.encryptionAlgorithm);
+			//SecretKeySpec skeySpec = new SecretKeySpec(userSecretKey.getEncoded(), Parameters.encryptionAlgorithm);
 			byte[] generatedXorBytes = EncryptorDecryptor.generateXorBytes(skeySpec, iv);
 
 			byte[] encryptedImg = Encryptor.encryptImage(imageBytes, generatedXorBytes);
 			byte[] shuffledEncryptedImg = Shuffle.shuffleImgPixels(encryptedImg, iv);
 
 			encodedImage = DisplayEncoder.encodeBytes(shuffledEncryptedImg, dimsArr, iv.getIV(),  chksumIV);
-
 			imgLabel.setIcon(new ImageIcon(encodedImage));
+			//imgLabel.setIcon(new ImageIcon(new ImageIcon(encodedImage).getImage().getScaledInstance(frame.getContentPane().getBounds().width,frame.getContentPane().getBounds().height,Image.SCALE_SMOOTH)));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -107,15 +109,16 @@ public class Flow {
 
 	private static void playWithUi() {
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.setSize(300,300);
+		//frame.setSize(300,300);
+
 
 
 		JLabel loggedInAs = new JLabel("Logged in as: ");
 		JPanel panel = new JPanel(); // the panel is not visible in output
-		JLabel label = new JLabel("Username:");
+		JLabel usernameLabel = new JLabel("Username:");
 		JTextField tf = new JTextField(10); // accepts up to 10 characters
-		JButton send = new JButton("Apply");
-		send.addActionListener((actionEvent)-> {
+		JButton apply = new JButton("Apply");
+		apply.addActionListener((actionEvent)-> {
 			String email = tf.getText();
 			if (email.isEmpty()) {
 				showMessageDialog(null, "Error: username field is empty");
@@ -132,18 +135,11 @@ public class Flow {
 
 		imgLabel = new JLabel("", SwingConstants.CENTER);
 
-
-
 		JToggleButton toggleButton = new JToggleButton("Off");
 		toggleButton.addItemListener((itemEvent) -> {
 			int state = itemEvent.getStateChange();
 			if (state == ItemEvent.SELECTED) {
-
 				executor = Executors.newSingleThreadScheduledExecutor();
-
-
-				//ImageIO.write(capture, "jpeg", new File("ss.jpg"));
-
 				executor.scheduleAtFixedRate(()-> {
 					BufferedImage img = robot.createScreenCapture(screenRect);
 					flow(img);
@@ -153,21 +149,28 @@ public class Flow {
 				executor.shutdown();
 				toggleButton.setText("Off");
 			}
-
 		});
 
-		panel.add(label); // Components Added using Flow Layout
+		panel.add(usernameLabel); // Components Added using Flow Layout
 		panel.add(tf);
-		panel.add(send);
+		panel.add(apply);
 		panel.add(BorderLayout.WEST, toggleButton);
 
 
-		frame.getContentPane().add(BorderLayout.CENTER, imgLabel);
-		frame.getContentPane().add(BorderLayout.NORTH, loggedInAs);
-		frame.getContentPane().add(BorderLayout.SOUTH, panel);
+		BufferedImage img = robot.createScreenCapture(screenRect);
+		flow(img);
+
+		JPanel p = new JPanel();
+		p.add(imgLabel, BorderLayout.CENTER);
+		p.add(loggedInAs, BorderLayout.NORTH);
+		p.add(panel, BorderLayout.SOUTH);
+		frame.add(p);
+
+//		frame.add(imgLabel, BorderLayout.CENTER);
+//		frame.add(BorderLayout.NORTH, loggedInAs);
+//		frame.add(BorderLayout.SOUTH, panel);
 		frame.pack();
 		frame.setVisible(true);
-		int a=3;
 	}
 
 	private static SecretKey fetchUserKey(String username) {
