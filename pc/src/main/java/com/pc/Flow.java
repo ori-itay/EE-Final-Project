@@ -117,7 +117,6 @@ public class Flow {
 
 		JLabel loggedInAs = new JLabel("Logged in as: ");
 		JPanel panel = new JPanel(); // the panel is not visible in output
-		panel.setLayout(new BorderLayout());
 		JLabel usernameLabel = new JLabel("Username:");
 		JTextField tf = new JTextField(20); // accepts up to 10 characters
 		JButton apply = new JButton("Apply");
