@@ -53,26 +53,26 @@ public class OpenCvUtils {
         }
     }
 
-    public static int[] classifyPixelChannelsLevels(int[] channels, int indexRow, int indexCol){
-        int subMatIndRow = indexRow / DistortedImageSampler.tileHeight;
-        int subMatIndCol = indexCol / DistortedImageSampler.tileWidth;
+    public static int[] classifyPixelChannelsLevels(DistortedImageSampler sampler, int[] channels, int indexRow, int indexCol){
+        int subMatIndRow = indexRow / sampler.tileHeight;
+        int subMatIndCol = indexCol / sampler.tileWidth;
         //TODO: use the proper tile
         int processedChannels[] = new int[Constants.CHANNELS];
 
         double diffRed = 255, diffBlue = 255, diffGreen = 255;
         int currDiff;
-        for(int level : DistortedImageSampler.percentileValuesMapTilesRed.get(subMatIndRow).get(subMatIndCol).keySet()){
-            currDiff = (int) Math.abs(channels[0] - DistortedImageSampler.percentileValuesMapTilesRed.get(subMatIndRow).get(subMatIndCol).get(level));
+        for(int level : sampler.percentileValuesMapTilesRed.get(subMatIndRow).get(subMatIndCol).keySet()){
+            currDiff = (int) Math.abs(channels[0] - sampler.percentileValuesMapTilesRed.get(subMatIndRow).get(subMatIndCol).get(level));
             if(currDiff < diffRed){
                 diffRed = currDiff;
                 processedChannels[0] = level;
             }
-            currDiff = (int) Math.abs(channels[1] - DistortedImageSampler.percentileValuesMapTilesGreen.get(subMatIndRow).get(subMatIndCol).get(level));
+            currDiff = (int) Math.abs(channels[1] - sampler.percentileValuesMapTilesGreen.get(subMatIndRow).get(subMatIndCol).get(level));
             if(currDiff < diffGreen){
                 diffGreen = currDiff;
                 processedChannels[1] = level;
             }
-            currDiff = (int) Math.abs(channels[2] - DistortedImageSampler.percentileValuesMapTilesBlue.get(subMatIndRow).get(subMatIndCol).get(level));
+            currDiff = (int) Math.abs(channels[2] - sampler.percentileValuesMapTilesBlue.get(subMatIndRow).get(subMatIndCol).get(level));
             if(currDiff < diffBlue){
                 diffBlue = currDiff;
                 processedChannels[2] = level;
@@ -81,12 +81,12 @@ public class OpenCvUtils {
         return processedChannels;
     }
 
-    public static int[] thresholdAndNormalizeChannels(double[] channels, double[][][] minPixelVal,
+    public static int[] thresholdAndNormalizeChannels(DistortedImageSampler sampler, double[] channels, double[][][] minPixelVal,
                                                          double[][][] maxPixelVal, int indexRow, int indexCol) {
         final double GAMMA_ITAY = 1.37;
 
-        int subMatIndRow = indexRow / DistortedImageSampler.tileHeight;
-        int subMatIndCol = indexCol / DistortedImageSampler.tileWidth;
+        int subMatIndRow = indexRow / sampler.tileHeight;
+        int subMatIndCol = indexCol / sampler.tileWidth;
 
         double normalizedChannel;
         int closestLevel = 0;

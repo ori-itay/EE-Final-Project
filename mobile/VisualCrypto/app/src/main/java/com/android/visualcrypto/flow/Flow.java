@@ -2,7 +2,6 @@ package com.android.visualcrypto.flow;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.os.Environment;
 import android.util.Log;
 
@@ -17,10 +16,8 @@ import com.pc.encryptorDecryptor.decryptor.Decryptor;
 import com.pc.shuffleDeshuffle.deshuffle.Deshuffle;
 
 import org.opencv.core.Mat;
-import org.opencv.imgcodecs.Imgcodecs;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -32,11 +29,6 @@ import java.time.Instant;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
-
-import static com.android.visualcrypto.openCvUtils.DistortedImageSampler.errCounterBlue;
-import static com.android.visualcrypto.openCvUtils.DistortedImageSampler.errCounterGreen;
-import static com.android.visualcrypto.openCvUtils.DistortedImageSampler.errCounterRed;
-import static com.android.visualcrypto.openCvUtils.DistortedImageSampler.errCounterTotal;
 
 public class Flow{
     public static Mat delete;
@@ -56,10 +48,11 @@ public class Flow{
         DistortedImageSampler distortedImageSampler = new DistortedImageSampler(capturedImg, encodedBitmap);
 
 //        //delete from here snr
-        InputStream encodedStream = context.getAssets().open("50_50_4Level_colorPos.jpg");
-        Bitmap origEncodedBitmap = BitmapFactory.decodeStream(encodedStream);
-        distortedImageSampler.tempOrigPixelMatrix = MainActivity.get2DPixelArray(origEncodedBitmap);
-        errCounterTotal = 0; errCounterRed = 0; errCounterGreen = 0; errCounterBlue = 0;
+//        InputStream encodedStream = context.getAssets().open("50_50_4Level_colorPos.jpg");
+//        Bitmap origEncodedBitmap = BitmapFactory.decodeStream(encodedStream);
+//        distortedImageSampler.tempOrigPixelMatrix = MainActivity.get2DPixelArray(origEncodedBitmap);
+//        distortedImageSampler.errCounterTotal = 0; distortedImageSampler.errCounterRed = 0;
+//        distortedImageSampler.errCounterGreen = 0; distortedImageSampler.errCounterBlue = 0;
 //        //to here
 
         if (distortedImageSampler.initParameters() != 0) {
@@ -75,19 +68,20 @@ public class Flow{
         DisplayDecoder.decodePixelMatrix(distortedImageSampler, pixelArr);
         Log.d("performance", "decodePixelMatrix took: " + (System.currentTimeMillis() - start));
 
-        Imgcodecs.imwrite(Flow.DEBUG_FOLDER + "/SAMPLED_PLACES.jpg", Flow.delete); //TODO: del
+        //Imgcodecs.imwrite(Flow.DEBUG_FOLDER + "/SAMPLED_PLACES.jpg", Flow.delete); //TODO: del
 
         //SNR
         int total_num_of_modules = distortedImageSampler.getModulesInDim()*distortedImageSampler.getModulesInDim();
-        double SNR = (double)errCounterTotal / total_num_of_modules;
+        double SNR = (double)distortedImageSampler.errCounterTotal / total_num_of_modules;
         Log.d("ALL CHANNELS SNR", "SNR is: " + SNR);
-        double AVG_SNR = (double)(errCounterRed+errCounterGreen+errCounterBlue) / (Constants.CHANNELS * total_num_of_modules);
+        double AVG_SNR = (double)(distortedImageSampler.errCounterRed+distortedImageSampler.errCounterGreen+distortedImageSampler.errCounterBlue) /
+                (Constants.CHANNELS * total_num_of_modules);
         Log.d("ALL CHANNELS (AVG) SNR", "SNR is: " + AVG_SNR);
-        double RED_SNR = (double)errCounterRed / total_num_of_modules;
+        double RED_SNR = (double)distortedImageSampler.errCounterRed / total_num_of_modules;
         Log.d("RED CHANNEL SNR", "SNR is: " + RED_SNR);
-        double GREEN_SNR = (double)errCounterGreen / total_num_of_modules;
+        double GREEN_SNR = (double)distortedImageSampler.errCounterGreen / total_num_of_modules;
         Log.d("GREEN CHANNEL SNR", "SNR is: " + GREEN_SNR);
-        double BLUE_SNR = (double)errCounterBlue / total_num_of_modules;
+        double BLUE_SNR = (double)distortedImageSampler.errCounterBlue / total_num_of_modules;
         Log.d("BLUE CHANNEL SNR", "SNR is: " + BLUE_SNR);
         /* decode */
         byte[] decodedBytes = distortedImageSampler.getDecodedData();
