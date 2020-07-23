@@ -111,7 +111,11 @@ public class Flow {
 
 	private static void playWithUi() {
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		//frame.setSize(300,300);
+
+		GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
+		Dimension dim = new Dimension(gd.getDisplayMode().getWidth(),gd.getDisplayMode().getHeight() - 25);
+		frame.setPreferredSize(dim);
+
 
 
 
@@ -156,21 +160,32 @@ public class Flow {
 		panel.add(usernameLabel); // Components Added using Flow Layout
 		panel.add(tf);
 		panel.add(apply);
-		panel.add(BorderLayout.WEST, toggleButton);
+
+		//panel.add(toggleButton, FlowLayout.CENTER);
 
 
 //		BufferedImage img = robot.createScreenCapture(screenRect);
 //		flow(img);
 
-		JPanel p = new JPanel();
-		p.add(imgLabel, BorderLayout.CENTER);
-		p.add(loggedInAs, BorderLayout.NORTH);
-		p.add(panel, BorderLayout.SOUTH);
-		frame.add(p);
+		JPanel leftPanel = new JPanel(new BorderLayout());
+		leftPanel.add(loggedInAs, BorderLayout.WEST);
+		leftPanel.add(imgLabel, BorderLayout.CENTER);
 
-//		frame.add(imgLabel, BorderLayout.CENTER);
-//		frame.add(BorderLayout.NORTH, loggedInAs);
-//		frame.add(BorderLayout.SOUTH, panel);
+		//leftPanel.add(panel, BorderLayout.EAST);
+		frame.add(leftPanel, BorderLayout.CENTER);
+
+		JPanel rightPanel = new JPanel();
+		rightPanel.add(panel);
+
+		JPanel rightCenterPanel = new JPanel(new BorderLayout());
+		toggleButton.setPreferredSize(new Dimension(100, gd.getDisplayMode().getHeight()));
+		rightCenterPanel.add(toggleButton, BorderLayout.CENTER);
+		rightPanel.add(rightCenterPanel);
+		frame.add(rightPanel, BorderLayout.EAST);
+
+
+		//frame.add(rightCenterPanel, BorderLayout.EAST);
+
 		frame.pack();
 		frame.setVisible(true);
 	}

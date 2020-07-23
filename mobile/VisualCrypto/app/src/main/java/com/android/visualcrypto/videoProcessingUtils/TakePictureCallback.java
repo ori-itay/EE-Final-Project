@@ -79,11 +79,11 @@ public class TakePictureCallback extends ImageCapture.OnImageCapturedCallback {
         Mat mat = new Mat();
         Utils.bitmapToMat(bp, mat);
 
-//                    try {
-//                        bitmapToFile(bp);
-//                    } catch (IOException e) {
-//                        e.printStackTrace();
-//                    }
+                    try {
+                        bitmapToFile(bp);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
 
         /*********WITH CALIBRATION**************/
 //                    Mat afterCalibrationMatrix = OpenCvUtils.calibrateImage(mat, false);
