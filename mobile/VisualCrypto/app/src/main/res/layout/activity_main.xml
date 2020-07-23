@@ -25,10 +25,10 @@
         android:contentDescription="@string/displays_the_images"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.444"
+        app:layout_constraintHorizontal_bias="0.473"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.038"
+        app:layout_constraintVertical_bias="0.052"
         app:srcCompat="@android:color/background_light" />
 
     <Button
@@ -46,7 +46,7 @@
         android:id="@+id/videoProcessBtn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Go to heaven"
+        android:text="Video Mode"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.498"
@@ -66,5 +66,21 @@
         app:layout_constraintHorizontal_bias="0.025"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/deleteAllUsersBTN"
+        android:layout_width="43dp"
+        android:layout_height="17dp"
+        android:clickable="true"
+        android:fontFamily="sans-serif"
+        android:text="Clear"
+        android:textColor="#00BCD4"
+        android:textStyle="italic"
+        app:layout_constraintBottom_toTopOf="@+id/decodedImgId"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.017"
+        app:layout_constraintStart_toEndOf="@+id/loggedInAs"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.0" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

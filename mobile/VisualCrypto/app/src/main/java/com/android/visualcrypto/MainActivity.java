@@ -57,7 +57,10 @@ import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
 import java.util.Base64;
 import java.util.Date;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 
 import javax.crypto.NoSuchPaddingException;
 
@@ -80,52 +83,59 @@ public class MainActivity extends AppCompatActivity {
         getPermissions(); // gets camera and write permissions
 
 
+
         SharedPreferences sharedPref = this.getPreferences(Context.MODE_PRIVATE);
-        if (sharedPref.contains("user")) { //TODO: change user to username (email) and display it to user..logged in as etc
-            String val = sharedPref.getString("user", "");
-            privateKey = Base64.getDecoder().decode(val);
-            //loggedInAs.setText("Logged in as: " + emailStr);
-            setMainContentView();
+        Map<String, ?> preferencesMap = sharedPref.getAll();
+        if (preferencesMap.size() == 1) { //TODO: change user to username (email) and display it to user..logged in as etc
+            Map.Entry<String, ?> entry =  preferencesMap.entrySet().iterator().next();
+            String emailStr = entry.getKey();
+            String key = (String) entry.getValue();
+            privateKey = Base64.getDecoder().decode(key);
+            setMainContentView(emailStr, sharedPref);
         } else {
             setContentView(R.layout.entry_window);
-            Button registerBTN = this.findViewById(R.id.registerBTN);
-            TextInputEditText email = this.findViewById(R.id.inputEmail);
-            TextInputEditText serverAddr = this.findViewById(R.id.serverAddr);
-            registerBTN.setOnClickListener((v)-> {
-                String emailStr = Objects.requireNonNull(email.getText()).toString();
-                String serverAddrStr = Objects.requireNonNull(serverAddr.getText()).toString();
-                if (emailStr.isEmpty() || serverAddrStr.isEmpty() || !emailStr.contains("@")) {
-                    showAlert(this, "Error: Invalid input!");
-                } else {
-                    Thread sendKeyRequest = new Thread(()-> requestSecretKey(serverAddrStr, emailStr));
-                    sendKeyRequest.start();
-
-                    AlertDialog.Builder builder = new AlertDialog.Builder(this);
-                    builder.setTitle("Enter your secret key that you received in the email:");
-
-
-                    final EditText input = new EditText(this);
-
-                    input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
-                    builder.setView(input);
-
-                    builder.setPositiveButton("OK", (dialog, which) -> {
-                        String val = input.getText().toString();
-                        privateKey = Base64.getDecoder().decode(val);
-                        SharedPreferences.Editor editor = sharedPref.edit();
-                        editor.putString("user", val);
-                        editor.apply();
-
-
-                        setMainContentView();
-                        TextView loggedInAs = this.findViewById(R.id.loggedInAs);
-                        loggedInAs.setText("Logged in as: " + emailStr);
-                    });
-                    builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
-                    builder.show();
-                }
-            });
+            setRegisterButton(sharedPref);
         }
+    }
+
+    private void setRegisterButton(SharedPreferences sharedPref) {
+        Button registerBTN = this.findViewById(R.id.registerBTN);
+        TextInputEditText email = this.findViewById(R.id.inputEmail);
+        TextInputEditText serverAddr = this.findViewById(R.id.serverAddr);
+
+        registerBTN.setOnClickListener((v)-> {
+            String emailStr = Objects.requireNonNull(email.getText()).toString();
+            String serverAddrStr = Objects.requireNonNull(serverAddr.getText()).toString();
+            if (emailStr.isEmpty() || serverAddrStr.isEmpty() || !emailStr.contains("@")) {
+                showAlert(this, "Error: Invalid input!");
+            } else {
+                Thread sendKeyRequest = new Thread(()-> requestSecretKey(serverAddrStr, emailStr));
+                sendKeyRequest.start();
+
+                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                builder.setTitle("Enter your secret key that you received in the email:");
+
+
+                final EditText input = new EditText(this);
+
+                input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+                builder.setView(input);
+
+                builder.setPositiveButton("OK", (dialog, which) -> {
+                    String val = input.getText().toString();
+                    privateKey = Base64.getDecoder().decode(val);
+                    SharedPreferences.Editor editor = sharedPref.edit();
+                    editor.putString(emailStr, val);
+                    editor.apply();
+
+
+                    setMainContentView(emailStr, sharedPref);
+
+                });
+                builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
+                builder.show();
+            }
+        });
     }
 
     private void requestSecretKey(String serverAddr, String emailStr) {
@@ -139,7 +149,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void setMainContentView() {
+    private void setMainContentView(String emailStr, SharedPreferences sharedPref) {
         setContentView(R.layout.activity_main);
         Button captureImageBTN = this.findViewById(R.id.captureImageBTN);
         captureImageBTN.setOnClickListener(v -> takePicture());
@@ -150,6 +160,18 @@ public class MainActivity extends AppCompatActivity {
         videoProcessBTN.setOnClickListener(v -> {
             Intent intent = new Intent(v.getContext(), VideoProcessing.class);
             startActivityForResult(intent, VIDEO_PROCESS_INTENT);
+        });
+
+
+        TextView loggedInAs = this.findViewById(R.id.loggedInAs);
+        loggedInAs.setText("Logged in as: " + emailStr);
+
+
+        TextView deleteAllUsers = this.findViewById(R.id.deleteAllUsersBTN);
+        deleteAllUsers.setOnClickListener((v) -> {
+            sharedPref.edit().clear().apply();
+            setContentView(R.layout.entry_window);
+            setRegisterButton(sharedPref);
         });
     }
 
