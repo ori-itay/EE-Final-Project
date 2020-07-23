@@ -84,8 +84,10 @@ public class Flow {
 			byte[] shuffledEncryptedImg = Shuffle.shuffleImgPixels(encryptedImg, iv);
 
 			encodedImage = DisplayEncoder.encodeBytes(shuffledEncryptedImg, dimsArr, iv.getIV(),  chksumIV);
-			imgLabel.setIcon(new ImageIcon(encodedImage));
-			//imgLabel.setIcon(new ImageIcon(new ImageIcon(encodedImage).getImage().getScaledInstance(frame.getContentPane().getBounds().width,frame.getContentPane().getBounds().height,Image.SCALE_SMOOTH)));
+
+			//imgLabel.setIcon(new ImageIcon(encodedImage));
+
+			imgLabel.setIcon(new ImageIcon(new ImageIcon(encodedImage).getImage().getScaledInstance(-1 ,frame.getContentPane().getBounds().height,Image.SCALE_SMOOTH)));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -115,8 +117,9 @@ public class Flow {
 
 		JLabel loggedInAs = new JLabel("Logged in as: ");
 		JPanel panel = new JPanel(); // the panel is not visible in output
+		panel.setLayout(new BorderLayout());
 		JLabel usernameLabel = new JLabel("Username:");
-		JTextField tf = new JTextField(10); // accepts up to 10 characters
+		JTextField tf = new JTextField(20); // accepts up to 10 characters
 		JButton apply = new JButton("Apply");
 		apply.addActionListener((actionEvent)-> {
 			String email = tf.getText();
@@ -157,8 +160,8 @@ public class Flow {
 		panel.add(BorderLayout.WEST, toggleButton);
 
 
-		BufferedImage img = robot.createScreenCapture(screenRect);
-		flow(img);
+//		BufferedImage img = robot.createScreenCapture(screenRect);
+//		flow(img);
 
 		JPanel p = new JPanel();
 		p.add(imgLabel, BorderLayout.CENTER);
