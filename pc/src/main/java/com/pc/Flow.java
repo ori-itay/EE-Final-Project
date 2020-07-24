@@ -48,14 +48,14 @@ public class Flow {
 	}
 
 	public static void main(String[] args) {
-		SwingUtilities.invokeLater(ScreenCaptureRectangle::assignCapturedRectangle);
-		startUI();
-
-		if (!createDB()) {
+		if (!initDB()) {
 			System.out.println("No connection to DB");
 			return;
 		}
 		initServerThread();
+
+		SwingUtilities.invokeLater(ScreenCaptureRectangle::assignCapturedRectangle);
+		startUI();
 	}
 
 	public static void flow(BufferedImage image) {
@@ -89,43 +89,33 @@ public class Flow {
 	}
 
 
-
-	private static void getRectangleFromUser() {
-		final Rectangle[] rect = new Rectangle[1];
-		//SwingUtilities.invokeAndWait(()-> rect[0] = ScreenCaptureRectangle.getCapturedRectangle());
-
-
-	}
-
-
 	private static void startUI() {
+		JLabel loggedInAs = new JLabel();
+		String emailStr;
+		while (true) {
+			emailStr = JOptionPane.showInputDialog("Enter username:");
+			if (emailStr == null || emailStr.isEmpty()) {
+				JOptionPane.showMessageDialog(null, "Error: please enter a valid username");
+			} else {
+				loggedInAs.setText("Welcome: " + emailStr);
+				username = emailStr;
+				userSecretKey = fetchUserKey(username);
+				if (userSecretKey == null) {
+					System.out.println("fetchUserKey returned null!");
+					return;
+				}
+				break;
+			}
+		}
+
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
 		GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
-		Dimension dim = new Dimension(gd.getDisplayMode().getWidth(),gd.getDisplayMode().getHeight() - 25);
+		//Dimension dim = new Dimension(gd.getDisplayMode().getWidth(),gd.getDisplayMode().getHeight() - 25);
 		//frame.setPreferredSize(dim);
 
-		JLabel loggedInAs = new JLabel("Welcome: ");
-		JPanel panel = new JPanel();
-		JLabel usernameLabel = new JLabel("Username:");
-		JTextField tf = new JTextField(10);
-		JButton apply = new JButton("Apply");
-		apply.addActionListener((actionEvent)-> {
-			String email = tf.getText();
-			if (email.isEmpty()) {
-				showMessageDialog(null, "Error: username field is empty");
-				return;
-			}
-			username = email;
-			userSecretKey = fetchUserKey(username);
-			if (userSecretKey == null) {
-				System.out.println("fetchUserKey returned null!");
-				return;
-			}
-			loggedInAs.setText("Logged in as: " + email);
-			tf.setText("");
-		});
 
+		JPanel panel = new JPanel();
 		imgLabel = new JLabel("", SwingConstants.CENTER);
 
 		JToggleButton toggleButton = new JToggleButton("Off");
@@ -144,11 +134,6 @@ public class Flow {
 			}
 		});
 
-		panel.add(usernameLabel);
-		panel.add(tf);
-		panel.add(apply);
-
-
 		JPanel leftPanel = new JPanel(new BorderLayout());
 		leftPanel.add(loggedInAs, BorderLayout.WEST);
 		leftPanel.add(imgLabel, BorderLayout.CENTER);
@@ -165,18 +150,9 @@ public class Flow {
 		frame.add(rightPanel, BorderLayout.EAST);
 
 		frame.pack();
-		try {
-			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
-		} catch (InstantiationException e) {
-			e.printStackTrace();
-		} catch (IllegalAccessException e) {
-			e.printStackTrace();
-		} catch (UnsupportedLookAndFeelException e) {
-			e.printStackTrace();
-		}
 		frame.setVisible(true);
+		frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
+		ScreenCaptureRectangle.jFrame.toFront();
 	}
 
 	private static SecretKey fetchUserKey(String username) {
@@ -271,7 +247,7 @@ public class Flow {
 
 
 
-	public static boolean createDB() {
+	public static boolean initDB() {
 		if (!openConnection())
 			return false;
 		try {
