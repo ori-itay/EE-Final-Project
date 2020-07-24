@@ -2,7 +2,6 @@ package com.pc;
 
 
 import com.pc.checksum.Checksum;
-import com.pc.configuration.Constants;
 import com.pc.configuration.Parameters;
 import com.pc.encoderDecoder.DisplayEncoder;
 import com.pc.encryptorDecryptor.EncryptorDecryptor;
@@ -12,12 +11,7 @@ import com.pc.shuffleDeshuffle.shuffle.Shuffle;
 import javax.crypto.*;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
-import javax.imageio.ImageIO;
-import javax.mail.*;
-import javax.mail.internet.InternetAddress;
-import javax.mail.internet.MimeMessage;
 import javax.swing.*;
-import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.image.BufferedImage;
@@ -27,38 +21,39 @@ import java.security.cert.CertificateException;
 import java.sql.*;
 import java.util.Arrays;
 import java.util.Base64;
-import java.util.Properties;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import static java.awt.GridBagConstraints.VERTICAL;
 import static javax.swing.JOptionPane.showMessageDialog;
 
 public class Flow {
-	
-	private static final String encodedFilePath = "encodedImage.png";
-	
-	public static void main(String[] args) throws IOException, NoSuchAlgorithmException {
-		//load image
-		playWithUi();
 
+	private static final JFrame frame = new JFrame("VisualCrypto");
+	private static String username;
+	private static SecretKey userSecretKey;
+	private static JLabel imgLabel;
 
+	private static ScheduledExecutorService executor;
+	private static Robot robot = null;
+	private static final Rectangle screenRect = getRectangleFromUser();
+
+	static {
 		try {
-			initKeyStore();
-			if (!createDB()) {
-				System.out.println("No connection to DB");
-				return;
-			}
-			initServerThread();
-		} catch (SQLException | ClassNotFoundException e) {
+			robot = new Robot();
+		} catch (AWTException e) {
 			e.printStackTrace();
 		}
+	}
 
-		File inputFile = new File("200_200.jpg");		
-		
-		//BufferedImage image = ImageIO.read(inputFile);
+	public static void main(String[] args) {
+		startUI();
 
+		if (!createDB()) {
+			System.out.println("No connection to DB");
+			return;
+		}
+		initServerThread();
 	}
 
 	public static void flow(BufferedImage image) {
@@ -85,44 +80,32 @@ public class Flow {
 
 			encodedImage = DisplayEncoder.encodeBytes(shuffledEncryptedImg, dimsArr, iv.getIV(),  chksumIV);
 
-			//imgLabel.setIcon(new ImageIcon(encodedImage));
-
 			imgLabel.setIcon(new ImageIcon(new ImageIcon(encodedImage).getImage().getScaledInstance(-1 ,frame.getContentPane().getBounds().height,Image.SCALE_SMOOTH)));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 
-	private static ScheduledExecutorService executor;
-	private static Robot robot = null;
-	private static final Rectangle screenRect = new Rectangle(300, 300, 50, 50);
 
-	static {
-		try {
-			robot = new Robot();
-		} catch (AWTException e) {
-			e.printStackTrace();
-		}
+
+	private static Rectangle getRectangleFromUser() {
+		final Rectangle[] rect = new Rectangle[1];
+		SwingUtilities.invokeLater(()-> rect[0] = ScreenCaptureRectangle.getCapturedRectangle());
+		return rect[0];
 	}
-	private static final JFrame frame = new JFrame("VisualCrypto");
-	static String username;
-	static SecretKey userSecretKey;
-	static JLabel imgLabel;
 
-	private static void playWithUi() {
+
+	private static void startUI() {
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
 		GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
 		Dimension dim = new Dimension(gd.getDisplayMode().getWidth(),gd.getDisplayMode().getHeight() - 25);
 		frame.setPreferredSize(dim);
 
-
-
-
-		JLabel loggedInAs = new JLabel("Logged in as: ");
-		JPanel panel = new JPanel(); // the panel is not visible in output
+		JLabel loggedInAs = new JLabel("Welcome: ");
+		JPanel panel = new JPanel();
 		JLabel usernameLabel = new JLabel("Username:");
-		JTextField tf = new JTextField(20); // accepts up to 10 characters
+		JTextField tf = new JTextField(10);
 		JButton apply = new JButton("Apply");
 		apply.addActionListener((actionEvent)-> {
 			String email = tf.getText();
@@ -133,7 +116,8 @@ public class Flow {
 			username = email;
 			userSecretKey = fetchUserKey(username);
 			if (userSecretKey == null) {
-
+				System.out.println("fetchUserKey returned null!");
+				return;
 			}
 			loggedInAs.setText("Logged in as: " + email);
 			tf.setText("");
@@ -157,34 +141,25 @@ public class Flow {
 			}
 		});
 
-		panel.add(usernameLabel); // Components Added using Flow Layout
+		panel.add(usernameLabel);
 		panel.add(tf);
 		panel.add(apply);
 
-		//panel.add(toggleButton, FlowLayout.CENTER);
-
-
-//		BufferedImage img = robot.createScreenCapture(screenRect);
-//		flow(img);
 
 		JPanel leftPanel = new JPanel(new BorderLayout());
 		leftPanel.add(loggedInAs, BorderLayout.WEST);
 		leftPanel.add(imgLabel, BorderLayout.CENTER);
 
-		//leftPanel.add(panel, BorderLayout.EAST);
 		frame.add(leftPanel, BorderLayout.CENTER);
 
 		JPanel rightPanel = new JPanel();
 		rightPanel.add(panel);
 
 		JPanel rightCenterPanel = new JPanel(new BorderLayout());
-		toggleButton.setPreferredSize(new Dimension(100, gd.getDisplayMode().getHeight()));
+		toggleButton.setPreferredSize(new Dimension(52, gd.getDisplayMode().getHeight()));
 		rightCenterPanel.add(toggleButton, BorderLayout.CENTER);
 		rightPanel.add(rightCenterPanel);
 		frame.add(rightPanel, BorderLayout.EAST);
-
-
-		//frame.add(rightCenterPanel, BorderLayout.EAST);
 
 		frame.pack();
 		frame.setVisible(true);
@@ -233,14 +208,12 @@ public class Flow {
 		}
 	}
 
-	private static boolean closeConnection() {
+	private static void closeConnection() {
 		try {
 			conn.close();
 		} catch (SQLException e) {
 			e.printStackTrace();
-			return false;
 		}
-		return true;
 	}
 
 	private static final String keystoreName = "keyStore.jks";
@@ -253,8 +226,8 @@ public class Flow {
 		char[] pwdArr = password.toCharArray();
 
 		try {
-			ks = KeyStore.getInstance(KeyStore.getDefaultType());
-			SecretKey key = null;
+			ks = KeyStore.getInstance("pkcs12");
+			SecretKey key;
 			if (!ksFile.exists()) {
 				ks.load(null, pwdArr);
 				key = Encryptor.generateSymmetricKey();
@@ -284,7 +257,7 @@ public class Flow {
 
 
 
-	public static boolean createDB() throws SQLException, ClassNotFoundException {
+	public static boolean createDB() {
 		if (!openConnection())
 			return false;
 		try {
@@ -293,14 +266,12 @@ public class Flow {
 			conn.setCatalog("visual_crypto");
 			Statement createTable = conn.createStatement();
 			createTable.execute("CREATE TABLE IF NOT EXISTS Users (email VARCHAR(40), pw VARCHAR(255))");
-			//createTable.execute(); USE Users
 		}
 		catch (SQLException e) {
 			e.printStackTrace();
 			closeConnection();
 			return false;
 		}
-		//closeConnection();
 		return true;
 	}
 
