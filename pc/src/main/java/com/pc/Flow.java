@@ -103,7 +103,7 @@ public class Flow {
 
 		GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
 		Dimension dim = new Dimension(gd.getDisplayMode().getWidth(),gd.getDisplayMode().getHeight() - 25);
-		frame.setPreferredSize(dim);
+		//frame.setPreferredSize(dim);
 
 		JLabel loggedInAs = new JLabel("Welcome: ");
 		JPanel panel = new JPanel();
@@ -165,6 +165,17 @@ public class Flow {
 		frame.add(rightPanel, BorderLayout.EAST);
 
 		frame.pack();
+		try {
+			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		} catch (InstantiationException e) {
+			e.printStackTrace();
+		} catch (IllegalAccessException e) {
+			e.printStackTrace();
+		} catch (UnsupportedLookAndFeelException e) {
+			e.printStackTrace();
+		}
 		frame.setVisible(true);
 	}
 

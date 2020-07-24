@@ -10,6 +10,7 @@ import javax.swing.*;
 public class ScreenCaptureRectangle {
 
     static Rectangle captureRect;
+    static JFrame jFrame = new JFrame();
 
     public static void assignCapturedRectangle() {
         Robot robot = null;
@@ -34,9 +35,12 @@ public class ScreenCaptureRectangle {
         final JLabel screenLabel = new JLabel(new ImageIcon(screenCopy));
         JScrollPane screenScroll = new JScrollPane(screenLabel);
 
-        screenScroll.setPreferredSize(new Dimension(
-                (int)(screen.getWidth()/1.2),
-                (int)(screen.getHeight()/1.2)));
+//        screenScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+//        screenScroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
+
+//        screenScroll.setPreferredSize(new Dimension(
+//                (int)(screen.getWidth()/1.2),
+//                (int)(screen.getHeight()/1.2)));
 
         JPanel panel = new JPanel(new BorderLayout());
         panel.add(screenScroll, BorderLayout.CENTER);
@@ -71,10 +75,21 @@ public class ScreenCaptureRectangle {
             }
         });
 
-        JOptionPane.showMessageDialog(null, panel);
+        //JOptionPane.showMessageDialog(null, panel);
+
+        JButton okButton = new JButton("OK");
+        okButton.addActionListener((actionEvent)->{
+            Flow.screenRect = captureRect;
+            jFrame.dispose();
+        });
+        jFrame.add(okButton, BorderLayout.PAGE_END);
+
+        jFrame.add(panel);
+        jFrame.pack();
+        jFrame.setVisible(true);
 
         //System.out.println("Rectangle of interest: " + captureRect);
-         Flow.screenRect = captureRect;
+        //Flow.screenRect = captureRect;
     }
 
     public static void repaint(BufferedImage orig, BufferedImage copy) {
