@@ -16,6 +16,7 @@ import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.image.BufferedImage;
 import java.io.*;
+import java.lang.reflect.InvocationTargetException;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.sql.*;
@@ -36,7 +37,7 @@ public class Flow {
 
 	private static ScheduledExecutorService executor;
 	private static Robot robot = null;
-	private static final Rectangle screenRect = getRectangleFromUser();
+	protected static Rectangle screenRect;
 
 	static {
 		try {
@@ -47,6 +48,7 @@ public class Flow {
 	}
 
 	public static void main(String[] args) {
+		SwingUtilities.invokeLater(ScreenCaptureRectangle::assignCapturedRectangle);
 		startUI();
 
 		if (!createDB()) {
@@ -88,10 +90,11 @@ public class Flow {
 
 
 
-	private static Rectangle getRectangleFromUser() {
+	private static void getRectangleFromUser() {
 		final Rectangle[] rect = new Rectangle[1];
-		SwingUtilities.invokeLater(()-> rect[0] = ScreenCaptureRectangle.getCapturedRectangle());
-		return rect[0];
+		//SwingUtilities.invokeAndWait(()-> rect[0] = ScreenCaptureRectangle.getCapturedRectangle());
+
+
 	}
 
 

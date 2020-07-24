@@ -11,7 +11,7 @@ public class ScreenCaptureRectangle {
 
     static Rectangle captureRect;
 
-    public static Rectangle getCapturedRectangle() {
+    public static void assignCapturedRectangle() {
         Robot robot = null;
         try {
             robot = new Robot();
@@ -74,7 +74,7 @@ public class ScreenCaptureRectangle {
         JOptionPane.showMessageDialog(null, panel);
 
         //System.out.println("Rectangle of interest: " + captureRect);
-        return captureRect;
+         Flow.screenRect = captureRect;
     }
 
     public static void repaint(BufferedImage orig, BufferedImage copy) {
