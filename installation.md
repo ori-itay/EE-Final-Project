@@ -1,8 +1,10 @@
 (1) git clone https://github.com/ori-itay/EE-Final-Project.git
 
 (2) download and install mysql
+
 For windows 10:
 https://dev.mysql.com/downloads/windows/installer/8.0.html
+
 Make sure to create the following user:
 ```
 username: admin
@@ -19,11 +21,13 @@ The following way can't establish connection to mysql DB on my computer (classpa
 ```shell script
 java -jar all-pc.java
 ```
-Instead, import the pc project 'EE-Final-Project/pc' in intellij and run Flow.java
+Instead, import the pc project 'EE-Final-Project/pc' in intellij idea and run Flow.java
+
 Make sure there aren't any messages as "No connection to DB" etc.
 
 (5) Build an apk and install it on your android device:
 Make sure your device is connected to the computer via USB cable and run (instructions can also be found [here)](https://developer.android.com/studio/build/building-cmdline#DebugMode):
+
 Note: you might need to install an android driver for your phone and enable debugging mode on it.
 ```shell script
 cd ../mobile/VisualCrypto/
