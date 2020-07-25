@@ -15,9 +15,10 @@ import javax.crypto.spec.SecretKeySpec;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ItemEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.io.*;
-import java.lang.reflect.InvocationTargetException;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.sql.*;
@@ -27,7 +28,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import static javax.swing.JOptionPane.showMessageDialog;
 
 public class Flow {
 
@@ -39,6 +39,8 @@ public class Flow {
 	private static ScheduledExecutorService executor;
 	private static Robot robot = null;
 	protected static Rectangle screenRect;
+
+	private static final String LAST_LOGIN = "lastlogin";
 
 	static {
 		try {
@@ -61,6 +63,7 @@ public class Flow {
 
 	public static void flow(BufferedImage image) {
 		byte[] imageBytes = FlowUtils.convertToBytesUsingGetRGB(image);
+
 		//IvParameterSpec iv = Encryptor.generateIv(Parameters.ivLength);
 		IvParameterSpec iv = new IvParameterSpec(new byte[]{1,2,3,4,5,6,7,8,9,10,11,12});
 
@@ -91,25 +94,21 @@ public class Flow {
 		}
 	}
 
-
+	static JLabel loggedInAs = new JLabel();
 	private static void startUI() {
-		JLabel loggedInAs = new JLabel();
 		String emailStr;
-		while (true) {
-			emailStr = JOptionPane.showInputDialog("Enter username:");
-			if (emailStr == null || emailStr.isEmpty()) {
-				JOptionPane.showMessageDialog(null, "Error: please enter a valid username");
-			} else {
-				loggedInAs.setText("Welcome: " + emailStr);
-				username = emailStr;
-				userSecretKey = fetchUserKey(username);
-				if (userSecretKey == null) {
-					System.out.println("fetchUserKey returned null!");
-					return;
-				}
-				break;
+
+		if ((emailStr = fetchLastLoggedInUser()) != null) {
+			loggedInAs.setText("Welcome: " + emailStr);
+			username = emailStr;
+			userSecretKey = fetchUserKey(username);
+			if (userSecretKey == null) {
+			    JOptionPane.showMessageDialog(null ,"Warning: could not find user '" + username +"'");
 			}
+		} else {
+			registerUI();
 		}
+
 
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
@@ -137,8 +136,21 @@ public class Flow {
 			}
 		});
 
+		JLabel logOut = new JLabel(" (Log out)");
+		logOut.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+		logOut.setForeground(Color.CYAN);
+		logOut.addMouseListener(new MouseAdapter() {
+			public void mouseClicked(MouseEvent e) {
+				removeLastLoggedFromDB();
+				registerUI();
+			}
+		});
+
 		JPanel leftPanel = new JPanel(new BorderLayout());
-		leftPanel.add(loggedInAs, BorderLayout.WEST);
+		JPanel loggingPanel = new JPanel(new BorderLayout());
+		loggingPanel.add(loggedInAs, BorderLayout.WEST);
+		loggingPanel.add(logOut, BorderLayout.EAST);
+		leftPanel.add(loggingPanel, BorderLayout.WEST);
 		leftPanel.add(imgLabel, BorderLayout.CENTER);
 
 		frame.add(leftPanel, BorderLayout.CENTER);
@@ -158,23 +170,89 @@ public class Flow {
 		ScreenCaptureRectangle.jFrame.toFront();
 	}
 
+	private static boolean removeLastLoggedFromDB() {
+		String removeLastLoggedInStr = "DELETE FROM Users WHERE pw='lastlogin'";
+
+		try {
+			PreparedStatement insert = Flow.conn.prepareStatement(removeLastLoggedInStr);
+			insert.execute();
+			return true;
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return false;
+	}
+
+	private static void registerUI() {
+		String emailStr;
+		while (true) {
+			emailStr = JOptionPane.showInputDialog("Enter username:");
+			if (emailStr == null || emailStr.isEmpty()) {
+				JOptionPane.showMessageDialog(null, "Error: please enter a valid username");
+			} else {
+				loggedInAs.setText("Welcome: " + emailStr);
+				insertLastLoggedInToDB(emailStr);
+				username = emailStr;
+				userSecretKey = fetchUserKey(username);
+				if (userSecretKey == null) {
+                    JOptionPane.showMessageDialog(null ,"Warning: could not find user '" + username +"'");
+					return;
+				}
+				break;
+			}
+		}
+	}
+
+	private static boolean insertLastLoggedInToDB(String emailStr) {
+		String insetStr = "INSERT INTO Users (email,pw) VALUES(?, ?)";
+
+		try {
+			PreparedStatement insert = Flow.conn.prepareStatement(insetStr);
+			insert.setString(1, emailStr);
+			insert.setString(2, LAST_LOGIN);
+			insert.execute();
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return false;
+		}
+		return true;
+	}
+
+	private static String fetchLastLoggedInUser() {
+		String lastLoggedInStr = "SELECT * FROM Users WHERE pw='" + LAST_LOGIN +"'";
+		PreparedStatement getUsername;
+
+		try {
+			getUsername = Flow.conn.prepareStatement(lastLoggedInStr);
+			ResultSet rs = getUsername.executeQuery();
+			if (rs.next()) {
+				return rs.getString("email");
+			}
+		} catch (SQLException throwables) {
+			throwables.printStackTrace();
+		}
+		return null;
+	}
+
 	private static SecretKey fetchUserKey(String username) {
-		String insetStr = "SELECT * FROM Users WHERE email = ?";
+		String insertStr = "SELECT * FROM Users WHERE email = ?";
 
 		PreparedStatement getUserKey;
 		try {
-			getUserKey = Flow.conn.prepareStatement(insetStr);
+			getUserKey = Flow.conn.prepareStatement(insertStr);
 			getUserKey.setString(1, username);
 			ResultSet rs = getUserKey.executeQuery();
 			if (rs.next()) {
 				String pw = rs.getString("pw");
-				if (pw != null) {
+				if (pw != null && !pw.equals("lastlogin")) {
 					byte[] bytesKeyEncrypted = Base64.getDecoder().decode(pw);
 					final Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
 					cipher.init(Cipher.DECRYPT_MODE, privateSecretKey, new IvParameterSpec(new byte[] {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}));
 					byte[] decrypted = cipher.doFinal(bytesKeyEncrypted);
 					return new SecretKeySpec(decrypted, 0, decrypted.length, "AES");
 				}
+			} else {
+				System.out.println("Error: no username: " + username + " exists!");
 			}
 		} catch (SQLException | InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException | IllegalBlockSizeException | BadPaddingException | InvalidAlgorithmParameterException e) {
 			e.printStackTrace();
