@@ -18,7 +18,7 @@ compileJava {
 
 jar {
     manifest {
-        attributes 'Main-Class': 'com.pc.cli.EncodeDecodeCLI'
+        attributes 'Main-Class': 'com.pc.Flow'
     }
     archiveName 'all-pc.jar'
     destinationDirectory = file('.')
@@ -39,6 +39,8 @@ dependencies {
     testRuntime "org.junit.jupiter:junit-jupiter-engine:5.4.0"
     compile group: 'javax.mail', name: 'mail', version: '1.4.5'
     compile group: 'javax.activation', name: 'activation', version: '1.1.1'
+    compile group: 'org.imgscalr', name: 'imgscalr-lib', version: '4.2'
+    compile group: 'net.coobird', name: 'thumbnailator', version: '0.4.1'
 
     implementation 'mysql:mysql-connector-java:8.0.11'
 }

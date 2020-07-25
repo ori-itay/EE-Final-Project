@@ -8,6 +8,8 @@ import com.pc.encoderDecoder.DisplayEncoder;
 import com.pc.encryptorDecryptor.EncryptorDecryptor;
 import com.pc.encryptorDecryptor.encryptor.Encryptor;
 import com.pc.shuffleDeshuffle.shuffle.Shuffle;
+import net.coobird.thumbnailator.Thumbnails;
+import org.imgscalr.Scalr;
 
 import javax.crypto.*;
 import javax.crypto.spec.IvParameterSpec;
@@ -130,24 +132,26 @@ public class Flow {
 				executor = Executors.newSingleThreadScheduledExecutor();
 				executor.scheduleAtFixedRate(()-> {
 					BufferedImage img = robot.createScreenCapture(screenRect);
-					int w = img.getWidth();
-					int h = img.getHeight();
-//					BufferedImage scaledImg = new BufferedImage(w,h, BufferedImage.TYPE_INT_ARGB);
-//					AffineTransform at = new AffineTransform();
-//					at.scale(4,4);
-//					AffineTransformOp scaleOp = new AffineTransformOp(at, AffineTransformOp.TYPE_NEAREST_NEIGHBOR);
-//					scaledImg = scaleOp.filter(img, scaledImg);
-//					try {
-//						ImageIO.write(img, "png", new File("not_scaled.jpg"));
-//						ImageIO.write(scaledImg, "png", new File("scaled.jpg"));
-//					} catch (IOException e) {
-//						e.printStackTrace();
-//					}
-					int SCALE = 10;
-					Image tmp = img.getScaledInstance(w/SCALE, h/SCALE, BufferedImage.SCALE_SMOOTH);
-					BufferedImage scaledImg = new BufferedImage(w/SCALE, h/SCALE, BufferedImage.TYPE_INT_ARGB);
-					scaledImg.getGraphics().drawImage(tmp, 0, 0, null);
 
+//					BufferedImage scaledImg =
+//							Scalr.resize(img, Scalr.Method.ULTRA_QUALITY, img.getWidth()/2, img.getHeight()/2);
+
+					BufferedImage scaledImg = null;
+					try {
+						scaledImg =
+								Thumbnails.of(img)
+										.size(img.getWidth()/4, img.getHeight()/4)
+										.asBufferedImage();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+
+
+//					int SCALE = 2;
+//					Image tmp = img.getScaledInstance(w/SCALE, h/SCALE, BufferedImage.SCALE_SMOOTH);
+//					BufferedImage scaledImg = new BufferedImage(w/SCALE, h/SCALE, BufferedImage.TYPE_INT_ARGB);
+//					scaledImg.getGraphics().drawImage(tmp, 0, 0, null);
+//
 					try {
 						ImageIO.write(img, "png", new File("not_scaled.jpg"));
 						ImageIO.write(scaledImg, "png", new File("scaled.jpg"));
