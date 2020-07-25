@@ -254,18 +254,18 @@ public class MainActivity extends AppCompatActivity {
         try {
             //long startTime = System.currentTimeMillis();
             /*******************DECODE BY FILE NAME*****************************************/
-//            String imageName = "weird.jpg";
-//            InputStream encodedStream = getAssets().open(imageName);
-//            File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + imageName);
-//
-//            Bitmap encodedBitmap = BitmapFactory.decodeStream(encodedStream);
-//            /*           Bitmap rotatedBitmap = encodedBitmap; //del*/
-//            Bitmap rotatedBitmap = CameraRotationFix.fixRotation(encodedBitmap, file.getAbsolutePath());
+            String imageName = "6bits_100_100.jpg";
+            InputStream encodedStream = getAssets().open(imageName);
+            File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + imageName);
+
+            Bitmap encodedBitmap = BitmapFactory.decodeStream(encodedStream);
+            /*           Bitmap rotatedBitmap = encodedBitmap; //del*/
+            Bitmap rotatedBitmap = CameraRotationFix.fixRotation(encodedBitmap, file.getAbsolutePath());
             /*******************************************************************************/
 
             /*******************DECODE LAST TAKEN FILE AUTOMATICALLY************************/
-            Bitmap encodedBitmap = BitmapFactory.decodeFile(currentPhotoPath);
-            Bitmap rotatedBitmap = CameraRotationFix.fixRotation(encodedBitmap, currentPhotoPath);
+//            Bitmap encodedBitmap = BitmapFactory.decodeFile(currentPhotoPath);
+//            Bitmap rotatedBitmap = CameraRotationFix.fixRotation(encodedBitmap, currentPhotoPath);
             /*******************************************************************************/
 
             Mat capturedImage = new Mat();
@@ -275,15 +275,15 @@ public class MainActivity extends AppCompatActivity {
 
             //TODO: pay attention whether calibrateimage is commented
             /**********NO CALIBRATION***************/
-//            Bitmap resBitmap = Flow.executeAndroidFlow(capturedImage, rotatedBitmap, this);
+            Bitmap resBitmap = Flow.executeAndroidFlow(capturedImage, rotatedBitmap, this);
             /***************************************/
 
 
             /*********WITH CALIBRATION**************/
-            Mat afterCalibrationMatrix = OpenCvUtils.calibrateImage(capturedImage, false);
-            Utils.matToBitmap(afterCalibrationMatrix, rotatedBitmap);
-            //rotatedBitmap = convertMatToBitmap(afterCalibrationMatrix); // update bitmap as well
-            Bitmap resBitmap = Flow.executeAndroidFlow(afterCalibrationMatrix, rotatedBitmap, this);
+//            Mat afterCalibrationMatrix = OpenCvUtils.calibrateImage(capturedImage, false);
+//            Utils.matToBitmap(afterCalibrationMatrix, rotatedBitmap);
+//            //rotatedBitmap = convertMatToBitmap(afterCalibrationMatrix); // update bitmap as well
+//            Bitmap resBitmap = Flow.executeAndroidFlow(afterCalibrationMatrix, rotatedBitmap, this);
             /***************************************/
 
             if (resBitmap == null) {

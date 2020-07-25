@@ -197,13 +197,13 @@ public class DisplayDecoder {
 
 		byte[] decodedData = new byte[lengthInBytes];
 
-		int bitsLeftToByte = BITS_IN_BYTE, currByteInd = 0, mask = BIT_GROUP_MASK_OF_ONES,
+		int bitsLeftToByte = BITS_IN_BYTE - Parameters.colorDiscardedBits, currByteInd = 0, mask = BIT_GROUP_MASK_OF_ONES,
 				ones_in_mask = ENCODING_BIT_GROUP_SIZE;
 		int[] RGB = sampleModule(imageSampler, pos, isMetadata);
 		// assuming ENCODING_COLOR_LEVELS<255
-		int RChannelValue = RGB[0]/ COLOR_SCALE_DELTA;
-		int GChannelValue = RGB[1]/ COLOR_SCALE_DELTA;
-		int BChannelValue = RGB[2]/ COLOR_SCALE_DELTA;
+		int RChannelValue = (RGB[0]<<Parameters.colorDiscardedBits)/COLOR_SCALE_DELTA;
+		int GChannelValue = (RGB[1]<<Parameters.colorDiscardedBits)/COLOR_SCALE_DELTA;
+		int BChannelValue = (RGB[2]<<Parameters.colorDiscardedBits)/COLOR_SCALE_DELTA;
 		byte currentDataR = 0, currentDataG = 0, currentDataB = 0;
 
 		while (true){
@@ -227,9 +227,9 @@ public class DisplayDecoder {
 				mask = BIT_GROUP_MASK_OF_ONES;
 				ones_in_mask = ENCODING_BIT_GROUP_SIZE;
 				RGB = sampleModule(imageSampler, pos, isMetadata);
-				RChannelValue = (byte) (RGB[0]/ COLOR_SCALE_DELTA);
-				GChannelValue = (byte) (RGB[1]/ COLOR_SCALE_DELTA);
-				BChannelValue = (byte) (RGB[2]/ COLOR_SCALE_DELTA);
+				RChannelValue = (byte) (RGB[0]<<Parameters.colorDiscardedBits)/COLOR_SCALE_DELTA;
+				GChannelValue = (byte) (RGB[1]<<Parameters.colorDiscardedBits)/COLOR_SCALE_DELTA;
+				BChannelValue = (byte) (RGB[2]<<Parameters.colorDiscardedBits)/COLOR_SCALE_DELTA;
 			}
 
 			if(bitsLeftToByte == 0) {
@@ -238,7 +238,7 @@ public class DisplayDecoder {
 					decodedData[currByteInd+greenStride] = currentDataG;
 					decodedData[currByteInd+blueStride] = currentDataB;
 					currByteInd+= nextElemStride;
-					bitsLeftToByte = BITS_IN_BYTE;
+					bitsLeftToByte = BITS_IN_BYTE - Parameters.colorDiscardedBits;
 					currentDataR = 0; currentDataG = 0; currentDataB = 0;
 				}
 				else{
@@ -253,19 +253,7 @@ public class DisplayDecoder {
 						case(1):{
 							decodedData[currByteInd] = currentDataR;
 						}
-					}/*
-					if(currByteInd+blueStride<lengthInBytes){
-						decodedData[currByteInd] = currentDataR;
-						decodedData[currByteInd+greenStride] = currentDataG;
-						decodedData[currByteInd+blueStride] = currentDataB;
 					}
-					if(currByteInd+greenStride<lengthInBytes){
-						decodedData[currByteInd] = currentDataR;
-						decodedData[currByteInd+greenStride] = currentDataG;
-					}
-					if(currByteInd<lengthInBytes){
-						decodedData[currByteInd] = currentDataR;
-					}*/
 					return decodedData;
 				}
 

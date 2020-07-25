@@ -41,7 +41,7 @@ public class FlowUtils {
                 /(double)ENCODING_BIT_GROUP_SIZE));
         int modulesForMetadata = modulesForIVChecksum + modulesForIV + modulesForDims;
         int modulesForAlignmentPattern = MODULES_IN_ALIGNMENT_PATTERN_DIM*MODULES_IN_ALIGNMENT_PATTERN_DIM;
-        int modulesForImageData = (bytesDataLen*BITS_IN_BYTE + ENCODING_BIT_GROUP_SIZE - 1)/(ENCODING_BIT_GROUP_SIZE);
+        int modulesForImageData = (bytesDataLen*(BITS_IN_BYTE - Parameters.colorDiscardedBits) + ENCODING_BIT_GROUP_SIZE - 1)/(ENCODING_BIT_GROUP_SIZE); // ceil rounding "trick"
         int modulesForPosDet = MODULES_IN_POS_DET_DIM*MODULES_IN_POS_DET_DIM*NUM_OF_POSITION_DETECTORS;
         int modulesForRightLowerCorner = 1;
 
@@ -50,7 +50,7 @@ public class FlowUtils {
 
         int dim = (int) Math.ceil(Math.sqrt(totalNumOfModules));
         int encodingModules = dim*dim - (modulesForMetadata + modulesForPosDet + modulesForAlignmentPattern + modulesForRightLowerCorner);
-        int maxEncodedLength = (encodingModules*ENCODING_BIT_GROUP_SIZE)/BITS_IN_BYTE;
+        int maxEncodedLength = (encodingModules*ENCODING_BIT_GROUP_SIZE)/(BITS_IN_BYTE - Parameters.colorDiscardedBits);
 
         //TODO: treat case of small dimension without alignment pattern
         MODULES_IN_ENCODED_IMAGE_DIM = dim + 2*Parameters.modulesInMargin;

@@ -59,13 +59,13 @@ public class DisplayEncoder {
 			nextElemStride = 3;	greenStride = 1; blueStride = 2;
 		}
 
-		int bitsLeftInByte = BITS_IN_BYTE, currByteInd = 0, mask = BIT_GROUP_MASK_OF_ONES,
+		int bitsLeftInByte = BITS_IN_BYTE - Parameters.colorDiscardedBits, currByteInd = 0, mask = BIT_GROUP_MASK_OF_ONES,
 				ones_in_mask = ENCODING_BIT_GROUP_SIZE;
 
 		byte currentDataR = 0, currentDataG = 0, currentDataB = 0;
-		byte currByteR = binaryData[currByteInd];
-		byte currByteG = binaryData[currByteInd+greenStride];
-		byte currByteB = binaryData[currByteInd+blueStride];
+		byte currByteR = (byte) (binaryData[currByteInd] >> Parameters.colorDiscardedBits);
+		byte currByteG = (byte) (binaryData[currByteInd+greenStride] >> Parameters.colorDiscardedBits);
+		byte currByteB = (byte) (binaryData[currByteInd+blueStride] >> Parameters.colorDiscardedBits);
 
 		while (true){
 			if(ones_in_mask < bitsLeftInByte) { //mask doesn't cover all bits left in current byte
@@ -98,21 +98,21 @@ public class DisplayEncoder {
 
 			if(bitsLeftInByte == 0) {
 				if(currByteInd + nextElemStride < binaryData.length) {
-					bitsLeftInByte = BITS_IN_BYTE;
+					bitsLeftInByte = BITS_IN_BYTE - Parameters.colorDiscardedBits;
 					currByteInd+= nextElemStride;
 
 					if(currByteInd + blueStride < binaryData.length) {
-						currByteR = binaryData[currByteInd];
-						currByteG = binaryData[currByteInd + greenStride];
-						currByteB = binaryData[currByteInd + blueStride];
+						currByteR = (byte) (binaryData[currByteInd] >> Parameters.colorDiscardedBits);
+						currByteG = (byte) (binaryData[currByteInd + greenStride] >> Parameters.colorDiscardedBits);
+						currByteB = (byte) (binaryData[currByteInd + blueStride] >> Parameters.colorDiscardedBits);
 					}
 					else if (currByteInd + greenStride < binaryData.length) {
-						currByteR = binaryData[currByteInd];
-						currByteG = binaryData[currByteInd + greenStride];
+						currByteR = (byte) (binaryData[currByteInd] >> Parameters.colorDiscardedBits);
+						currByteG = (byte) (binaryData[currByteInd + greenStride] >> Parameters.colorDiscardedBits);
 						currByteB = 0;
 					}
 					else {
-						currByteR = binaryData[currByteInd];
+						currByteR = (byte) (binaryData[currByteInd] >> Parameters.colorDiscardedBits);
 						currByteG = 0;
 						currByteB = 0;
 					}
@@ -145,13 +145,12 @@ public class DisplayEncoder {
 		levelB = (currentDataB*COLOR_SCALE_DELTA) & 0xFF;
 
 		final double GAMMA_PARAMETER = 0.8;
-		levelR = (int) (Math.round(Math.pow( ((double)levelR/255), 0.75) * 255));
-		if(levelR>255){ levelR = 255;}
-		levelG = (int) (Math.round(Math.pow( ((double)levelG/255), 0.75) * 255));
-		if(levelG>255){ levelG = 255;}
-		levelB = (int) (Math.round(Math.pow( ((double)levelB/255), 0.68) * 255));
-		if(levelB>255){ levelB = 255;}
-
+//		levelR = (int) (Math.round(Math.pow( ((double)levelR/255), 0.75) * 255));
+//		if(levelR>255){ levelR = 255;}
+//		levelG = (int) (Math.round(Math.pow( ((double)levelG/255), 0.75) * 255));
+//		if(levelG>255){ levelG = 255;}
+//		levelB = (int) (Math.round(Math.pow( ((double)levelB/255), 0.68) * 255));
+//		if(levelB>255){ levelB = 255;}
 
 		color = new Color(levelR, levelG, levelB);
 		g.setColor(color);
