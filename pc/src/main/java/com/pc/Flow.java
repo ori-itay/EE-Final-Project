@@ -2,6 +2,7 @@ package com.pc;
 
 
 import com.pc.checksum.Checksum;
+import com.pc.configuration.Constants;
 import com.pc.configuration.Parameters;
 import com.pc.encoderDecoder.DisplayEncoder;
 import com.pc.encryptorDecryptor.EncryptorDecryptor;
@@ -81,6 +82,8 @@ public class Flow {
 			byte[] shuffledEncryptedImg = Shuffle.shuffleImgPixels(encryptedImg, iv);
 
 			encodedImage = DisplayEncoder.encodeBytes(shuffledEncryptedImg, dimsArr, iv.getIV(),  chksumIV);
+			System.out.println((Constants.MODULES_IN_ENCODED_IMAGE_DIM - Parameters.modulesInMargin*2) +
+					" modules in dimension (without margins).");
 
 			imgLabel.setIcon(new ImageIcon(new ImageIcon(encodedImage).getImage().getScaledInstance(-1 ,frame.getContentPane().getBounds().height,Image.SCALE_SMOOTH)));
 		} catch (Exception e) {

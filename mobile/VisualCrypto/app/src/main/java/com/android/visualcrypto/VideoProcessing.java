@@ -75,26 +75,21 @@ public class VideoProcessing extends AppCompatActivity {
         imageCapture = setImageCapture();
         TakePictureCallback.setImageCaptureParams(imageCapture, processedImgView, this);
 
-//TODO : 1) fix preview.
         toggleButton.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (isChecked) {
-                executor = Executors.newFixedThreadPool(4); // Runtime.getRuntime().availableProcessors() - 1
+                executor = Executors.newFixedThreadPool(3); // Runtime.getRuntime().availableProcessors() - 1
                 imageCapture.takePicture(executor, new TakePictureCallback());
             } else {
                 executor.shutdown();
             }
         });
 
-
-
-
-
         Camera camera = cameraProvider.bindToLifecycle(this, cameraSelector, imageCapture, preview);
     }
 
     private ImageCapture setImageCapture() {
         ImageCapture imageCapture = new ImageCapture.Builder()
-                .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)//////
+                .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
                 .setTargetRotation(Surface.ROTATION_0)
                 //.setTargetRotation(view.getDisplay().getRotation())
                 .build();

@@ -5,6 +5,7 @@ import android.util.Log;
 
 import androidx.core.util.Pair;
 
+import com.android.visualcrypto.MainActivity;
 import com.pc.configuration.Constants;
 import com.pc.configuration.Parameters;
 import com.pc.encoderDecoder.StdImageSampler;
@@ -18,9 +19,13 @@ import org.opencv.core.MatOfInt;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
 import org.opencv.core.Rect;
+import org.opencv.core.Scalar;
 import org.opencv.core.Size;
+import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 
+import java.io.FileWriter;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -65,7 +70,9 @@ public class DistortedImageSampler extends StdImageSampler {
     public int errCounterBlue = 0;
 
 
-    public static Mat debugBW;
+    public Mat debugBW;
+    public Mat debugPathtaken;
+    public Path DEBUG_FOLDER;
 
     public static final Mat itaysCamConfigMtx = new Mat(3,3 ,CvType.CV_64F);
     public static final Mat orisCamConfigMtx = new Mat(3,3 ,CvType.CV_64F);
@@ -182,12 +189,17 @@ public class DistortedImageSampler extends StdImageSampler {
         adaptiveThreshold(bw, bw, 255, ADAPTIVE_THRESH_GAUSSIAN_C, Imgproc.THRESH_BINARY, 31, 45);
         cvtColor(bw, bw, Imgproc.THRESH_BINARY);
 
-
         pts[0].x -= (xMin - 10); pts[1].x -= (xMin - 10); pts[2].x -= (xMin - 10); pts[3].x -= (xMin - 10);
         pts[0].y -= (yMin - 10); pts[1].y -= (yMin - 10); pts[2].y -= (yMin - 10); pts[3].y -= (yMin - 10);
-        //DistortedImageSampler.debugBW = bw.clone();
+        if (MainActivity.DEBUG) {
+            this.debugBW = bw.clone();
+        }
+
         pts[2] = findCorner(bw, 0, false, false);
-//        Imgcodecs.imwrite(Flow.DEBUG_FOLDER + "/debugBW.jpg", DistortedImageSampler.debugBW);
+        if (MainActivity.DEBUG) {
+            Imgcodecs.imwrite(this.DEBUG_FOLDER + "/debugBW.jpg", this.debugBW);
+        }
+
         Log.d("performance", "bw cvtColors and findCorner took: " + (System.currentTimeMillis() - start));//performance
         MatOfPoint2f corners1 = new MatOfPoint2f(pts[0], pts[1], pts[2], pts[3]);
         MatOfPoint2f corners2 = new MatOfPoint2f(new Point(0, 0), new Point(1, 0), new Point(1, 1), new Point(0, 1));
@@ -199,30 +211,32 @@ public class DistortedImageSampler extends StdImageSampler {
 
         double minPixelStride = 1 / getMaxDistance(pts[0], pts[1], pts[2], pts[3]);
 
-//        /******DEBUGGING***************/
-//        try {
-//            FileWriter fw = new FileWriter(Flow.DEBUG_FOLDER + "/parameters.txt");
-//            Imgcodecs.imwrite(Flow.DEBUG_FOLDER + "/bw.jpg", bw);
-//            Imgcodecs.imwrite(Flow.DEBUG_FOLDER + "/afterRoi.jpg", DistortedImageSampler.distortedImage);
-//            String upperRowPts = String.format("leftUpperPoint: %f,%f\t\trightUpperPoint: %f,%f\n", pts[0].x,pts[0].y, pts[1].x, pts[1].y);
-//            String lowerRowPts = String.format("leftLowerrPoint: %f,%f\t\trightLowerPoint: %f,%f", pts[3].x,pts[3].y, pts[2].x, pts[2].y);
-//            fw.write(upperRowPts);
-//            fw.write(lowerRowPts);
-//            fw.close();
-//        }catch(Exception e){
-//            Log.d("writing_file", e.getMessage());
-//        }
-        /*****************************/
-
+        if (MainActivity.DEBUG) {
+            try {
+                FileWriter fw = new FileWriter(this.DEBUG_FOLDER + "/parameters.txt");
+                Imgcodecs.imwrite(this.DEBUG_FOLDER + "/bw.jpg", bw);
+                Imgcodecs.imwrite(this.DEBUG_FOLDER + "/afterRoi.jpg", this.distortedImage);
+                String upperRowPts = String.format("leftUpperPoint: %f,%f\t\trightUpperPoint: %f,%f\n", pts[0].x,pts[0].y, pts[1].x, pts[1].y);
+                String lowerRowPts = String.format("leftLowerrPoint: %f,%f\t\trightLowerPoint: %f,%f", pts[3].x,pts[3].y, pts[2].x, pts[2].y);
+                fw.write(upperRowPts);
+                fw.write(lowerRowPts);
+                fw.close();
+            }catch(Exception e){
+                Log.d("writing_file", e.getMessage());
+            }
+        }
 
         start = System.currentTimeMillis(); // performance
         Rect roi = new Rect(new Point(pts[0].x+10+150, pts[0].y-10+150), new Point(pts[2].x+10-100, pts[2].y+10-100));
         Mat croppedMatForHisto = new Mat(this.distortedImage, roi);
         Log.d("performance", "cropped for histo(milli): " + (System.currentTimeMillis() - start));
-//        Imgcodecs.imwrite(Flow.DEBUG_FOLDER + "/for_histo.jpg", croppedMatForHisto);
+
+        if (MainActivity.DEBUG) {
+            Imgcodecs.imwrite(this.DEBUG_FOLDER + "/for_histo.jpg", croppedMatForHisto);
+        }
+
 
         start = System.currentTimeMillis();
-        //findPercentilesValues(DistortedImageSampler.distortedImage);
         this.tileHeight = distortedImage.height() / gridSplitSize;
         this.tileWidth = distortedImage.width() / gridSplitSize;
         findPercentilesValues(croppedMatForHisto);
@@ -236,29 +250,17 @@ public class DistortedImageSampler extends StdImageSampler {
         double normalizedEstimatedModuleSize = 1 / (Math.floor(1.0 / estimatedModuleSize));
 
         start = System.currentTimeMillis();
-        //Flow.delete = distortedImage.clone();
+        if (MainActivity.DEBUG) {
+            this.debugPathtaken = distortedImage.clone();
+        }
+
         Point alignmentBottomRight = OpenCvUtils.findAlignmentBottomRight(
                 this, normalizedEstimatedModuleSize, minPixelStride, inverseH, this.distortedImage);
-//        Imgcodecs.imwrite(Flow.DEBUG_FOLDER + "/pathTaken.jpg", Flow.delete);
+        if (MainActivity.DEBUG) {
+            Imgcodecs.imwrite(this.DEBUG_FOLDER + "/pathTaken.jpg", this.debugPathtaken);
+        }
+
         if (alignmentBottomRight == null) {
-//            String folderPath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + Instant.now().toString();
-//            Path path = Paths.get(Flow.DEBUG_FOLDER);
-//            try {
-//                Files.createDirectory(path);
-//                Imgcodecs.imwrite(Flow.DEBUG_FOLDER + "/bw.jpg", bw);
-//                Imgcodecs.imwrite(Flow.DEBUG_FOLDER + "/afterRoi.jpg", DistortedImageSampler.distortedImage);
-//                FileWriter fw = new FileWriter(folderPath + "/parameters.txt");
-//                String upperRowPts = String.format("leftUpperPoint: %f,%f\t\trightUpperPoint: %f,%f\n", pts[0].x,pts[0].y, pts[1].x, pts[1].y);
-//                String lowerRowPts = String.format("leftLowerrPoint: %f,%f\t\trightLowerPoint: %f,%f", pts[3].x,pts[3].y, pts[2].x, pts[2].y);
-//                fw.write(upperRowPts);
-//                fw.write(lowerRowPts);
-//                fw.close();
-//
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//            }
-
-
             Log.d("DistortedImageSampler", "findAlignmentBottomRight returned null");
             return 1;
         }
@@ -272,14 +274,15 @@ public class DistortedImageSampler extends StdImageSampler {
                 (Constants.MODULES_FROM_UPPER_LEFT_TO_ALIGNMENT_BOTTOM_RIGHT-1) * (Constants.MODULES_FROM_UPPER_LEFT_TO_ALIGNMENT_BOTTOM_RIGHT-1))));
         Log.d("performance", "computeModuleSize took: " + (System.currentTimeMillis() - start));
         int effectiveModulesInDim = (int) Math.round(1.0 / this.getModuleSize());
-//
-//        try (FileWriter fw = new FileWriter(folderPath + "/information.txt")) {
-//            fw.write("alignment: " + distortedPoint.x +"," + distortedPoint.y);
-//            fw.write("\nModules in dim: " + (1.0/this.getModuleSize()));
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
 
+//        if (MainActivity.DEBUG) {
+//            try (FileWriter fw = new FileWriter( + "/information.txt")) {
+//                fw.write("alignment: " + distortedPoint.x + "," + distortedPoint.y);
+//                fw.write("\nModules in dim: " + (1.0 / this.getModuleSize()));
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+//        }
 
         this.setModulesInDim(effectiveModulesInDim);
 
@@ -305,7 +308,10 @@ public class DistortedImageSampler extends StdImageSampler {
         Pair p = scanDiagonalFromCorner(img.size(), top, left);
         while (img.get((int) p.first, (int) p.second)[0] != val) {
             Point debugBWPoint = new Point((int) p.second, (int) p.first);
-            //Imgproc.rectangle(DistortedImageSampler.debugBW, debugBWPoint,debugBWPoint, new Scalar(155,155,155));
+            if (MainActivity.DEBUG) {
+                Imgproc.rectangle(this.debugBW, debugBWPoint,debugBWPoint, new Scalar(155,155,155));
+            }
+
             p = scanDiagonalFromCorner(img.size(), top, left);
         }
         return new Point((int) p.second, (int) p.first);
@@ -355,69 +361,8 @@ public class DistortedImageSampler extends StdImageSampler {
         return calcDistance(upperLeftPt, lowerPt) / expectedModulesDistance;
     }
 
-//    private void findMinMaxPixelVals(Mat capturedImage) {
-//        DistortedImageSampler.tileHeight = capturedImage.height() / gridSplitSize;
-//        DistortedImageSampler.tileWidth = capturedImage.width() / gridSplitSize;
-//        Mat subMat;
-//        int histSize = 256;
-//        float[] range = {0, 256}; //the upper boundary is exclusive
-//        MatOfFloat histRange = new MatOfFloat(range);
-//        boolean accumulate = false;
-//        int countR = 0, countG = 0, countB = 0;
-//
-//        final int lowPercentileRed = (int) Math.floor(0.1*(tileWidth*tileHeight));
-//        final int highPercentileRed = (int) Math.floor(0.9*(tileWidth*tileHeight));
-//
-//        final int lowPercentileGreen = (int) Math.floor(0.1*(tileWidth*tileHeight));
-//        final int highPercentileGreen = (int) Math.floor(0.9*(tileWidth*tileHeight));
-//
-//        final int lowPercentileBlue = (int) Math.floor(0.1*(tileWidth*tileHeight));
-//        final int highPercentileBlue = (int) Math.floor(0.9*(tileWidth*tileHeight));
-//
-//        int high, low, left, right;
-//        for(int i = 0; i < gridSplitSize; i++){
-//            for(int j = 0; j < gridSplitSize; j++){
-//                countR = 0; countG = 0; countB = 0;
-//                List<Mat> bgrPlanes = new ArrayList<>();
-//                high = i*tileHeight; low = Math.min((i+1)*tileHeight, capturedImage.rows());
-//                left = i*tileWidth; right = Math.min((i+1)*tileWidth, capturedImage.cols());
-//                subMat = capturedImage.submat(high, low, left, right);
-//                Core.split(subMat, bgrPlanes);
-//                Mat bHist = new Mat(), gHist = new Mat(), rHist = new Mat();
-//                Imgproc.calcHist(bgrPlanes, new MatOfInt(0), new Mat(), bHist, new MatOfInt(histSize), histRange, accumulate);
-//                Imgproc.calcHist(bgrPlanes, new MatOfInt(1), new Mat(), gHist, new MatOfInt(histSize), histRange, accumulate);
-//                Imgproc.calcHist(bgrPlanes, new MatOfInt(2), new Mat(), rHist, new MatOfInt(histSize), histRange, accumulate);
-//
-//                for (int pixelValue = 0; pixelValue < 256; pixelValue++){
-//                    countR += rHist.get(pixelValue, 0)[0];
-//                    countG += gHist.get(pixelValue, 0)[0];
-//                    countB += bHist.get(pixelValue, 0)[0];
-//                    if(minPixelVal[i][j][0] == 0 && countR >= lowPercentileRed){
-//                        minPixelVal[i][j][0] = pixelValue;
-//                    }
-//                    if(maxPixelVal[i][j][0] == 0 && countR >= highPercentileRed){
-//                        maxPixelVal[i][j][0] = pixelValue;
-//                    }
-//                    if(minPixelVal[i][j][1] == 0 && countG >= lowPercentileGreen){
-//                        minPixelVal[i][j][1] = pixelValue;
-//                    }
-//                    if(maxPixelVal[i][j][1] == 0 && countG >= highPercentileGreen){
-//                        maxPixelVal[i][j][1] = pixelValue;
-//                    }
-//                    if(minPixelVal[i][j][2] == 0 && countB >= lowPercentileBlue){
-//                        minPixelVal[i][j][2] = pixelValue;
-//                    }
-//                    if(maxPixelVal[i][j][2] == 0 && countB >= highPercentileBlue){
-//                        maxPixelVal[i][j][2] = pixelValue;
-//                    }
-//                }
-//            }
-//        }
-//    }
 
     private void findPercentilesValues(Mat capturedImage) {
-//        DistortedImageSampler.tileHeight = capturedImage.height() / gridSplitSize;
-//        DistortedImageSampler.tileWidth = capturedImage.width() / gridSplitSize;
         int tileWidth = capturedImage.width();
         int tileHeight = capturedImage.height();
         final int BLOCK_SIZE = (tileWidth*tileHeight);
@@ -436,8 +381,6 @@ public class DistortedImageSampler extends StdImageSampler {
         for(int i = 0; i < Parameters.encodingColorLevels; i++){
             percentilesPixelCounts[i] = (int) Math.round((lowestPercentile + diffBetweenPercentiles*i) * BLOCK_SIZE);//how many pixels for each percentile
         }
-
-
 
         int high, low, left, right;
         for(int i = 0; i < gridSplitSize; i++){
@@ -471,18 +414,14 @@ public class DistortedImageSampler extends StdImageSampler {
                     countB += bHist.get(pixelValue, 0)[0];
 
                     if (currPercentileIndexRed < Parameters.encodingColorLevels && percentilesPixelCounts[currPercentileIndexRed] <= countR){
-                        //listOfMapsRed[i][j].put...
                         currMapRed.put((int) Math.round(diffBetweenLevels*currPercentileIndexRed), pixelValue);
-                        //percentilesMapRed.put((int) Math.round(diffBetweenLevels*currPercentileIndexRed), pixelValue);
                         currPercentileIndexRed++;
                     }
                     if (currPercentileIndexGreen < Parameters.encodingColorLevels && percentilesPixelCounts[currPercentileIndexGreen] <= countG){
-                        //percentilesMapGreen.put((int) Math.round(diffBetweenLevels*currPercentileIndexGreen), pixelValue);
-                        currMapGreen.put((int) Math.round(diffBetweenLevels*currPercentileIndexGreen), pixelValue);
+                       currMapGreen.put((int) Math.round(diffBetweenLevels*currPercentileIndexGreen), pixelValue);
                         currPercentileIndexGreen++;
                     }
                     if (currPercentileIndexBlue < Parameters.encodingColorLevels && percentilesPixelCounts[currPercentileIndexBlue] <= countB){
-                        //percentilesMapBlue.put((int) Math.round(diffBetweenLevels*currPercentileIndexBlue), pixelValue);
                         currMapBlue.put((int) Math.round(diffBetweenLevels*currPercentileIndexBlue), pixelValue);
                         currPercentileIndexBlue++;
                     }
@@ -510,72 +449,76 @@ public class DistortedImageSampler extends StdImageSampler {
         unDistortedImageMatCord.put(0, 1, colLoc);
         unDistortedImageMatCord.put(0, 2, 1);
         Point distortedIndex = switchCoordinates(unDistortedImageMatCord, inverseH);
-        //Imgproc.circle(Flow.delete, distortedIndex, 1, new Scalar(0,0,255), 1);
+        if(MainActivity.DEBUG)
+            Imgproc.circle(this.debugPathtaken, distortedIndex, 1, new Scalar(0,0,255), 1);
         int indexCol = (int) distortedIndex.x; int indexRow = (int) distortedIndex.y;
         final int NUM_OF_SAMPLES_FOR_RADIUS = 9;
         int[] medianChannels = new int[Constants.CHANNELS];
         if(radiusSample) {
 
-//            List<double[]> allChannels = new ArrayList<>(NUM_OF_SAMPLES_FOR_RADIUS);
-//            for (int channelNum = 0; channelNum < NUM_OF_SAMPLES_FOR_RADIUS; channelNum++) {
-//                Point pt; int a, b;
-//                a = (int) Math.round(indexRow); b = (int) Math.round(indexCol);
-//                double[] channels = DistortedImageSampler.distortedImage.get(a, b);
-//                allChannels.add(channelNum, channels);
-//            }
-
-            Point pt; int a, b;
+            Point pt; Scalar scalar; int a, b;
             a = (int) Math.round(indexRow + .51); b = (int) Math.round(indexCol + .51);
             double[] channels1 = this.distortedImage.get(a, b);
-            //pt =  new Point(b, a); Scalar scalar = new Scalar(255,255,255);
-            //Imgproc.rectangle(Flow.delete, pt, pt,  scalar);
+            if (MainActivity.DEBUG) {
+                pt =  new Point(b, a); scalar = new Scalar(255,255,255);
+                Imgproc.rectangle(this.debugPathtaken, pt, pt,  scalar);
+            }
 
             a = (int) Math.round(indexRow - .51); b = (int) Math.round(indexCol - .51);
             double[] channels2 = this.distortedImage.get(a, b);
-            //pt = new Point(b,a);
-            //Imgproc.rectangle(Flow.delete, pt,pt, scalar);
+            if (MainActivity.DEBUG) {
+                pt = new Point(b,a);
+                Imgproc.rectangle(this.debugPathtaken, pt,pt, scalar);
+            }
 
             a = (int) Math.round(indexRow + .51); b = (int) Math.round(indexCol - .51);
             double[] channels3 = this.distortedImage.get(a, b);
-            //pt = new Point(b,a);
-            //mgproc.rectangle(Flow.delete, pt,pt, scalar);
+            if (MainActivity.DEBUG) {
+                pt = new Point(b,a);
+                Imgproc.rectangle(this.debugPathtaken, pt,pt, scalar);
+            }
 
             a = (int) Math.round(indexRow - .51); b = (int) Math.round(indexCol + .51);
             double[] channels4 = this.distortedImage.get(a, b);
-            //pt = new Point(b,a);
-            //Imgproc.rectangle(Flow.delete, pt,pt, scalar);
+            if (MainActivity.DEBUG) {
+                pt = new Point(b,a);
+                Imgproc.rectangle(this.debugPathtaken, pt,pt, scalar);
+            }
 
             a = (int) Math.round(indexRow); b = (int) Math.round(indexCol + .51);
             double[] channels5 = this.distortedImage.get(a, b);
-            //pt = new Point(b,a);
-            //Imgproc.rectangle(Flow.delete, pt,pt, scalar);
+            if (MainActivity.DEBUG) {
+                pt = new Point(b,a);
+                Imgproc.rectangle(this.debugPathtaken, pt,pt, scalar);
+            }
 
             a = (int) Math.round(indexRow); b = (int) Math.round(indexCol - .51);
             double[] channels6 = this.distortedImage.get(a, b);
-            //pt = new Point(b,a);
-            //Imgproc.rectangle(Flow.delete, pt,pt, scalar);
+            if (MainActivity.DEBUG) {
+                pt = new Point(b,a);
+                Imgproc.rectangle(this.debugPathtaken, pt,pt, scalar);
+            }
 
             a = (int) Math.round(indexRow - .51); b = (int) Math.round(indexCol);
             double[] channels7 = this.distortedImage.get(a, b);
-            //pt = new Point(b,a);
-            //Imgproc.rectangle(Flow.delete, pt,pt, scalar);
+            if (MainActivity.DEBUG) {
+                pt = new Point(b,a);
+                Imgproc.rectangle(this.debugPathtaken, pt,pt, scalar);
+            }
 
             a = (int) Math.round(indexRow + .51); b = (int) Math.round(indexCol);
             double[] channels8 = this.distortedImage.get(a, b);
-           // pt = new Point(b,a);
-           // Imgproc.rectangle(Flow.delete, pt,pt, scalar);
+            if (MainActivity.DEBUG) {
+                pt = new Point(b,a);
+                Imgproc.rectangle(this.debugPathtaken, pt,pt, scalar);
+            }
 
             a = (int) Math.round(indexRow); b = (int) Math.round(indexCol);
             double[] channels9 = this.distortedImage.get(a, b);
-           // pt = new Point(b,a);
-            //Imgproc.rectangle(Flow.delete, pt,pt, scalar);
-
-//            int[][] radiusValues = new int[Constants.CHANNELS][NUM_OF_SAMPLES_FOR_RADIUS];
-//            for(int i = 0; i < allChannels.size(); i++){
-//                radiusValues[0][i] = (int) allChannels.get(i)[0];
-//                radiusValues[1][i] = (int) allChannels.get(i)[1];
-//                radiusValues[2][i] = (int) allChannels.get(i)[2];
-//            }
+            if (MainActivity.DEBUG) {
+                pt = new Point(b,a);
+                Imgproc.rectangle(this.debugPathtaken, pt,pt, scalar);
+            }
 
             for (int i = 0; i < medianChannels.length; i++) {
                 int[] radiusValues = {(int)channels1[i], (int)channels2[i], (int)channels3[i], (int)channels4[i],
@@ -591,7 +534,6 @@ public class DistortedImageSampler extends StdImageSampler {
             medianChannels[2] = (int) channels[2];
         }
 
-
         int[] processedChannels = classifyPixelChannelsLevels(this, medianChannels, indexRow, indexCol);
 
         // set all values to the majority
@@ -606,43 +548,42 @@ public class DistortedImageSampler extends StdImageSampler {
         }
 
         int pixelValue = (processedChannels[0]) |(processedChannels[1] << 8) | (processedChannels[2] << 16);
-//
-////         debugging code for comparison to original image
-//        if(radiusSample) {
-//            int rowPixel = (int) Math.round((Parameters.modulesInMargin + rowLoc / this.getModuleSize()) * Parameters.pixelsInModule);
-//            int colPixel = (int) Math.round((Parameters.modulesInMargin + colLoc / this.getModuleSize()) * Parameters.pixelsInModule);
-//            if(rowPixel >= 0 && rowPixel < this.tempOrigPixelMatrix.length && colPixel >=0 && colPixel < this.tempOrigPixelMatrix[0].length) {
-//                int encodedPixelValue = super.getPixel(colPixel, rowPixel);
-//                int RGB = Integer.reverseBytes(encodedPixelValue) >>> 8;
-//                int[] originalChannelVals = new int[Constants.CHANNELS];
-//                originalChannelVals[0] = RGB & 0xff;
-//                originalChannelVals[1] = (RGB >> 8) & 0xff;
-//                originalChannelVals[2] = (RGB >> 16) & 0xff;
-//                if (RGB != pixelValue) {
-//                    errCounterTotal++;
-//                    if(originalChannelVals[0] != processedChannels[0]){
-//                        errCounterRed++;
-//                    }
-//                    if(originalChannelVals[1] != processedChannels[1]){
-//                        errCounterGreen++;
-//                    }
-//                    if(originalChannelVals[2] != processedChannels[2]){
-//                        errCounterBlue++;
-//                    }
-//
-//                    //            Mat alignmentBottomRightMat = new Mat(1, 3, CvType.CV_64F);
-//                    //            alignmentBottomRightMat.put(0, 0, alignmentBottomRight.x, alignmentBottomRight.y, 1);
-//
-//                   //double[] middleVals = DistortedImageSampler.distortedImage.get((int) Math.round(indexCol), (int) Math.round(indexRow));
-//                   // Imgproc.rectangle(Flow.delete, new Point((int) Math.round(indexCol), (int) Math.round(indexRow)), new Point((int) Math.round(indexCol), (int) Math.round(indexRow)), new Scalar(255-middleVals[0],255-middleVals[1],255-middleVals[2]));
-//                    Imgproc.rectangle(Flow.delete, new Point((int) Math.round(indexCol), (int) Math.round(indexRow)), new Point((int) Math.round(indexCol), (int) Math.round(indexRow)), new Scalar(0,0,0));
-//                    //Log.d("DistortedImageSampler", "Module pixel value different than expected");
-//                }
-//            }
-//        }
 
+        if(MainActivity.DEBUG){
+            //debugging code for comparison to original image
+            if(radiusSample) {
+                int rowPixel = (int) Math.round((Parameters.modulesInMargin + rowLoc / this.getModuleSize()) * Parameters.pixelsInModule);
+                int colPixel = (int) Math.round((Parameters.modulesInMargin + colLoc / this.getModuleSize()) * Parameters.pixelsInModule);
+                if(rowPixel >= 0 && rowPixel < this.tempOrigPixelMatrix.length && colPixel >=0 && colPixel < this.tempOrigPixelMatrix[0].length) {
+                    int encodedPixelValue = super.getPixel(colPixel, rowPixel);
+                    int RGB = Integer.reverseBytes(encodedPixelValue) >>> 8;
+                    int[] originalChannelVals = new int[Constants.CHANNELS];
+                    originalChannelVals[0] = RGB & 0xff;
+                    originalChannelVals[1] = (RGB >> 8) & 0xff;
+                    originalChannelVals[2] = (RGB >> 16) & 0xff;
+                    if (RGB != pixelValue) {
+                        errCounterTotal++;
+                        if(originalChannelVals[0] != processedChannels[0]){
+                            errCounterRed++;
+                        }
+                        if(originalChannelVals[1] != processedChannels[1]){
+                            errCounterGreen++;
+                        }
+                        if(originalChannelVals[2] != processedChannels[2]){
+                            errCounterBlue++;
+                        }
 
+                        // Mat alignmentBottomRightMat = new Mat(1, 3, CvType.CV_64F);
+                        // alignmentBottomRightMat.put(0, 0, alignmentBottomRight.x, alignmentBottomRight.y, 1);
+
+                        //double[] middleVals = DistortedImageSampler.distortedImage.get((int) Math.round(indexCol), (int) Math.round(indexRow));
+                        //Imgproc.rectangle(Flow.delete, new Point((int) Math.round(indexCol), (int) Math.round(indexRow)), new Point((int) Math.round(indexCol), (int) Math.round(indexRow)), new Scalar(255-middleVals[0],255-middleVals[1],255-middleVals[2]));
+                        Imgproc.rectangle(this.debugPathtaken, new Point((int) Math.round(indexCol), (int) Math.round(indexRow)), new Point((int) Math.round(indexCol), (int) Math.round(indexRow)), new Scalar(0,0,0));
+                        //Log.d("DistortedImageSampler", "Module pixel value different than expected");
+                    }
+                }
+            }
+        }
         return pixelValue;
     }
-
 }

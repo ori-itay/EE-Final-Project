@@ -95,11 +95,11 @@ public class TakePictureCallback extends ImageCapture.OnImageCapturedCallback {
         Mat afterCalibrationMatrix = mat;
         /***************************************/
 
-        try {
-            bitmapToFile(bp);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+//        try {
+//            bitmapToFile(bp);
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
 
         try {
             start = System.nanoTime();

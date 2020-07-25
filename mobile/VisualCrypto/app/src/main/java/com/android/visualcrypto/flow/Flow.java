@@ -2,6 +2,7 @@ package com.android.visualcrypto.flow;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Environment;
 import android.util.Log;
 
@@ -16,8 +17,10 @@ import com.pc.encryptorDecryptor.decryptor.Decryptor;
 import com.pc.shuffleDeshuffle.deshuffle.Deshuffle;
 
 import org.opencv.core.Mat;
+import org.opencv.imgcodecs.Imgcodecs;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -30,30 +33,29 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
-public class Flow{
-    public static Mat delete;
-    public static Path DEBUG_FOLDER;
+public class Flow {
 
     public static Bitmap executeAndroidFlow(Mat capturedImg, Bitmap encodedBitmap, Context context) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidAlgorithmParameterException, InvalidKeyException, IOException, InterruptedException {
-        //DEBUG
-        String folderPath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + Instant.now().toString();
-        Path path = Paths.get(folderPath);
-        try {
-            Files.createDirectory(path);
-            DEBUG_FOLDER = path;
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        //
         DistortedImageSampler distortedImageSampler = new DistortedImageSampler(capturedImg, encodedBitmap);
 
-//        //delete from here snr
-//        InputStream encodedStream = context.getAssets().open("50_50_4Level_colorPos.jpg");
-//        Bitmap origEncodedBitmap = BitmapFactory.decodeStream(encodedStream);
-//        distortedImageSampler.tempOrigPixelMatrix = MainActivity.get2DPixelArray(origEncodedBitmap);
-//        distortedImageSampler.errCounterTotal = 0; distortedImageSampler.errCounterRed = 0;
-//        distortedImageSampler.errCounterGreen = 0; distortedImageSampler.errCounterBlue = 0;
-//        //to here
+        if (MainActivity.DEBUG) {
+            String folderPath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + Instant.now().toString();
+            Path path = Paths.get(folderPath);
+            try {
+                Files.createDirectory(path);
+                distortedImageSampler.DEBUG_FOLDER = path;
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        if (MainActivity.DEBUG) { // snr
+            InputStream encodedStream = context.getAssets().open("50_50_4Level_colorPos.jpg");
+            Bitmap origEncodedBitmap = BitmapFactory.decodeStream(encodedStream);
+            distortedImageSampler.tempOrigPixelMatrix = MainActivity.get2DPixelArray(origEncodedBitmap);
+            distortedImageSampler.errCounterTotal = 0; distortedImageSampler.errCounterRed = 0;
+            distortedImageSampler.errCounterGreen = 0; distortedImageSampler.errCounterBlue = 0;
+        }
 
         if (distortedImageSampler.initParameters() != 0) {
             return null;
@@ -63,26 +65,26 @@ public class Flow{
         int[][] pixelArr = MainActivity.get2DPixelArray(encodedBitmap);
         Log.d("performance", "get2DPixelArray took: " + (System.currentTimeMillis() - start));
 
-
         start = System.currentTimeMillis();
         DisplayDecoder.decodePixelMatrix(distortedImageSampler, pixelArr);
         Log.d("performance", "decodePixelMatrix took: " + (System.currentTimeMillis() - start));
 
-        //Imgcodecs.imwrite(Flow.DEBUG_FOLDER + "/SAMPLED_PLACES.jpg", Flow.delete); //TODO: del
-
-        //SNR
-        int total_num_of_modules = distortedImageSampler.getModulesInDim()*distortedImageSampler.getModulesInDim();
-        double SNR = (double)distortedImageSampler.errCounterTotal / total_num_of_modules;
-        Log.d("ALL CHANNELS SNR", "SNR is: " + SNR);
-        double AVG_SNR = (double)(distortedImageSampler.errCounterRed+distortedImageSampler.errCounterGreen+distortedImageSampler.errCounterBlue) /
-                (Constants.CHANNELS * total_num_of_modules);
-        Log.d("ALL CHANNELS (AVG) SNR", "SNR is: " + AVG_SNR);
-        double RED_SNR = (double)distortedImageSampler.errCounterRed / total_num_of_modules;
-        Log.d("RED CHANNEL SNR", "SNR is: " + RED_SNR);
-        double GREEN_SNR = (double)distortedImageSampler.errCounterGreen / total_num_of_modules;
-        Log.d("GREEN CHANNEL SNR", "SNR is: " + GREEN_SNR);
-        double BLUE_SNR = (double)distortedImageSampler.errCounterBlue / total_num_of_modules;
-        Log.d("BLUE CHANNEL SNR", "SNR is: " + BLUE_SNR);
+        if (MainActivity.DEBUG) {
+            Imgcodecs.imwrite(distortedImageSampler.DEBUG_FOLDER + "/SAMPLED_PLACES.jpg", distortedImageSampler.debugPathtaken);
+            //SNR
+            int total_num_of_modules = distortedImageSampler.getModulesInDim()*distortedImageSampler.getModulesInDim();
+            double SNR = (double)distortedImageSampler.errCounterTotal / total_num_of_modules;
+            Log.d("ALL CHANNELS SNR", "SNR is: " + SNR);
+            double AVG_SNR = (double)(distortedImageSampler.errCounterRed+distortedImageSampler.errCounterGreen+distortedImageSampler.errCounterBlue) /
+                    (Constants.CHANNELS * total_num_of_modules);
+            Log.d("ALL CHANNELS (AVG) SNR", "SNR is: " + AVG_SNR);
+            double RED_SNR = (double)distortedImageSampler.errCounterRed / total_num_of_modules;
+            Log.d("RED CHANNEL SNR", "SNR is: " + RED_SNR);
+            double GREEN_SNR = (double)distortedImageSampler.errCounterGreen / total_num_of_modules;
+            Log.d("GREEN CHANNEL SNR", "SNR is: " + GREEN_SNR);
+            double BLUE_SNR = (double)distortedImageSampler.errCounterBlue / total_num_of_modules;
+            Log.d("BLUE CHANNEL SNR", "SNR is: " + BLUE_SNR);
+        }
         /* decode */
         byte[] decodedBytes = distortedImageSampler.getDecodedData();
 
@@ -115,11 +117,9 @@ public class Flow{
 
         if (width == 0 || height == 0) {
             Log.d("dimensions", "Cannot decode the image: Dimensions checksum are wrong!");
-            //showAlert(context, "Cannot decode the image: Dimensions checksum are wrong!");
             return null;
         } else if (width > Constants.MAX_IMAGE_DIMENSION_SIZE || height > Constants.MAX_IMAGE_DIMENSION_SIZE) {
             Log.d("dimensions", "Error: image dimension larger than " + Constants.MAX_IMAGE_DIMENSION_SIZE);
-            //showAlert(context, "Error: image dimension larger than " + Constants.MAX_IMAGE_DIMENSION_SIZE);
             return null;
         }
 
@@ -127,7 +127,6 @@ public class Flow{
         /* convert to Bitmap */
         Bitmap bmp = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
         MainActivity.setBitmapPixels(bmp, imageBytes, width, height);
-        //MainActivity.setBitmapPixels(bmp, decodedBytes, width, height);
         Log.d("performance", "createBitmap took: " + (System.currentTimeMillis() - start));
 
         return bmp;
