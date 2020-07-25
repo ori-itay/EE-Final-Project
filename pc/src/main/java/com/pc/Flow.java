@@ -12,11 +12,14 @@ import com.pc.shuffleDeshuffle.shuffle.Shuffle;
 import javax.crypto.*;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.geom.AffineTransform;
+import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.security.*;
@@ -127,7 +130,33 @@ public class Flow {
 				executor = Executors.newSingleThreadScheduledExecutor();
 				executor.scheduleAtFixedRate(()-> {
 					BufferedImage img = robot.createScreenCapture(screenRect);
-					flow(img);
+					int w = img.getWidth();
+					int h = img.getHeight();
+//					BufferedImage scaledImg = new BufferedImage(w,h, BufferedImage.TYPE_INT_ARGB);
+//					AffineTransform at = new AffineTransform();
+//					at.scale(4,4);
+//					AffineTransformOp scaleOp = new AffineTransformOp(at, AffineTransformOp.TYPE_NEAREST_NEIGHBOR);
+//					scaledImg = scaleOp.filter(img, scaledImg);
+//					try {
+//						ImageIO.write(img, "png", new File("not_scaled.jpg"));
+//						ImageIO.write(scaledImg, "png", new File("scaled.jpg"));
+//					} catch (IOException e) {
+//						e.printStackTrace();
+//					}
+					int SCALE = 10;
+					Image tmp = img.getScaledInstance(w/SCALE, h/SCALE, BufferedImage.SCALE_SMOOTH);
+					BufferedImage scaledImg = new BufferedImage(w/SCALE, h/SCALE, BufferedImage.TYPE_INT_ARGB);
+					scaledImg.getGraphics().drawImage(tmp, 0, 0, null);
+
+					try {
+						ImageIO.write(img, "png", new File("not_scaled.jpg"));
+						ImageIO.write(scaledImg, "png", new File("scaled.jpg"));
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+
+
+					flow(scaledImg);
 				}, 0, 100, TimeUnit.MILLISECONDS);
 				toggleButton.setText("On");
 			} else {
