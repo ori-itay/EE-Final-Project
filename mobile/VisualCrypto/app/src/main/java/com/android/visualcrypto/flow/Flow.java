@@ -110,6 +110,7 @@ public class Flow {
         start = System.currentTimeMillis();
         /* decrypt */
         byte[] imageBytes = Decryptor.decryptImage(deshuffledBytes, secretKeySpec, ivSpec);
+        Log.d("performance", "decryptImage took: " + (System.currentTimeMillis() - start));
         /* fetch the image dimensions */
         DimensionsFetcher dimensionsFetcher = new DimensionsFetcher(distortedImageSampler);
         int width = dimensionsFetcher.getWidth();
