@@ -536,7 +536,7 @@ public class DistortedImageSampler extends StdImageSampler {
         }
 
         int[] processedChannels;
-        if (!MainActivity.DEBUG_CAPTURED) {
+        if (MainActivity.DEBUG_READ_IMAGE_FROM_FILE) {
             processedChannels = medianChannels;
         }
         else {

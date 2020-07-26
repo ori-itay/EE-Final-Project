@@ -69,8 +69,8 @@ public class Flow {
 	public static void flow(BufferedImage image) {
 		byte[] imageBytes = FlowUtils.convertToBytesUsingGetRGB(image);
 
-		//IvParameterSpec iv = Encryptor.generateIv(Parameters.ivLength);
-		IvParameterSpec iv = new IvParameterSpec(new byte[]{1,2,3,4,5,6,7,8,9,10,11,12});
+		IvParameterSpec iv = Encryptor.generateIv(Parameters.ivLength);
+		//IvParameterSpec iv = new IvParameterSpec(new byte[]{1,2,3,4,5,6,7,8,9,10,11,12});
 
 		System.out.println("IV:" + Arrays.toString(iv.getIV()));
 		byte[] chksumIV = Checksum.computeChecksum(iv.getIV());
@@ -161,7 +161,7 @@ public class Flow {
 
 
 					flow(scaledImg);
-				}, 0, 100, TimeUnit.MILLISECONDS);
+				}, 0, 800, TimeUnit.MILLISECONDS);
 				toggleButton.setText("On");
 			} else {
 				executor.shutdown();

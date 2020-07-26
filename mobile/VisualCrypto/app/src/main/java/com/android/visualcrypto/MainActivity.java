@@ -65,7 +65,7 @@ public class MainActivity extends AppCompatActivity {
     public static byte[] privateKey;
 
     public static final boolean DEBUG = true;
-    public static boolean DEBUG_CAPTURED = false;
+    public static boolean DEBUG_READ_IMAGE_FROM_FILE = false;
 
 
     @Override
