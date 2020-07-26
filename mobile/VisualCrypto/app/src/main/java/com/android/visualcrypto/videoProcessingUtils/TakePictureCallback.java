@@ -24,7 +24,7 @@ import java.security.NoSuchAlgorithmException;
 
 import javax.crypto.NoSuchPaddingException;
 
-import static com.android.visualcrypto.MainActivity.bitmapToFile;
+import static com.android.visualcrypto.MainActivity.lastDetectedRoi;
 
 public class TakePictureCallback extends ImageCapture.OnImageCapturedCallback {
 
@@ -52,7 +52,7 @@ public class TakePictureCallback extends ImageCapture.OnImageCapturedCallback {
         ByteBuffer buffer = image.getPlanes()[0].getBuffer();
         byte[] bytes = new byte[buffer.remaining()];
         buffer.get(bytes);
-        Log.d("time", "mili, buffer to bitmap: " + (System.nanoTime() - start) / 1e6);
+        Log.d("performance", "mili, buffer to bitmap: " + (System.nanoTime() - start) / 1e6);
         image.close();
 
         imageCapture.takePicture(VideoProcessing.executor, new TakePictureCallback());
@@ -65,13 +65,13 @@ public class TakePictureCallback extends ImageCapture.OnImageCapturedCallback {
 //                    Utils.matToBitmap(mat, bp); // update bitmap as well
         start = System.nanoTime();
         Bitmap bp = BitmapFactory.decodeByteArray(bytes, 0, bytes.length, null);
-        Log.d("time", "mili, decodeByteArray: " + (System.nanoTime() - start) / 1e6);
+        Log.d("performance", "mili, decodeByteArray: " + (System.nanoTime() - start) / 1e6);
 
 
         /** ROTATION**/
         //start = System.nanoTime();
         //Bitmap fixedBitmap = CameraRotationFix.rotateImage(rotatedBitmap, image.getImageInfo().getRotationDegrees());
-        //Log.d("time", "mili, rotateImage: " + (System.nanoTime() - start) / 1e6);
+        //Log.d("performance", "mili, rotateImage: " + (System.nanoTime() - start) / 1e6);
         /*************/
 
 
@@ -79,20 +79,36 @@ public class TakePictureCallback extends ImageCapture.OnImageCapturedCallback {
         Mat mat = new Mat();
         Utils.bitmapToMat(bp, mat);
 
-                    try {
-                        bitmapToFile(bp);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+//        try {
+//            bitmapToFile(bp);
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
 
         /*********WITH CALIBRATION**************/
 //                    Mat afterCalibrationMatrix = OpenCvUtils.calibrateImage(mat, false);
 //                    Utils.matToBitmap(afterCalibrationMatrix, bp); // update bitmap as well
-//                    Log.d("time", "mili, bitmapToMat + calibration: " + (System.nanoTime() - start) / 1e6);
+//                    Log.d("performance", "mili, bitmapToMat + calibration: " + (System.nanoTime() - start) / 1e6);
         /***************************************/
 
         /*********NO CALIBRATION**************/
-        Mat afterCalibrationMatrix = mat;
+        Mat afterCalibrationMatrix = null;
+        if(lastDetectedRoi != null &&
+                mat.rows() >= lastDetectedRoi.height  &&   mat.cols() >= lastDetectedRoi.width) {
+            start = System.nanoTime();
+            try {
+                afterCalibrationMatrix = new Mat(mat, lastDetectedRoi);
+            }catch (Exception e) {
+
+            }
+            
+            bp = Bitmap.createBitmap(afterCalibrationMatrix.cols(), afterCalibrationMatrix.rows(), Bitmap.Config.ARGB_8888);
+            Utils.matToBitmap(afterCalibrationMatrix, bp);
+            Log.d("performance", "mili, crops for lastDetectodRoi took: " + (System.nanoTime() - start) / 1e6);
+        }
+        else
+            afterCalibrationMatrix = mat;
+//        Mat afterCalibrationMatrix = mat;
         /***************************************/
 
 //        try {
@@ -104,7 +120,7 @@ public class TakePictureCallback extends ImageCapture.OnImageCapturedCallback {
         try {
             start = System.nanoTime();
             final Bitmap finalBitmap = Flow.executeAndroidFlow(afterCalibrationMatrix, bp, videoProcessing.getApplicationContext());
-            Log.d("time", "mili, executeAndroidFlow took: " + (System.nanoTime() - start) / 1e6);
+            Log.d("performance", "mili, executeAndroidFlow took: " + (System.nanoTime() - start) / 1e6);
             if (finalBitmap == null) {
                 Log.d("finalBitmap", "finalBitmap is null");
                 return;
@@ -114,8 +130,8 @@ public class TakePictureCallback extends ImageCapture.OnImageCapturedCallback {
             videoProcessing.runOnUiThread(() -> {
                 long s = System.nanoTime();
                 processedImgView.setImageBitmap(finalBitmap);
-                Log.d("time", "mili,setFinalBitmap took: " + (System.nanoTime() - s) / 1e6);
-                Log.d("time", "mili, ~~~~~EndToEnd~~~~~ took: " + (System.nanoTime() - endToEndStart) / 1e6);
+                Log.d("performance", "mili,setFinalBitmap took: " + (System.nanoTime() - s) / 1e6);
+                Log.d("performance", "mili, ~~~~~EndToEnd~~~~~ took: " + (System.nanoTime() - endToEndStart) / 1e6);
             });
 
         } catch (IOException | NoSuchAlgorithmException | InvalidAlgorithmParameterException | InvalidKeyException | NoSuchPaddingException e) {

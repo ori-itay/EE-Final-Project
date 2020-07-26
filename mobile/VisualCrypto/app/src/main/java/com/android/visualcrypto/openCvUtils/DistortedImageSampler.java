@@ -155,6 +155,7 @@ public class DistortedImageSampler extends StdImageSampler {
 
         } else if (failures.size() == 0 && detections.size() == 0) {
             Log.d("DistortedImageSampler", "Couldn't detect QR position detectors");
+            MainActivity.lastDetectedRoi = null;
             return 1;
         }
 
@@ -172,11 +173,13 @@ public class DistortedImageSampler extends StdImageSampler {
         /********************ROI****************************/
         try {
             Rect roi = new Rect(new Point(xMin-10, yMin-10), new Point(xMax+10, yMax+10));
+            MainActivity.lastDetectedRoi = new Rect(new Point(Math.max(xMin-50, 0), Math.max(yMin-50, 0)), new Point(xMax+50, yMax+50));
             //Rect roi = new Rect(new Point(xMin-10, yMin-10), new Point(xMax, yMax));
             this.distortedImage = new Mat(this.distortedImage, roi);
             Log.d("performance", "roi took: " + (System.currentTimeMillis() - start));//performance
         } catch (Exception e) {
             Log.d("roi", "roi threw exception");
+            MainActivity.lastDetectedRoi = null;
             return 1;
         }
         /***************************************************/

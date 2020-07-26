@@ -32,6 +32,7 @@ import com.pc.configuration.Constants;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
 import org.opencv.core.Mat;
+import org.opencv.core.Rect;
 
 import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
@@ -66,6 +67,8 @@ public class MainActivity extends AppCompatActivity {
 
     public static final boolean DEBUG = false;
     public static boolean DEBUG_READ_IMAGE_FROM_FILE = false;
+
+    public static Rect lastDetectedRoi = null;
 
 
     @Override
