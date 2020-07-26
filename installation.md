@@ -13,13 +13,11 @@ password: barakitkin123
 cd EE-Final-Project/pc
 ./buildAndCopyJar.sh
 ```
-(4) To run the PC program:
+(4) To run the PC program (buildAndCopyJar.sh builds the .jar, you may also build it with ./gradlew build):
 
-The following way can't establish connection to mysql DB on my computer (classpath issues related):
 ```shell script
 java -jar all-pc.java
 ```
-Instead, import the pc project 'EE-Final-Project/pc' in intellij and run Flow.java
 Make sure there aren't any messages as "No connection to DB" etc.
 
 (5) Build an apk and install it on your android device:

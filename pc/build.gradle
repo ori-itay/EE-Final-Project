@@ -1,14 +1,6 @@
-//buildscript {
-//    repositories {
-//        mavenCentral()
-//    }
-//}
-//apply plugin: 'java'
-
 plugins {
     id 'java'
 }
-
 
 version '1.0'
 compileJava {
@@ -16,16 +8,7 @@ compileJava {
 	targetCompatibility = '1.8'
 }
 
-jar {
-    manifest {
-        attributes 'Main-Class': 'com.pc.Flow'
-    }
-    archiveName 'all-pc.jar'
-    destinationDirectory = file('.')
-//    from ('src/main/resources'){
-//        include 'config.properties'
-//    }
-}
+
 
 repositories {
     mavenCentral()
@@ -42,7 +25,22 @@ dependencies {
     compile group: 'org.imgscalr', name: 'imgscalr-lib', version: '4.2'
     compile group: 'net.coobird', name: 'thumbnailator', version: '0.4.1'
 
-    implementation 'mysql:mysql-connector-java:8.0.11'
+    compile 'mysql:mysql-connector-java:8.0.11'
+}
+
+jar {
+    manifest {
+        if (!configurations.compile.isEmpty()){
+            attributes(
+                    'Class-Path': configurations.compile.collect{it.toURI().toString()}.join(' '),
+                    'Main-Class': 'com.pc.Flow')
+        }
+    }
+    archiveName 'all-pc.jar'
+    destinationDirectory = file('.')
+//    from ('src/main/resources'){
+//        include 'config.properties'
+//    }
 }
 
 test {
