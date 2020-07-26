@@ -8,14 +8,10 @@ compileJava {
 	targetCompatibility = '1.8'
 }
 
-
-
 repositories {
     mavenCentral()
     jcenter()
 }
-
-
 
 dependencies {
     testImplementation "org.junit.jupiter:junit-jupiter-api:5.4.0-M1"
@@ -28,6 +24,16 @@ dependencies {
     compile group:'org.xerial', name:'sqlite-jdbc', version:'3.8.11.2'
 }
 
+
+sourceSets {
+    main {
+        java {
+            srcDir 'main'
+        }
+    }
+}
+
+
 jar {
     manifest {
         if (!configurations.compile.isEmpty()){
@@ -36,12 +42,39 @@ jar {
                     'Main-Class': 'com.pc.Flow')
         }
     }
-    archiveName 'all-pc.jar'
+    archiveName 'VisualCrypto.jar'
     destinationDirectory = file('.')
-//    from ('src/main/resources'){
-//        include 'config.properties'
-//    }
 }
+
+
+task androidJar(type: Jar, description: "Creates the jar code from pc to android") {
+    manifest {
+        attributes(
+                'Main-Class': 'com.pc.Flow',
+                'Class-Path': configurations.compile.collect{it.toPath()}.join(' ') // note the different from toPath to toURI
+        )
+    }
+    archiveName 'pc_to_android.jar'
+    destinationDirectory = file('../mobile/VisualCrypto/app/libs/')
+    from ('main') {
+        include '**/*'
+    } with jar
+}
+
+task cliJar(type: Jar, description: "Creates the Application  Client JAR file.") {
+    manifest {
+        attributes(
+                'Main-Class': 'com.pc.cli.EncodeDecodeCLI',
+                'Class-Path': configurations.compile.collect{it.toURI().toString()}.join(' ')
+        )
+    }
+    archiveName 'cli.jar'
+    destinationDirectory = file('.')
+    from ('main') {
+        include '**/*'
+    } with jar
+}
+
 
 test {
     useJUnitPlatform()
@@ -50,47 +83,3 @@ test {
         events "passed", "skipped", "failed"
     }
 }
-//
-//sourceSets {
-//    main {
-//        java {
-//            srcDir 'src'
-//        }
-//    }
-//}
-
-/*
-task cliJar(type: Jar) {
-    manifest {
-        attributes 'Implementation-Title': 'Command Line Interface for VisualCrypto',
-                'Implementation-Version': version,
-                'Main-Class': 'com.pc.cli.EncodeDecodeCLI'
-    }
-    baseName = 'CLI'
-    from ('src/main/resources') {
-        include 'config.properties'
-    }
-    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
-    with jar
-}
-
-task cli(dependsOn: cliJar, type: Copy){
-    from "build/libs/"
-    into "/jars"
-    include '*.jar'
-}
-
-
-task flowJar(type: Jar) {
-    manifest {
-        attributes 'Implementation-Title': 'Gradle Jar File Example',
-                'Implementation-Version': version,
-                'Main-Class': 'com.pc'
-    }
-    baseName = project.name + '-all'
-    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
-    with jar
-}
-*/
-
-

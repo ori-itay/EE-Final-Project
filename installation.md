@@ -1,19 +1,22 @@
 (1) git clone https://github.com/ori-itay/EE-Final-Project.git
 
-(2) Copy the PC jar to the android app:
+(2) Build and move the PC code libraries to the android project (it moves it there automatically):
 ```shell script
 cd EE-Final-Project/pc
-./buildAndCopyJar.sh
+./gradlew androidJar
 ```
-(3) To run the PC program (buildAndCopyJar.sh builds the .jar, you may also build it with ./gradlew build):
+(3) Build and run the PC program:
 
 ```shell script
-java -jar all-pc.java
+./gradlew build
+java -jar VisualCrypto.jar 
 ```
 Make sure there aren't any messages as "No connection to DB" etc.
 
 (4) Build an apk and install it on your android device:
+
 Make sure your device is connected to the computer via USB cable and run (instructions can also be found [here)](https://developer.android.com/studio/build/building-cmdline#DebugMode):
+
 Note: you might need to install an android driver for your phone and enable debugging mode on it.
 ```shell script
 cd ../mobile/VisualCrypto/
@@ -26,7 +29,7 @@ cd ../mobile/VisualCrypto/
     - Check the local IP of the PC via ipconfig and put that IP in the "Enter server IP address" on your phone.
     - Also enter your email in the "Enter your email address" field.
     - Click REGISTER (at this point an output of "Client accepted" should appear in the PC program output. If there isn't, make sure both are connected to the same network and no firewall is blocking it. From our experience, even Windows Firewall blocked it for one of us).
-(6) Once you get the email, copy the secret key and paste it and click OK.
+(6) Once you get the email, copy the secret key, paste it and click OK.
 
 (7) Return to the PC program.
 
