@@ -171,7 +171,7 @@ public class Flow {
 
 		JLabel logOut = new JLabel(" (Log out)");
 		logOut.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-		logOut.setForeground(Color.CYAN);
+		logOut.setForeground(Color.BLUE);
 		logOut.addMouseListener(new MouseAdapter() {
 			public void mouseClicked(MouseEvent e) {
 				removeLastLoggedFromDB();
@@ -179,10 +179,23 @@ public class Flow {
 			}
 		});
 
+		JButton changeRectangleBtn = new JButton("Change rectangle");
+		changeRectangleBtn.setPreferredSize(new Dimension(10,10));
+		changeRectangleBtn.addMouseListener(new MouseAdapter() {
+			public void mouseClicked(MouseEvent e) {
+				ScreenCaptureRectangle.jFrame.setVisible(true);
+			}
+		});
+
 		JPanel leftPanel = new JPanel(new BorderLayout());
-		JPanel loggingPanel = new JPanel(new BorderLayout());
-		loggingPanel.add(loggedInAs, BorderLayout.WEST);
-		loggingPanel.add(logOut, BorderLayout.EAST);
+//		JPanel loggingPanel = new JPanel(new BorderLayout());
+//		loggingPanel.add(loggedInAs, BorderLayout.WEST);
+//		loggingPanel.add(logOut, BorderLayout.EAST);
+//		leftPanel.add(loggingPanel, BorderLayout.WEST);
+		JPanel loggingPanel = new JPanel(new GridLayout(2,1));
+		loggingPanel.add(loggedInAs);
+		loggingPanel.add(logOut);
+		loggingPanel.add(changeRectangleBtn);
 		leftPanel.add(loggingPanel, BorderLayout.WEST);
 		leftPanel.add(imgLabel, BorderLayout.CENTER);
 

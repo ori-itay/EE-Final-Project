@@ -81,7 +81,7 @@ public class MainActivity extends AppCompatActivity {
 
         SharedPreferences sharedPref = this.getPreferences(Context.MODE_PRIVATE);
         Map<String, ?> preferencesMap = sharedPref.getAll();
-        if (preferencesMap.size() == 1) { //TODO: change user to username (email) and display it to user..logged in as etc
+        if (preferencesMap.size() == 1) {
             Map.Entry<String, ?> entry =  preferencesMap.entrySet().iterator().next();
             String emailStr = entry.getKey();
             String key = (String) entry.getValue();
@@ -90,7 +90,30 @@ public class MainActivity extends AppCompatActivity {
         } else {
             setContentView(R.layout.entry_window);
             setRegisterButton(sharedPref);
+            setSignInButton(sharedPref);
         }
+    }
+
+    private void setSignInButton(SharedPreferences sharedPref) {
+        Button signInButton = this.findViewById(R.id.signInBTN);
+        EditText email = this.findViewById(R.id.signInEmailTXT);
+        EditText secretKey = this.findViewById(R.id.signInSecretKeyTXT);
+
+        signInButton.setOnClickListener((v)-> {
+            String emailStr = Objects.requireNonNull(email.getText()).toString();
+            String secretKeyStr = Objects.requireNonNull(secretKey.getText()).toString();
+            if (emailStr.isEmpty() || secretKeyStr.isEmpty() || !emailStr.contains("@")) {
+                showAlert(this, "Error: Invalid input!");
+            } else {
+                privateKey = Base64.getDecoder().decode(secretKeyStr);
+                SharedPreferences.Editor editor = sharedPref.edit();
+                editor.putString(emailStr, secretKeyStr);
+                editor.apply();
+
+                setMainContentView(emailStr, sharedPref);
+            }
+        });
+
     }
 
     private void setRegisterButton(SharedPreferences sharedPref) {
@@ -167,6 +190,7 @@ public class MainActivity extends AppCompatActivity {
             sharedPref.edit().clear().apply();
             setContentView(R.layout.entry_window);
             setRegisterButton(sharedPref);
+            setSignInButton(sharedPref);
         });
     }
 

@@ -71,7 +71,7 @@ public class ScreenCaptureRectangle {
         okButton.setBackground(Color.GRAY);
         okButton.addActionListener((actionEvent)->{
             Flow.screenRect = captureRect;
-            jFrame.dispose();
+            jFrame.setVisible(false);
         });
         jFrame.add(okButton, BorderLayout.PAGE_END);
 
