@@ -9,7 +9,6 @@ import com.pc.encryptorDecryptor.EncryptorDecryptor;
 import com.pc.encryptorDecryptor.encryptor.Encryptor;
 import com.pc.shuffleDeshuffle.shuffle.Shuffle;
 import net.coobird.thumbnailator.Thumbnails;
-import org.imgscalr.Scalr;
 
 import javax.crypto.*;
 import javax.crypto.spec.IvParameterSpec;
@@ -20,10 +19,11 @@ import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.geom.AffineTransform;
-import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.sql.*;
@@ -303,8 +303,8 @@ public class Flow {
 	static KeyStore ks = null;
 	private static boolean openConnection() {
 		try {
-			Class.forName("com.mysql.cj.jdbc.Driver");
-			conn = DriverManager.getConnection("jdbc:mysql://localhost?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Jerusalem","admin",password);
+			Class.forName("org.sqlite.JDBC");
+			conn = DriverManager.getConnection("jdbc:sqlite:users.db");
 			return true;
 		} catch (Exception e) {
 			System.out.println(Arrays.toString(e.getStackTrace()));
@@ -365,9 +365,6 @@ public class Flow {
 		if (!openConnection())
 			return false;
 		try {
-			Statement createDB = conn.createStatement();
-			createDB.execute("CREATE DATABASE IF NOT EXISTS visual_crypto");
-			conn.setCatalog("visual_crypto");
 			Statement createTable = conn.createStatement();
 			createTable.execute("CREATE TABLE IF NOT EXISTS Users (email VARCHAR(40), pw VARCHAR(255))");
 		}
