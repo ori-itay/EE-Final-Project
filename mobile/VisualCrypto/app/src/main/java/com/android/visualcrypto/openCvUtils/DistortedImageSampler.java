@@ -171,8 +171,8 @@ public class DistortedImageSampler extends StdImageSampler {
         start = System.currentTimeMillis();// performance
         /********************ROI****************************/
         try {
-            //Rect roi = new Rect(new Point(xMin-10, yMin-10), new Point(xMax+10, yMax+10));
-            Rect roi = new Rect(new Point(xMin-10, yMin-10), new Point(xMax, yMax));
+            Rect roi = new Rect(new Point(xMin-10, yMin-10), new Point(xMax+10, yMax+10));
+            //Rect roi = new Rect(new Point(xMin-10, yMin-10), new Point(xMax, yMax));
             this.distortedImage = new Mat(this.distortedImage, roi);
             Log.d("performance", "roi took: " + (System.currentTimeMillis() - start));//performance
         } catch (Exception e) {
@@ -449,6 +449,7 @@ public class DistortedImageSampler extends StdImageSampler {
         unDistortedImageMatCord.put(0, 1, colLoc);
         unDistortedImageMatCord.put(0, 2, 1);
         Point distortedIndex = switchCoordinates(unDistortedImageMatCord, inverseH);
+        //Log.d("nullpointer", distortedIndex.toString());
         if(MainActivity.DEBUG)
             Imgproc.circle(this.debugPathtaken, distortedIndex, 1, new Scalar(0,0,255), 1);
         int indexCol = (int) distortedIndex.x; int indexRow = (int) distortedIndex.y;
@@ -534,7 +535,13 @@ public class DistortedImageSampler extends StdImageSampler {
             medianChannels[2] = (int) channels[2];
         }
 
-        int[] processedChannels = classifyPixelChannelsLevels(this, medianChannels, indexRow, indexCol);
+        int[] processedChannels;
+        if (!MainActivity.DEBUG_CAPTURED) {
+            processedChannels = medianChannels;
+        }
+        else {
+            processedChannels = classifyPixelChannelsLevels(this, medianChannels, indexRow, indexCol);
+        }
 
         // set all values to the majority
         if (duplicateChannels) {

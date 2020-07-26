@@ -35,13 +35,13 @@ public class DisplayDecoder {
 
 		if(posT2.rowModule < MODULES_IN_POS_DET_DIM)
 			currLineLength = imageSampler.getModulesInDim() - MODULES_IN_POS_DET_DIM - posT2.colModule;
-		else if(posT2.rowModule + 1 >= imageSampler.getModulesInDim() - MODULES_IN_POS_DET_DIM)
+		else if(posT2.rowModule >= imageSampler.getModulesInDim() - MODULES_IN_POS_DET_DIM)
 			currLineLength = imageSampler.getModulesInDim() - posT2.colModule;
-		else if(posT2.rowModule + 1 >= ALIGNMENT_PATTERN_UPPER_LEFT_MODULE &&
-				posT2.rowModule < ALIGNMENT_PATTERN_UPPER_LEFT_MODULE + MODULES_IN_ALIGNMENT_PATTERN_DIM)
+		else if(posT2.rowModule >= ALIGNMENT_PATTERN_UPPER_LEFT_MODULE - Parameters.modulesInMargin &&
+				posT2.rowModule < ALIGNMENT_PATTERN_UPPER_LEFT_MODULE + MODULES_IN_ALIGNMENT_PATTERN_DIM - Parameters.modulesInMargin)
 			currLineLength = imageSampler.getModulesInDim() - posT2.colModule - MODULES_IN_ALIGNMENT_PATTERN_DIM;
 		else
-			currLineLength = imageSampler.getModulesInDim();
+			currLineLength = imageSampler.getModulesInDim() - posT2.colModule;
 
 		totalBitsCovered+= currLineLength*ENCODING_BIT_GROUP_SIZE*CHANNELS;
 		posT2.rowModule++;
@@ -51,35 +51,40 @@ public class DisplayDecoder {
 				posT2.colModule = MODULES_IN_POS_DET_DIM;
 				currLineLength = imageSampler.getModulesInDim() - MODULES_IN_POS_DET_DIM - posT2.colModule;
 			}
-			else if(posT2.rowModule + 1 >= imageSampler.getModulesInDim() - MODULES_IN_POS_DET_DIM){
+			else if(posT2.rowModule >= imageSampler.getModulesInDim() - MODULES_IN_POS_DET_DIM){
 				posT2.colModule = MODULES_IN_POS_DET_DIM;
 				currLineLength = imageSampler.getModulesInDim() - posT2.colModule;
 			}
-			else if(posT2.rowModule + 1 >= ALIGNMENT_PATTERN_UPPER_LEFT_MODULE &&
-					posT2.rowModule < ALIGNMENT_PATTERN_UPPER_LEFT_MODULE + MODULES_IN_ALIGNMENT_PATTERN_DIM){
+			else if(posT2.rowModule >= ALIGNMENT_PATTERN_UPPER_LEFT_MODULE - Parameters.modulesInMargin &&
+					posT2.rowModule < ALIGNMENT_PATTERN_UPPER_LEFT_MODULE + MODULES_IN_ALIGNMENT_PATTERN_DIM - Parameters.modulesInMargin){
 				posT2.colModule = 0;
 				currLineLength = imageSampler.getModulesInDim() - posT2.colModule - MODULES_IN_ALIGNMENT_PATTERN_DIM;
 			}
 			else{
 				posT2.colModule = 0;
-				currLineLength = imageSampler.getModulesInDim();
+				currLineLength = imageSampler.getModulesInDim() - posT2.colModule;
 			}
 			totalBitsCovered+= currLineLength*ENCODING_BIT_GROUP_SIZE*CHANNELS;
 			posT2.rowModule++;
 		}
-		while( (totalBitsCovered % BITS_IN_BYTE) != 0){
+		while( (totalBitsCovered % (CHANNELS*(BITS_IN_BYTE - Parameters.colorDiscardedBits))) != 0	){
 			posT2.colModule++;
 			//skip alignment pattern
-			if(posT2.colModule == ALIGNMENT_PATTERN_UPPER_LEFT_MODULE &&
-					(posT2.rowModule >= ALIGNMENT_PATTERN_UPPER_LEFT_MODULE &&
-							posT2.rowModule < ALIGNMENT_PATTERN_UPPER_LEFT_MODULE + MODULES_IN_ALIGNMENT_PATTERN_DIM)){
+			if(posT2.colModule == ALIGNMENT_PATTERN_UPPER_LEFT_MODULE - Parameters.modulesInMargin &&
+					posT2.rowModule >= ALIGNMENT_PATTERN_UPPER_LEFT_MODULE - Parameters.modulesInMargin
+					&& posT2.rowModule < ALIGNMENT_PATTERN_UPPER_LEFT_MODULE + MODULES_IN_ALIGNMENT_PATTERN_DIM - Parameters.modulesInMargin ){
 				posT2.colModule+=  MODULES_IN_ALIGNMENT_PATTERN_DIM;
 			}
+//			if(posT2.colModule == ALIGNMENT_PATTERN_UPPER_LEFT_MODULE &&
+//					(posT2.rowModule >= ALIGNMENT_PATTERN_UPPER_LEFT_MODULE &&
+//							posT2.rowModule < ALIGNMENT_PATTERN_UPPER_LEFT_MODULE + MODULES_IN_ALIGNMENT_PATTERN_DIM)){
+//				posT2.colModule+=  MODULES_IN_ALIGNMENT_PATTERN_DIM;
+//			}
 			totalBitsCovered+= ENCODING_BIT_GROUP_SIZE*CHANNELS;
 			imageSampler.imageCheckForColumnEnd(posT2, imageSampler.getModulesInDim(), 0);
 		}
 
-		return totalBitsCovered / BITS_IN_BYTE;
+		return totalBitsCovered / (BITS_IN_BYTE - Parameters.colorDiscardedBits);
 	}
 
 	public static void decodePixelMatrix(StdImageSampler imageSampler, int[][] pixelMatrix) throws IOException, InterruptedException {
@@ -110,18 +115,15 @@ public class DisplayDecoder {
 		int imageDataLength = computeMaxEncodedLength(imageSampler.getModulesInDim());
 		writer.write("computeMaxEncodedLength: " + (System.nanoTime() - start)/1e6+ "\n");
 
-		// TODO: find proper index for pos when splitting to threads
-
 		Position posT1 = new Position(pos.rowModule,pos.colModule);
-		int FirstHalfDataLength = proceedPosToMidDataLength(imageSampler, pos, imageDataLength*BITS_IN_BYTE);
+		int FirstHalfDataLength = proceedPosToMidDataLength(imageSampler, pos, imageDataLength*(BITS_IN_BYTE - Parameters.colorDiscardedBits));
 		int SecondHalfDataLength = imageDataLength - FirstHalfDataLength;
 		Position posT2 = new Position(posT1.rowModule,posT1.colModule); //These are the OLD pos coordinates!
-		int T1DataLength = proceedPosToMidDataLength(imageSampler, posT2, FirstHalfDataLength*BITS_IN_BYTE);
+		int T1DataLength = proceedPosToMidDataLength(imageSampler, posT2, FirstHalfDataLength*(BITS_IN_BYTE - Parameters.colorDiscardedBits));
 		int T2DataLength = FirstHalfDataLength - T1DataLength;
 		Position posT3 = new Position(pos.rowModule,pos.colModule); //These are the NEW pos coordinates!
-		int T3DataLength = proceedPosToMidDataLength(imageSampler, pos, SecondHalfDataLength*BITS_IN_BYTE);
+		int T3DataLength = proceedPosToMidDataLength(imageSampler, pos, SecondHalfDataLength*(BITS_IN_BYTE - Parameters.colorDiscardedBits));
 		int T4DataLength = SecondHalfDataLength - T3DataLength;
-
 
 // 		FixedThreadExecutor
 		Runtime.getRuntime().availableProcessors();
@@ -139,6 +141,7 @@ public class DisplayDecoder {
 			System.arraycopy(decodeData(imageSampler, T3DataLength, posT3, false), 0, decodedData, FirstHalfDataLength, T3DataLength);
 
 		});
+		//pos.colModule+=2;
 		Thread t4 = new Thread(()->{
 			System.arraycopy(decodeData(imageSampler, T4DataLength, pos, false), 0, decodedData,
 					FirstHalfDataLength + T3DataLength, T4DataLength);
@@ -185,25 +188,26 @@ public class DisplayDecoder {
 	}
 
 
-	private static byte[] decodeData(StdImageSampler imageSampler, int lengthInBytes, Position pos,
-									 boolean isMetadata) {
-		int nextElemStride, greenStride, blueStride;
+	private static byte[] decodeData(StdImageSampler imageSampler, int lengthInBytes, Position pos, boolean isMetadata) {
+		int nextElemStride, greenStride, blueStride, shift;
 		if(isMetadata) {
 			nextElemStride = 1;	greenStride = 0; blueStride = 0;
+			shift = 0;
 		}
 		else {
 			nextElemStride = 3;	greenStride = 1; blueStride = 2;
+			shift = Parameters.colorDiscardedBits;
 		}
 
 		byte[] decodedData = new byte[lengthInBytes];
 
-		int bitsLeftToByte = BITS_IN_BYTE - Parameters.colorDiscardedBits, currByteInd = 0, mask = BIT_GROUP_MASK_OF_ONES,
+		int bitsLeftToByte = BITS_IN_BYTE - shift, currByteInd = 0, mask = BIT_GROUP_MASK_OF_ONES,
 				ones_in_mask = ENCODING_BIT_GROUP_SIZE;
 		int[] RGB = sampleModule(imageSampler, pos, isMetadata);
 		// assuming ENCODING_COLOR_LEVELS<255
-		int RChannelValue = (RGB[0]<<Parameters.colorDiscardedBits)/COLOR_SCALE_DELTA;
-		int GChannelValue = (RGB[1]<<Parameters.colorDiscardedBits)/COLOR_SCALE_DELTA;
-		int BChannelValue = (RGB[2]<<Parameters.colorDiscardedBits)/COLOR_SCALE_DELTA;
+		int RChannelValue = RGB[0]/COLOR_SCALE_DELTA;
+		int GChannelValue = RGB[1]/COLOR_SCALE_DELTA;
+		int BChannelValue = RGB[2]/COLOR_SCALE_DELTA;
 		byte currentDataR = 0, currentDataG = 0, currentDataB = 0;
 
 		while (true){
@@ -227,30 +231,36 @@ public class DisplayDecoder {
 				mask = BIT_GROUP_MASK_OF_ONES;
 				ones_in_mask = ENCODING_BIT_GROUP_SIZE;
 				RGB = sampleModule(imageSampler, pos, isMetadata);
-				RChannelValue = (byte) (RGB[0]<<Parameters.colorDiscardedBits)/COLOR_SCALE_DELTA;
-				GChannelValue = (byte) (RGB[1]<<Parameters.colorDiscardedBits)/COLOR_SCALE_DELTA;
-				BChannelValue = (byte) (RGB[2]<<Parameters.colorDiscardedBits)/COLOR_SCALE_DELTA;
+				RChannelValue = RGB[0]/COLOR_SCALE_DELTA;
+				GChannelValue = RGB[1]/COLOR_SCALE_DELTA;
+				BChannelValue = RGB[2]/COLOR_SCALE_DELTA;
 			}
 
 			if(bitsLeftToByte == 0) {
 				if(currByteInd+nextElemStride<lengthInBytes) {
+//					decodedData[currByteInd] = (byte) (currentDataR << shift);
+//					decodedData[currByteInd+greenStride] = (byte) (currentDataG << shift);
+//					decodedData[currByteInd+blueStride] = (byte) (currentDataB << shift);
 					decodedData[currByteInd] = currentDataR;
 					decodedData[currByteInd+greenStride] = currentDataG;
 					decodedData[currByteInd+blueStride] = currentDataB;
 					currByteInd+= nextElemStride;
-					bitsLeftToByte = BITS_IN_BYTE - Parameters.colorDiscardedBits;
+					bitsLeftToByte = BITS_IN_BYTE - shift;
 					currentDataR = 0; currentDataG = 0; currentDataB = 0;
 				}
 				else{
 					int remainder = lengthInBytes - currByteInd;
 					switch (remainder){
 						case(3): {
+							//decodedData[currByteInd+blueStride] = (byte) (currentDataB << shift);
 							decodedData[currByteInd+blueStride] = currentDataB;
 						}
 						case (2):{
+							//decodedData[currByteInd+greenStride] = (byte) (currentDataG << shift);
 							decodedData[currByteInd+greenStride] = currentDataG;
 						}
 						case(1):{
+							//decodedData[currByteInd] = (byte) (currentDataR << shift);
 							decodedData[currByteInd] = currentDataR;
 						}
 					}
@@ -310,7 +320,7 @@ public class DisplayDecoder {
 
 		int modulesForEncoding = dim*dim  - (modulesForMetadata + modulesForPosDet + modulesForAlignmentPattern + modulesForRightLowerCorner);
 		int maxBitsToEncode = ENCODING_BIT_GROUP_SIZE*modulesForEncoding;
-		int maxBytesToEncode = CHANNELS*(maxBitsToEncode/BITS_IN_BYTE);
+		int maxBytesToEncode = CHANNELS*(maxBitsToEncode/(BITS_IN_BYTE - Parameters.colorDiscardedBits));
 		return maxBytesToEncode;
 	}
 

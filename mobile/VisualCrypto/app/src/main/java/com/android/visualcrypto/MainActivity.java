@@ -26,7 +26,6 @@ import androidx.core.content.FileProvider;
 
 import com.android.visualcrypto.cameraUtils.CameraRotationFix;
 import com.android.visualcrypto.flow.Flow;
-import com.android.visualcrypto.openCvUtils.OpenCvUtils;
 import com.google.android.material.textfield.TextInputEditText;
 import com.pc.configuration.Constants;
 
@@ -66,6 +65,7 @@ public class MainActivity extends AppCompatActivity {
     public static byte[] privateKey;
 
     public static final boolean DEBUG = true;
+    public static boolean DEBUG_CAPTURED = false;
 
 
     @Override
@@ -270,8 +270,6 @@ public class MainActivity extends AppCompatActivity {
 
             Mat capturedImage = new Mat();
             Utils.bitmapToMat(rotatedBitmap, capturedImage);
-
-
 
             //TODO: pay attention whether calibrateimage is commented
             /**********NO CALIBRATION***************/

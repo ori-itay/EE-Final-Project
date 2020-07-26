@@ -33,6 +33,7 @@ public class DisplayEncoder {
 		encodeData(g, ivchecksum, pos, true); //encode IV checksum first time
 		encodeData(g, dimsArr, pos, true); //encode dims+checksum first time
 		encodeData(g, binaryData, pos, false); 	//encode actual picture data
+		//System.out.println(binaryData.length);
 		encodeData(g, IV, pos, true); //encode IV second time
 		encodeData(g, ivchecksum, pos, true); //encode IV checksum second time
 		encodeData(g, dimsArr, pos, true); //encode dims+checksum second time
@@ -51,21 +52,22 @@ public class DisplayEncoder {
 
 
 	private static void encodeData(Graphics2D g, byte[] binaryData, Position pos, boolean isMetadata) {
-		int nextElemStride, greenStride, blueStride;
+		int nextElemStride, greenStride, blueStride, shift;
 		if(isMetadata) {
 			nextElemStride = 1;	greenStride = 0; blueStride = 0;
+			shift = 0;
 		}
 		else {
 			nextElemStride = 3;	greenStride = 1; blueStride = 2;
+			shift = Parameters.colorDiscardedBits;
 		}
-
-		int bitsLeftInByte = BITS_IN_BYTE - Parameters.colorDiscardedBits, currByteInd = 0, mask = BIT_GROUP_MASK_OF_ONES,
+		int bitsLeftInByte = BITS_IN_BYTE - shift, currByteInd = 0, mask = BIT_GROUP_MASK_OF_ONES,
 				ones_in_mask = ENCODING_BIT_GROUP_SIZE;
 
 		byte currentDataR = 0, currentDataG = 0, currentDataB = 0;
-		byte currByteR = (byte) (binaryData[currByteInd] >> Parameters.colorDiscardedBits);
-		byte currByteG = (byte) (binaryData[currByteInd+greenStride] >> Parameters.colorDiscardedBits);
-		byte currByteB = (byte) (binaryData[currByteInd+blueStride] >> Parameters.colorDiscardedBits);
+		byte currByteR = (byte) (binaryData[currByteInd] >> shift);
+		byte currByteG = (byte) (binaryData[currByteInd+greenStride] >> shift);
+		byte currByteB = (byte) (binaryData[currByteInd+blueStride] >> shift);
 
 		while (true){
 			if(ones_in_mask < bitsLeftInByte) { //mask doesn't cover all bits left in current byte
@@ -98,21 +100,21 @@ public class DisplayEncoder {
 
 			if(bitsLeftInByte == 0) {
 				if(currByteInd + nextElemStride < binaryData.length) {
-					bitsLeftInByte = BITS_IN_BYTE - Parameters.colorDiscardedBits;
+					bitsLeftInByte = BITS_IN_BYTE - shift;
 					currByteInd+= nextElemStride;
 
 					if(currByteInd + blueStride < binaryData.length) {
-						currByteR = (byte) (binaryData[currByteInd] >> Parameters.colorDiscardedBits);
-						currByteG = (byte) (binaryData[currByteInd + greenStride] >> Parameters.colorDiscardedBits);
-						currByteB = (byte) (binaryData[currByteInd + blueStride] >> Parameters.colorDiscardedBits);
+						currByteR = (byte) (binaryData[currByteInd] >> shift);
+						currByteG = (byte) (binaryData[currByteInd + greenStride] >> shift);
+						currByteB = (byte) (binaryData[currByteInd + blueStride] >> shift);
 					}
 					else if (currByteInd + greenStride < binaryData.length) {
-						currByteR = (byte) (binaryData[currByteInd] >> Parameters.colorDiscardedBits);
-						currByteG = (byte) (binaryData[currByteInd + greenStride] >> Parameters.colorDiscardedBits);
+						currByteR = (byte) (binaryData[currByteInd] >> shift);
+						currByteG = (byte) (binaryData[currByteInd + greenStride] >> shift);
 						currByteB = 0;
 					}
 					else {
-						currByteR = (byte) (binaryData[currByteInd] >> Parameters.colorDiscardedBits);
+						currByteR = (byte) (binaryData[currByteInd] >> shift);
 						currByteG = 0;
 						currByteB = 0;
 					}
@@ -145,6 +147,7 @@ public class DisplayEncoder {
 		levelB = (currentDataB*COLOR_SCALE_DELTA) & 0xFF;
 
 		final double GAMMA_PARAMETER = 0.8;
+		boolean GAMMA = true;
 //		levelR = (int) (Math.round(Math.pow( ((double)levelR/255), 0.75) * 255));
 //		if(levelR>255){ levelR = 255;}
 //		levelG = (int) (Math.round(Math.pow( ((double)levelG/255), 0.75) * 255));

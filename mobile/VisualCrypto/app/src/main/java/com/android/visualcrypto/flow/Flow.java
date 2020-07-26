@@ -50,7 +50,7 @@ public class Flow {
         }
 
         if (MainActivity.DEBUG) { // snr
-            InputStream encodedStream = context.getAssets().open("50_50_4Level_colorPos.jpg");
+            InputStream encodedStream = context.getAssets().open("6bits_100_100.jpg");
             Bitmap origEncodedBitmap = BitmapFactory.decodeStream(encodedStream);
             distortedImageSampler.tempOrigPixelMatrix = MainActivity.get2DPixelArray(origEncodedBitmap);
             distortedImageSampler.errCounterTotal = 0; distortedImageSampler.errCounterRed = 0;
