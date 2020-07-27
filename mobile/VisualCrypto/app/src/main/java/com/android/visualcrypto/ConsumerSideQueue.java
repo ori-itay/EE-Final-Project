@@ -8,7 +8,7 @@ public class ConsumerSideQueue implements Runnable {
     private  VideoProcessing videoProcessing;
     private  ImageView processedImgView;
 
-    private static final int SLEEPING_TIME_MILLI = 800;
+    private static final int SLEEPING_TIME_MILLI = 1200;
 
     public ConsumerSideQueue(VideoProcessing videoProcessing, ImageView processedImgView) {
         this.videoProcessing = videoProcessing;
@@ -17,12 +17,14 @@ public class ConsumerSideQueue implements Runnable {
 
     @Override
     public void run() {
-        try {
-            Thread.sleep(SLEEPING_TIME_MILLI);
-            Bitmap finalBitmap = VideoProcessing.finishedQueue.take();
-            videoProcessing.runOnUiThread(() -> processedImgView.setImageBitmap(finalBitmap));
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        while (true){
+            try {
+                Thread.sleep(SLEEPING_TIME_MILLI);
+                Bitmap finalBitmap = VideoProcessing.finishedQueue.take();
+                videoProcessing.runOnUiThread(() -> processedImgView.setImageBitmap(finalBitmap));
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
     }
 }

@@ -31,7 +31,7 @@ public class Parameters {
 	public static int encodingColorLevels = 4;
 	public static int pixelsInModule = 10;
 	public static int modulesInMargin = 2;
-	public static int colorDiscardedBits = 2;
+	public static int colorDiscardedBits = 5;
 
 //	static {
 //		InputStream inputStream = null;

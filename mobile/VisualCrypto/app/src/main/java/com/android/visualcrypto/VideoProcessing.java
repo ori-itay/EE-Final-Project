@@ -41,7 +41,7 @@ public class VideoProcessing extends AppCompatActivity {
     Context context;
 
     public static ExecutorService executor;
-    public static final BlockingQueue<Bitmap> finishedQueue = new ArrayBlockingQueue<>(8, true);
+    public static final BlockingQueue<Bitmap> finishedQueue = new ArrayBlockingQueue<>(16, true);
 
 
     @Override

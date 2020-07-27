@@ -1,13 +1,5 @@
 package com.pc.encoderDecoder;
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-
-import javax.imageio.ImageIO;
-
-import com.pc.FlowUtils;
-import com.pc.configuration.Constants;
 import com.pc.configuration.Parameters;
 
 import static com.pc.configuration.Constants.*;
@@ -87,33 +79,14 @@ public class DisplayDecoder {
 		return totalBitsCovered / (BITS_IN_BYTE - Parameters.colorDiscardedBits);
 	}
 
-	public static void decodePixelMatrix(StdImageSampler imageSampler, int[][] pixelMatrix) throws IOException, InterruptedException {
-		long start = System.currentTimeMillis();
-		File f = new File("/storage/emulated/0/Download/" + start +"-times.txt");
-		//f.createNewFile();
-		FileWriter writer = new FileWriter(f);
-
-		start = System.nanoTime();
-
+	public static void decodePixelMatrix(StdImageSampler imageSampler, int[][] pixelMatrix) throws InterruptedException {
 		configureImage(imageSampler, pixelMatrix);
-		writer.write("configureImage: " + (System.nanoTime() - start)/1e6+ "\n");
-
 		Position pos = new Position(imageSampler.getModulesInMargin(), imageSampler.getModulesInMargin() + MODULES_IN_POS_DET_DIM);
-		start = System.nanoTime();
 		imageSampler.setIV1(decodeData(imageSampler, Parameters.ivLength, pos, true));
-		writer.write("setIV1: " + (System.nanoTime() - start)/1e6+ "\n");
-
-		start = System.nanoTime();
 		imageSampler.setIV1Checksum(decodeData(imageSampler, CHECKSUM_LENGTH, pos, true));
-		writer.write("setIV1Checksum: " + (System.nanoTime() - start)/1e6+ "\n");
-
-		start = System.nanoTime();
 		imageSampler.setDimsAndChecksum1(decodeData(imageSampler, IMAGE_DIMS_ENCODING_LENGTH + CHECKSUM_LENGTH, pos, true));
-		writer.write("setDimsAndChecksum1: " + (System.nanoTime() - start)/1e6+ "\n");
 
-		start = System.nanoTime();
 		int imageDataLength = computeMaxEncodedLength(imageSampler.getModulesInDim());
-		writer.write("computeMaxEncodedLength: " + (System.nanoTime() - start)/1e6+ "\n");
 
 		Position posT1 = new Position(pos.rowModule,pos.colModule);
 		int FirstHalfDataLength = proceedPosToMidDataLength(imageSampler, pos, imageDataLength*(BITS_IN_BYTE - Parameters.colorDiscardedBits));
@@ -125,11 +98,13 @@ public class DisplayDecoder {
 		int T3DataLength = proceedPosToMidDataLength(imageSampler, pos, SecondHalfDataLength*(BITS_IN_BYTE - Parameters.colorDiscardedBits));
 		int T4DataLength = SecondHalfDataLength - T3DataLength;
 
-// 		FixedThreadExecutor
-		Runtime.getRuntime().availableProcessors();
-//		pos.rowModule = 62; pos.colModule = 32;
-//		int firstThreadDataLength = 5640;
-		byte[] decodedData = new byte[imageDataLength];
+		byte[] decodedData =  new byte[imageDataLength];
+		Thread t4 = new Thread(()->{
+			System.arraycopy(decodeData(imageSampler, T4DataLength, pos, false), 0, decodedData,
+					FirstHalfDataLength + T3DataLength, T4DataLength);
+
+		});
+		t4.start();
 		Thread t1 = new Thread(()->{
 			System.arraycopy(decodeData(imageSampler, T1DataLength, posT1, false), 0, decodedData,0, T1DataLength);
 		});
@@ -141,42 +116,18 @@ public class DisplayDecoder {
 			System.arraycopy(decodeData(imageSampler, T3DataLength, posT3, false), 0, decodedData, FirstHalfDataLength, T3DataLength);
 
 		});
-		//pos.colModule+=2;
-		Thread t4 = new Thread(()->{
-			System.arraycopy(decodeData(imageSampler, T4DataLength, pos, false), 0, decodedData,
-					FirstHalfDataLength + T3DataLength, T4DataLength);
 
-		});
-
-		start = System.nanoTime();
 		t1.start();
 		t2.start();
 		t3.start();
-		t4.start();
-
-		t1.join(); t2.join(); t3.join(); t4.join();
+		t4.join();
 
 		imageSampler.setDecodedData(decodedData);
-		writer.write("decodedData ALL THREADS: " + (System.nanoTime() - start)/1e6+ "\n");
-
-
-//		start = System.nanoTime();
 //		imageSampler.setDecodedData(decodeData(imageSampler, imageDataLength, pos, false));
-//		writer.write("setDecodedData: " + (System.nanoTime() - start)/1e6+ "\n");
-
-		start = System.nanoTime();
 		imageSampler.setIV2(decodeData(imageSampler, Parameters.ivLength, pos, true));
-		writer.write("setIV2: " + (System.nanoTime() - start)/1e6+ "\n");
-
-		start = System.nanoTime();
 		imageSampler.setIV2Checksum(decodeData(imageSampler, CHECKSUM_LENGTH, pos, true));
-		writer.write("setIV2Checksum: " + (System.nanoTime() - start)/1e6+ "\n");
-
-		start = System.nanoTime();
 		imageSampler.setDimsAndChecksum2(decodeData(imageSampler, IMAGE_DIMS_ENCODING_LENGTH + CHECKSUM_LENGTH, pos, true));
-		writer.write("setIV2Checksum: " + (System.nanoTime() - start)/1e6 );
-		writer.close();;
-
+		t1.join(); t2.join(); t3.join();
 		return;
 	}
 

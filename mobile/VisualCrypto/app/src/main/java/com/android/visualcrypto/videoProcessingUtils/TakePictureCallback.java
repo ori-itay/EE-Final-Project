@@ -23,8 +23,6 @@ import java.security.NoSuchAlgorithmException;
 
 import javax.crypto.NoSuchPaddingException;
 
-import static com.android.visualcrypto.MainActivity.lastDetectedRoi;
-
 public class TakePictureCallback extends ImageCapture.OnImageCapturedCallback {
 
     private static ImageCapture imageCapture;
@@ -85,24 +83,25 @@ public class TakePictureCallback extends ImageCapture.OnImageCapturedCallback {
         /***************************************/
 
         /*********NO CALIBRATION**************/
-        Mat afterCalibrationMatrix = null;
-        if (lastDetectedRoi != null &&
-                mat.rows() >= lastDetectedRoi.height  &&   mat.cols() >= lastDetectedRoi.width) {
-            start = System.nanoTime();
-            try {
-                afterCalibrationMatrix = new Mat(mat, lastDetectedRoi);
-            }catch (Exception e) {
+//        Mat afterCalibrationMatrix = null;
+//        if (lastDetectedRoi != null &&
+//                mat.rows() >= lastDetectedRoi.height  &&   mat.cols() >= lastDetectedRoi.width) {
+//            start = System.nanoTime();
+//            try {
+//                afterCalibrationMatrix = new Mat(mat, lastDetectedRoi);
+//            }catch (Exception e) {
+//                e.printStackTrace();
+//                return;
+//            }
+//
+//            bp = Bitmap.createBitmap(afterCalibrationMatrix.cols(), afterCalibrationMatrix.rows(), Bitmap.Config.ARGB_8888);
+//            Utils.matToBitmap(afterCalibrationMatrix, bp);
+//            Log.d("performance", "mili, crops for lastDetectodRoi took: " + (System.nanoTime() - start) / 1e6);
+//        } else {
+//            afterCalibrationMatrix = mat;
+//        }
 
-            }
-            
-            bp = Bitmap.createBitmap(afterCalibrationMatrix.cols(), afterCalibrationMatrix.rows(), Bitmap.Config.ARGB_8888);
-            Utils.matToBitmap(afterCalibrationMatrix, bp);
-            Log.d("performance", "mili, crops for lastDetectodRoi took: " + (System.nanoTime() - start) / 1e6);
-        } else {
-            afterCalibrationMatrix = mat;
-        }
-
-//        Mat afterCalibrationMatrix = mat;
+        Mat afterCalibrationMatrix = mat;
         /***************************************/
 
 //        try {
