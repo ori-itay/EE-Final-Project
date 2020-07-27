@@ -82,9 +82,18 @@ public class DisplayDecoder {
 	public static void decodePixelMatrix(StdImageSampler imageSampler, int[][] pixelMatrix) throws InterruptedException {
 		configureImage(imageSampler, pixelMatrix);
 		Position pos = new Position(imageSampler.getModulesInMargin(), imageSampler.getModulesInMargin() + MODULES_IN_POS_DET_DIM);
-		imageSampler.setIV1(decodeData(imageSampler, Parameters.ivLength, pos, true));
-		imageSampler.setIV1Checksum(decodeData(imageSampler, CHECKSUM_LENGTH, pos, true));
-		imageSampler.setDimsAndChecksum1(decodeData(imageSampler, IMAGE_DIMS_ENCODING_LENGTH + CHECKSUM_LENGTH, pos, true));
+
+		byte[] IV1 = new byte[Parameters.ivLength];
+		decodeData(imageSampler, Parameters.ivLength, pos, true, IV1, 0);
+		imageSampler.setIV1(IV1);
+
+		byte[] IV1Checksum = new byte[CHECKSUM_LENGTH];
+		decodeData(imageSampler, CHECKSUM_LENGTH, pos, true, IV1Checksum, 0);
+		imageSampler.setIV1Checksum(IV1Checksum);
+
+		byte[] DimsAndChecksum1 = new byte[IMAGE_DIMS_ENCODING_LENGTH + CHECKSUM_LENGTH];
+		decodeData(imageSampler, IMAGE_DIMS_ENCODING_LENGTH + CHECKSUM_LENGTH, pos, true, DimsAndChecksum1, 0);
+		imageSampler.setDimsAndChecksum1(DimsAndChecksum1);
 
 		int imageDataLength = computeMaxEncodedLength(imageSampler.getModulesInDim());
 
@@ -100,21 +109,17 @@ public class DisplayDecoder {
 
 		byte[] decodedData =  new byte[imageDataLength];
 		Thread t4 = new Thread(()->{
-			System.arraycopy(decodeData(imageSampler, T4DataLength, pos, false), 0, decodedData,
-					FirstHalfDataLength + T3DataLength, T4DataLength);
-
+			decodeData(imageSampler, T4DataLength, pos, false, decodedData, FirstHalfDataLength + T3DataLength);
 		});
 		t4.start();
 		Thread t1 = new Thread(()->{
-			System.arraycopy(decodeData(imageSampler, T1DataLength, posT1, false), 0, decodedData,0, T1DataLength);
+			decodeData(imageSampler, T1DataLength, posT1, false, decodedData, 0);
 		});
 		Thread t2 = new Thread(()->{
-			System.arraycopy(decodeData(imageSampler, T2DataLength, posT2, false), 0, decodedData, T1DataLength, T2DataLength);
-
+			decodeData(imageSampler, T2DataLength, posT2, false, decodedData, T1DataLength);
 		});
 		Thread t3 = new Thread(()->{
-			System.arraycopy(decodeData(imageSampler, T3DataLength, posT3, false), 0, decodedData, FirstHalfDataLength, T3DataLength);
-
+			decodeData(imageSampler, T3DataLength, posT3, false, decodedData, FirstHalfDataLength);
 		});
 
 		t1.start();
@@ -124,9 +129,20 @@ public class DisplayDecoder {
 
 		imageSampler.setDecodedData(decodedData);
 //		imageSampler.setDecodedData(decodeData(imageSampler, imageDataLength, pos, false));
-		imageSampler.setIV2(decodeData(imageSampler, Parameters.ivLength, pos, true));
-		imageSampler.setIV2Checksum(decodeData(imageSampler, CHECKSUM_LENGTH, pos, true));
-		imageSampler.setDimsAndChecksum2(decodeData(imageSampler, IMAGE_DIMS_ENCODING_LENGTH + CHECKSUM_LENGTH, pos, true));
+
+
+		byte[] IV2 = new byte[Parameters.ivLength];
+		decodeData(imageSampler, Parameters.ivLength, pos, true, IV2, 0);
+		imageSampler.setIV2(IV2);
+
+		byte[] IV2Checksum = new byte[CHECKSUM_LENGTH];
+		decodeData(imageSampler, CHECKSUM_LENGTH, pos, true, IV2Checksum, 0);
+		imageSampler.setIV1Checksum(IV2Checksum);
+
+		byte[] DimsAndChecksum2 = new byte[IMAGE_DIMS_ENCODING_LENGTH + CHECKSUM_LENGTH];
+		decodeData(imageSampler, IMAGE_DIMS_ENCODING_LENGTH + CHECKSUM_LENGTH, pos, true, DimsAndChecksum2, 0);
+		imageSampler.setDimsAndChecksum2(DimsAndChecksum2);
+
 		t1.join(); t2.join(); t3.join();
 		return;
 	}
@@ -139,18 +155,18 @@ public class DisplayDecoder {
 	}
 
 
-	private static byte[] decodeData(StdImageSampler imageSampler, int lengthInBytes, Position pos, boolean isMetadata) {
+	private static void decodeData(StdImageSampler imageSampler, int lengthInBytes, Position pos, boolean isMetadata, byte[] decodedData, int start) {
 		int nextElemStride, greenStride, blueStride, shift;
 		if(isMetadata) {
 			nextElemStride = 1;	greenStride = 0; blueStride = 0;
 			shift = 0;
 		}
 		else {
-			nextElemStride = 3;	greenStride = 1; blueStride = 2;
+			nextElemStride = 3;
+			greenStride = 1;
+			blueStride = 2;
 			shift = Parameters.colorDiscardedBits;
 		}
-
-		byte[] decodedData = new byte[lengthInBytes];
 
 		int bitsLeftToByte = BITS_IN_BYTE - shift, currByteInd = 0, mask = BIT_GROUP_MASK_OF_ONES,
 				ones_in_mask = ENCODING_BIT_GROUP_SIZE;
@@ -192,9 +208,9 @@ public class DisplayDecoder {
 //					decodedData[currByteInd] = (byte) (currentDataR << shift);
 //					decodedData[currByteInd+greenStride] = (byte) (currentDataG << shift);
 //					decodedData[currByteInd+blueStride] = (byte) (currentDataB << shift);
-					decodedData[currByteInd] = currentDataR;
-					decodedData[currByteInd+greenStride] = currentDataG;
-					decodedData[currByteInd+blueStride] = currentDataB;
+					decodedData[start + currByteInd] = currentDataR;
+					decodedData[start +currByteInd+greenStride] = currentDataG;
+					decodedData[start +currByteInd+blueStride] = currentDataB;
 					currByteInd+= nextElemStride;
 					bitsLeftToByte = BITS_IN_BYTE - shift;
 					currentDataR = 0; currentDataG = 0; currentDataB = 0;
@@ -204,18 +220,18 @@ public class DisplayDecoder {
 					switch (remainder){
 						case(3): {
 							//decodedData[currByteInd+blueStride] = (byte) (currentDataB << shift);
-							decodedData[currByteInd+blueStride] = currentDataB;
+							decodedData[start + currByteInd+blueStride] = currentDataB;
 						}
 						case (2):{
 							//decodedData[currByteInd+greenStride] = (byte) (currentDataG << shift);
-							decodedData[currByteInd+greenStride] = currentDataG;
+							decodedData[start + currByteInd+greenStride] = currentDataG;
 						}
 						case(1):{
 							//decodedData[currByteInd] = (byte) (currentDataR << shift);
-							decodedData[currByteInd] = currentDataR;
+							decodedData[start + currByteInd] = currentDataR;
 						}
 					}
-					return decodedData;
+					return;
 				}
 
 			}

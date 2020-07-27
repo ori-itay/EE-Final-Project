@@ -82,7 +82,7 @@ public class VideoProcessing extends AppCompatActivity {
 
         toggleButton.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (isChecked) {
-                executor = Executors.newFixedThreadPool(3); // Runtime.getRuntime().availableProcessors() - 1
+                executor = Executors.newFixedThreadPool(1); // Runtime.getRuntime().availableProcessors() - 1
                 imageCapture.takePicture(executor, new TakePictureCallback(imageCapture, this));
             } else {
                 executor.shutdown();
