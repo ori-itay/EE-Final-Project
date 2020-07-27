@@ -41,7 +41,7 @@ public class VideoProcessing extends AppCompatActivity {
     Context context;
 
     public static ExecutorService executor;
-    public static final BlockingQueue<Bitmap> finishedQueue = new ArrayBlockingQueue<>(16, true);
+    public static final BlockingQueue<Bitmap> finishedQueue = new ArrayBlockingQueue<>(8, true);
 
 
     @Override
@@ -69,8 +69,6 @@ public class VideoProcessing extends AppCompatActivity {
         }, ContextCompat.getMainExecutor(this));
     }
 
-
-
     @SuppressLint("ClickableViewAccessibility")
     private void bindPreviewAndCapture(ProcessCameraProvider cameraProvider) {
         preview = setPreview();
@@ -82,7 +80,7 @@ public class VideoProcessing extends AppCompatActivity {
 
         toggleButton.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (isChecked) {
-                executor = Executors.newFixedThreadPool(3); // Runtime.getRuntime().availableProcessors() - 1
+                executor = Executors.newFixedThreadPool(3);
                 imageCapture.takePicture(executor, new TakePictureCallback(imageCapture, this));
             } else {
                 executor.shutdown();
@@ -98,15 +96,13 @@ public class VideoProcessing extends AppCompatActivity {
         ImageCapture imageCapture = new ImageCapture.Builder()
                 .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
                 .setTargetRotation(Surface.ROTATION_0)
-                //.setTargetRotation(view.getDisplay().getRotation())
                 .build();
 
         return imageCapture;
     }
 
-
     private Preview setPreview() {
-        Preview preview = new Preview.Builder()./*setTargetResolution(screen).*/build(); // AspectRatio.4_3, .setTargetAspectRatio(aspectRatio)
+        Preview preview = new Preview.Builder().build();
         preview.setSurfaceProvider(previewView.createSurfaceProvider());
         return preview;
     }

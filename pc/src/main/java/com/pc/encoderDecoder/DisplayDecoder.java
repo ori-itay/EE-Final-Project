@@ -1,24 +1,16 @@
 package com.pc.encoderDecoder;
-import java.awt.image.BufferedImage;
+
+import com.pc.checksum.Checksum;
 import com.pc.configuration.Parameters;
+
+import java.awt.image.BufferedImage;
+import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 import static com.pc.configuration.Constants.*;
 
 
 public class DisplayDecoder {
-
-//	public static RotatedImageSampler decodeFilePC(String filepath) throws IOException {
-//		File inputFile = new File(filepath);
-//		BufferedImage encodedImage = ImageIO.read(inputFile);
-//		int[][] pixelMatrix = convertTo2DUsingGetRGB(encodedImage);
-//		RotatedImageSampler imageSampler = decodePixelMatrix(pixelMatrix);
-//
-//		//only temporary testing:
-//		//CapturedImageSampler sampler = new CapturedImageSampler();
-//		//sampler.locatePositionDetectors(filepath);
-//
-//		return imageSampler;
-//	}
 
 	private static int proceedPosToMidDataLength(StdImageSampler imageSampler, Position posT2, int dataLengthBits){
 		int wantedLengthBits = dataLengthBits / 2;
@@ -67,11 +59,7 @@ public class DisplayDecoder {
 					&& posT2.rowModule < ALIGNMENT_PATTERN_UPPER_LEFT_MODULE + MODULES_IN_ALIGNMENT_PATTERN_DIM - Parameters.modulesInMargin ){
 				posT2.colModule+=  MODULES_IN_ALIGNMENT_PATTERN_DIM;
 			}
-//			if(posT2.colModule == ALIGNMENT_PATTERN_UPPER_LEFT_MODULE &&
-//					(posT2.rowModule >= ALIGNMENT_PATTERN_UPPER_LEFT_MODULE &&
-//							posT2.rowModule < ALIGNMENT_PATTERN_UPPER_LEFT_MODULE + MODULES_IN_ALIGNMENT_PATTERN_DIM)){
-//				posT2.colModule+=  MODULES_IN_ALIGNMENT_PATTERN_DIM;
-//			}
+
 			totalBitsCovered+= ENCODING_BIT_GROUP_SIZE*CHANNELS;
 			imageSampler.imageCheckForColumnEnd(posT2, imageSampler.getModulesInDim(), 0);
 		}
@@ -79,14 +67,112 @@ public class DisplayDecoder {
 		return totalBitsCovered / (BITS_IN_BYTE - Parameters.colorDiscardedBits);
 	}
 
-	public static void decodePixelMatrix(StdImageSampler imageSampler, int[][] pixelMatrix) throws InterruptedException {
+	private static void proceedPos2ToIV2(StdImageSampler imageSampler, Position pos2, int dataLengthBits){
+
+		int totalBitsCovered = 0;
+		int currLineLength;
+
+		if(pos2.rowModule < MODULES_IN_POS_DET_DIM)
+			currLineLength = imageSampler.getModulesInDim() - MODULES_IN_POS_DET_DIM - pos2.colModule;
+		else if(pos2.rowModule >= imageSampler.getModulesInDim() - MODULES_IN_POS_DET_DIM)
+			currLineLength = imageSampler.getModulesInDim() - pos2.colModule;
+		else if(pos2.rowModule >= ALIGNMENT_PATTERN_UPPER_LEFT_MODULE - Parameters.modulesInMargin &&
+				pos2.rowModule < ALIGNMENT_PATTERN_UPPER_LEFT_MODULE + MODULES_IN_ALIGNMENT_PATTERN_DIM - Parameters.modulesInMargin)
+			currLineLength = imageSampler.getModulesInDim() - pos2.colModule - MODULES_IN_ALIGNMENT_PATTERN_DIM;
+		else
+			currLineLength = imageSampler.getModulesInDim() - pos2.colModule;
+
+		totalBitsCovered+= currLineLength*ENCODING_BIT_GROUP_SIZE*CHANNELS;
+		pos2.rowModule++;
+
+		while(totalBitsCovered < dataLengthBits){
+			if(pos2.rowModule < MODULES_IN_POS_DET_DIM){
+				pos2.colModule = MODULES_IN_POS_DET_DIM;
+				currLineLength = imageSampler.getModulesInDim() - MODULES_IN_POS_DET_DIM - pos2.colModule;
+			}
+			else if(pos2.rowModule >= imageSampler.getModulesInDim() - MODULES_IN_POS_DET_DIM){
+				pos2.colModule = MODULES_IN_POS_DET_DIM;
+				currLineLength = imageSampler.getModulesInDim() - pos2.colModule;
+			}
+			else if(pos2.rowModule >= ALIGNMENT_PATTERN_UPPER_LEFT_MODULE - Parameters.modulesInMargin &&
+					pos2.rowModule < ALIGNMENT_PATTERN_UPPER_LEFT_MODULE + MODULES_IN_ALIGNMENT_PATTERN_DIM - Parameters.modulesInMargin){
+				pos2.colModule = 0;
+				currLineLength = imageSampler.getModulesInDim() - pos2.colModule - MODULES_IN_ALIGNMENT_PATTERN_DIM;
+			}
+			else{
+				pos2.colModule = 0;
+				currLineLength = imageSampler.getModulesInDim() - pos2.colModule;
+			}
+			totalBitsCovered+= currLineLength*ENCODING_BIT_GROUP_SIZE*CHANNELS;
+			pos2.rowModule++;
+		}
+		pos2.rowModule--;
+		totalBitsCovered-= currLineLength*ENCODING_BIT_GROUP_SIZE*CHANNELS;
+
+		while(totalBitsCovered < dataLengthBits){
+			pos2.colModule++;
+			//skip alignment pattern
+			if(pos2.colModule == ALIGNMENT_PATTERN_UPPER_LEFT_MODULE - Parameters.modulesInMargin &&
+					pos2.rowModule >= ALIGNMENT_PATTERN_UPPER_LEFT_MODULE - Parameters.modulesInMargin
+					&& pos2.rowModule < ALIGNMENT_PATTERN_UPPER_LEFT_MODULE + MODULES_IN_ALIGNMENT_PATTERN_DIM - Parameters.modulesInMargin ){
+				pos2.colModule+=  MODULES_IN_ALIGNMENT_PATTERN_DIM;
+			}
+			totalBitsCovered+= ENCODING_BIT_GROUP_SIZE*CHANNELS;
+			imageSampler.imageCheckForColumnEnd(pos2, imageSampler.getModulesInDim(), 0);
+		}
+	}
+
+	private static int getIntByteBuffer(byte[] bytes, int startIndex, int length) {
+		short bytesShort = ByteBuffer.wrap(bytes, startIndex, length).getShort();
+		return Short.toUnsignedInt(bytesShort);
+	}
+	private static boolean isValidDimensionsChecksum(StdImageSampler sampler, byte[] dimsAndChecksum) {
+		int width = getIntByteBuffer(dimsAndChecksum, 0, IMAGE_DIMENSION_ENCODING_LENGTH);
+		int height = getIntByteBuffer(dimsAndChecksum,
+				IMAGE_DIMENSION_ENCODING_LENGTH, IMAGE_DIMENSION_ENCODING_LENGTH);
+		byte[] dimensionsChecksum = ByteBuffer.wrap(Arrays.copyOfRange(dimsAndChecksum
+				, 2 * IMAGE_DIMENSION_ENCODING_LENGTH, 2 * IMAGE_DIMENSION_ENCODING_LENGTH + CHECKSUM_LENGTH)).array();
+
+		boolean validDimensions = Checksum.isValidChecksum(width, height, dimensionsChecksum);
+		if (validDimensions) {
+			sampler.setWidth(width);
+			sampler.setHeight(height);
+			return true;
+		}
+		return false;
+	}
+
+	public static boolean decodePixelMatrix(StdImageSampler imageSampler, int[][] pixelMatrix) throws InterruptedException {
 		configureImage(imageSampler, pixelMatrix);
 		Position pos = new Position(imageSampler.getModulesInMargin(), imageSampler.getModulesInMargin() + MODULES_IN_POS_DET_DIM);
+		int imageDataLength = computeMaxEncodedLength(imageSampler.getModulesInDim());
+
 		imageSampler.setIV1(decodeData(imageSampler, Parameters.ivLength, pos, true));
 		imageSampler.setIV1Checksum(decodeData(imageSampler, CHECKSUM_LENGTH, pos, true));
 		imageSampler.setDimsAndChecksum1(decodeData(imageSampler, IMAGE_DIMS_ENCODING_LENGTH + CHECKSUM_LENGTH, pos, true));
+		boolean iv1, dims1;
 
-		int imageDataLength = computeMaxEncodedLength(imageSampler.getModulesInDim());
+		dims1 = isValidDimensionsChecksum(imageSampler, imageSampler.getDimsAndChecksum1());
+		iv1 = Checksum.isValidChecksum(imageSampler.getIV1Checksum(), imageSampler.getIV1());
+
+		if (!iv1 || !dims1) {
+			Position pos2 = new Position(pos.rowModule,pos.colModule);
+			proceedPos2ToIV2(imageSampler, pos2, imageDataLength*(BITS_IN_BYTE - Parameters.colorDiscardedBits));
+			imageSampler.setIV2(decodeData(imageSampler, Parameters.ivLength, pos2, true));
+			imageSampler.setIV2Checksum(decodeData(imageSampler, CHECKSUM_LENGTH, pos2, true));
+			imageSampler.setDimsAndChecksum2(decodeData(imageSampler, IMAGE_DIMS_ENCODING_LENGTH + CHECKSUM_LENGTH, pos2, true));
+		}
+
+		if ((!dims1 && !isValidDimensionsChecksum(imageSampler, imageSampler.getDimsAndChecksum2())) || (!iv1 && !Checksum.isValidChecksum(imageSampler.getIV2Checksum(), imageSampler.getIV2()))) {
+			return false;
+		}
+		
+		if (!iv1) {
+			imageSampler.setIV(imageSampler.getIV2());
+		}
+		else {
+			imageSampler.setIV(imageSampler.getIV1()); // correct iv and dims are in sampler
+		}
 
 		Position posT1 = new Position(pos.rowModule,pos.colModule);
 		int FirstHalfDataLength = proceedPosToMidDataLength(imageSampler, pos, imageDataLength*(BITS_IN_BYTE - Parameters.colorDiscardedBits));
@@ -99,12 +185,7 @@ public class DisplayDecoder {
 		int T4DataLength = SecondHalfDataLength - T3DataLength;
 
 		byte[] decodedData =  new byte[imageDataLength];
-		Thread t4 = new Thread(()->{
-			System.arraycopy(decodeData(imageSampler, T4DataLength, pos, false), 0, decodedData,
-					FirstHalfDataLength + T3DataLength, T4DataLength);
 
-		});
-		t4.start();
 		Thread t1 = new Thread(()->{
 			System.arraycopy(decodeData(imageSampler, T1DataLength, posT1, false), 0, decodedData,0, T1DataLength);
 		});
@@ -116,19 +197,17 @@ public class DisplayDecoder {
 			System.arraycopy(decodeData(imageSampler, T3DataLength, posT3, false), 0, decodedData, FirstHalfDataLength, T3DataLength);
 
 		});
+		Thread t4 = new Thread(()->{
+			System.arraycopy(decodeData(imageSampler, T4DataLength, pos, false), 0, decodedData,
+					FirstHalfDataLength + T3DataLength, T4DataLength);
 
-		t1.start();
-		t2.start();
-		t3.start();
-		t4.join();
+		});
 
+
+		t1.start();	t2.start();	t3.start();	t4.start();
+		t1.join(); t2.join(); t3.join(); t4.join();
 		imageSampler.setDecodedData(decodedData);
-//		imageSampler.setDecodedData(decodeData(imageSampler, imageDataLength, pos, false));
-		imageSampler.setIV2(decodeData(imageSampler, Parameters.ivLength, pos, true));
-		imageSampler.setIV2Checksum(decodeData(imageSampler, CHECKSUM_LENGTH, pos, true));
-		imageSampler.setDimsAndChecksum2(decodeData(imageSampler, IMAGE_DIMS_ENCODING_LENGTH + CHECKSUM_LENGTH, pos, true));
-		t1.join(); t2.join(); t3.join();
-		return;
+		return true;
 	}
 
 	private static void configureImage(StdImageSampler imageSampler, int[][] pixelMatrix) {

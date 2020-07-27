@@ -8,7 +8,7 @@ public class ConsumerSideQueue implements Runnable {
     private  VideoProcessing videoProcessing;
     private  ImageView processedImgView;
 
-    private static final int SLEEPING_TIME_MILLI = 1200;
+    private static final int SLEEPING_TIME_MILLI = 1000;
 
     public ConsumerSideQueue(VideoProcessing videoProcessing, ImageView processedImgView) {
         this.videoProcessing = videoProcessing;

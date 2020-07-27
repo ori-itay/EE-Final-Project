@@ -7,8 +7,6 @@ import android.os.Environment;
 import android.util.Log;
 
 import com.android.visualcrypto.MainActivity;
-import com.android.visualcrypto.configurationFetcher.DimensionsFetcher;
-import com.android.visualcrypto.configurationFetcher.IvFetcher;
 import com.android.visualcrypto.openCvUtils.DistortedImageSampler;
 import com.pc.configuration.Constants;
 import com.pc.configuration.Parameters;
@@ -66,7 +64,10 @@ public class Flow {
         Log.d("performance", "get2DPixelArray took: " + (System.currentTimeMillis() - start));
 
         start = System.currentTimeMillis();
-        DisplayDecoder.decodePixelMatrix(distortedImageSampler, pixelArr);
+        if (!DisplayDecoder.decodePixelMatrix(distortedImageSampler, pixelArr)){ // checks for iv and dimensions validity
+            Log.d("decodePixelMatrix", "decodePixelMatrix returned null");
+            return null;
+        }
         Log.d("performance", "decodePixelMatrix took: " + (System.currentTimeMillis() - start));
 
         if (MainActivity.DEBUG) {
@@ -89,13 +90,9 @@ public class Flow {
         byte[] decodedBytes = distortedImageSampler.getDecodedData();
 
         /* get iv */
-        byte[] iv = IvFetcher.getIV(distortedImageSampler);
-        if (iv == null) {
-            Log.d("iv", "Cannot decode the image: IV checksums are wrong!");
-            //showAlert(context, "Cannot decode the image: IV checksums are wrong!");
-            return null;
-        }
+        byte[] iv = distortedImageSampler.getIV();
         IvParameterSpec ivSpec = new IvParameterSpec(iv);
+
         // get secret key
         /* Using constant secret key! */
         byte[] const_key = new byte[]{100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115};
@@ -111,18 +108,9 @@ public class Flow {
         /* decrypt */
         byte[] imageBytes = Decryptor.decryptImage(deshuffledBytes, secretKeySpec, ivSpec);
         Log.d("performance", "decryptImage took: " + (System.currentTimeMillis() - start));
-        /* fetch the image dimensions */
-        DimensionsFetcher dimensionsFetcher = new DimensionsFetcher(distortedImageSampler);
-        int width = dimensionsFetcher.getWidth();
-        int height = dimensionsFetcher.getHeight();
 
-        if (width == 0 || height == 0) {
-            Log.d("dimensions", "Cannot decode the image: Dimensions checksum are wrong!");
-            return null;
-        } else if (width > Constants.MAX_IMAGE_DIMENSION_SIZE || height > Constants.MAX_IMAGE_DIMENSION_SIZE) {
-            Log.d("dimensions", "Error: image dimension larger than " + Constants.MAX_IMAGE_DIMENSION_SIZE);
-            return null;
-        }
+        int width = distortedImageSampler.getWidth();
+        int height = distortedImageSampler.getHeight();
 
         start = System.currentTimeMillis();
         /* convert to Bitmap */

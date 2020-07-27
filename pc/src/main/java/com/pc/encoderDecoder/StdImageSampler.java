@@ -93,11 +93,11 @@ public class StdImageSampler implements ImageSamplerInf{
 	}
 	
 	public int getWidth() {
-	    return receivedImageDim;
+	    return this.width;
 	}
 
 	public int getHeight() {
-		return receivedImageDim;
+		return this.height;
 	}
 
 	public int getReceivedImageDim() {
@@ -128,6 +128,25 @@ public class StdImageSampler implements ImageSamplerInf{
 	private byte[] IV1;
 	private byte[] IV1Checksum;
 	private byte[] IV2;
+
+	public byte[] getIV() {
+		return IV;
+	}
+
+	public void setIV(byte[] IV) {
+		this.IV = IV;
+	}
+
+	public void setWidth(int width) {
+		this.width = width;
+	}
+
+	public void setHeight(int height) {
+		this.height = height;
+	}
+
+	private byte[] IV;
+	private int width, height;
 	private byte[] IV2Checksum;
 	private byte[] dims1;
 	private byte[] dims2;
