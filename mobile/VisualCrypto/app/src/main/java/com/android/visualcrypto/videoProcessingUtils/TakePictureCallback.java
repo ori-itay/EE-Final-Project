@@ -3,7 +3,6 @@ package com.android.visualcrypto.videoProcessingUtils;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.util.Log;
-import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
 import androidx.camera.core.ImageCapture;
@@ -29,17 +28,11 @@ import static com.android.visualcrypto.MainActivity.lastDetectedRoi;
 public class TakePictureCallback extends ImageCapture.OnImageCapturedCallback {
 
     private static ImageCapture imageCapture;
-    private static ImageView processedImgView;
-    private static VideoProcessing videoProcessing;
+    private VideoProcessing videoProcessing;
 
-
-
-
-    public static void setImageCaptureParams(ImageCapture imageCapture, ImageView processedImgView, VideoProcessing videoProcessing) {
+    public TakePictureCallback(ImageCapture imageCapture, VideoProcessing videoProcessing) {
         TakePictureCallback.imageCapture = imageCapture;
-        TakePictureCallback.processedImgView = processedImgView;
-        TakePictureCallback.videoProcessing = videoProcessing;
-
+        this.videoProcessing = videoProcessing;
     }
 
     @Override
@@ -55,7 +48,7 @@ public class TakePictureCallback extends ImageCapture.OnImageCapturedCallback {
         Log.d("performance", "mili, buffer to bitmap: " + (System.nanoTime() - start) / 1e6);
         image.close();
 
-        imageCapture.takePicture(VideoProcessing.executor, new TakePictureCallback());
+        imageCapture.takePicture(VideoProcessing.executor, new TakePictureCallback(imageCapture, videoProcessing));
 
 
 
@@ -93,7 +86,7 @@ public class TakePictureCallback extends ImageCapture.OnImageCapturedCallback {
 
         /*********NO CALIBRATION**************/
         Mat afterCalibrationMatrix = null;
-        if(lastDetectedRoi != null &&
+        if (lastDetectedRoi != null &&
                 mat.rows() >= lastDetectedRoi.height  &&   mat.cols() >= lastDetectedRoi.width) {
             start = System.nanoTime();
             try {
@@ -105,9 +98,10 @@ public class TakePictureCallback extends ImageCapture.OnImageCapturedCallback {
             bp = Bitmap.createBitmap(afterCalibrationMatrix.cols(), afterCalibrationMatrix.rows(), Bitmap.Config.ARGB_8888);
             Utils.matToBitmap(afterCalibrationMatrix, bp);
             Log.d("performance", "mili, crops for lastDetectodRoi took: " + (System.nanoTime() - start) / 1e6);
-        }
-        else
+        } else {
             afterCalibrationMatrix = mat;
+        }
+
 //        Mat afterCalibrationMatrix = mat;
         /***************************************/
 
@@ -126,13 +120,14 @@ public class TakePictureCallback extends ImageCapture.OnImageCapturedCallback {
                 return;
             }
 
-
-            videoProcessing.runOnUiThread(() -> {
-                long s = System.nanoTime();
-                processedImgView.setImageBitmap(finalBitmap);
-                Log.d("performance", "mili,setFinalBitmap took: " + (System.nanoTime() - s) / 1e6);
-                Log.d("performance", "mili, ~~~~~EndToEnd~~~~~ took: " + (System.nanoTime() - endToEndStart) / 1e6);
-            });
+            long s = System.nanoTime();
+            if (VideoProcessing.finishedQueue.remainingCapacity() == 0) {
+                Log.d("finishedQueue", "finishedQueue was full!");
+                VideoProcessing.finishedQueue.take();
+            }
+            VideoProcessing.finishedQueue.put(finalBitmap);
+            Log.d("performance", "mili,insertToQueue took: " + (System.nanoTime() - s) / 1e6);
+            Log.d("performance", "mili, ~~~~~EndToEnd~~~~~ took: " + (System.nanoTime() - endToEndStart) / 1e6);
 
         } catch (IOException | NoSuchAlgorithmException | InvalidAlgorithmParameterException | InvalidKeyException | NoSuchPaddingException e) {
             e.printStackTrace();

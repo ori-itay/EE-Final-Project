@@ -2,6 +2,7 @@ package com.android.visualcrypto;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.view.Surface;
 import android.widget.ImageView;
@@ -19,6 +20,8 @@ import androidx.core.content.ContextCompat;
 import com.android.visualcrypto.videoProcessingUtils.TakePictureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
 
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -36,6 +39,9 @@ public class VideoProcessing extends AppCompatActivity {
 
     private ListenableFuture<ProcessCameraProvider> cameraProviderFuture;
     Context context;
+
+    public static ExecutorService executor;
+    public static final BlockingQueue<Bitmap> finishedQueue = new ArrayBlockingQueue<>(8, true);
 
 
     @Override
@@ -63,7 +69,7 @@ public class VideoProcessing extends AppCompatActivity {
         }, ContextCompat.getMainExecutor(this));
     }
 
-    public static ExecutorService executor;
+
 
     @SuppressLint("ClickableViewAccessibility")
     private void bindPreviewAndCapture(ProcessCameraProvider cameraProvider) {
@@ -73,17 +79,18 @@ public class VideoProcessing extends AppCompatActivity {
                 .build();
 
         imageCapture = setImageCapture();
-        TakePictureCallback.setImageCaptureParams(imageCapture, processedImgView, this);
 
         toggleButton.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (isChecked) {
                 executor = Executors.newFixedThreadPool(3); // Runtime.getRuntime().availableProcessors() - 1
-                imageCapture.takePicture(executor, new TakePictureCallback());
+                imageCapture.takePicture(executor, new TakePictureCallback(imageCapture, this));
             } else {
                 executor.shutdown();
             }
         });
 
+        Thread queueThread = new Thread(new ConsumerSideQueue(this, processedImgView));
+        queueThread.start();
         Camera camera = cameraProvider.bindToLifecycle(this, cameraSelector, imageCapture, preview);
     }
 
