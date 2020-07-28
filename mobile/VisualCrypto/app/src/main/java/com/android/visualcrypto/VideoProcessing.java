@@ -42,6 +42,7 @@ public class VideoProcessing extends AppCompatActivity {
 
     public static ExecutorService executor;
     public static final BlockingQueue<Bitmap> finishedQueue = new ArrayBlockingQueue<>(8, true);
+    public static final Integer THREADPOOL_NUM_THREADS = 3;
 
 
     @Override
@@ -80,7 +81,7 @@ public class VideoProcessing extends AppCompatActivity {
 
         toggleButton.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (isChecked) {
-                executor = Executors.newFixedThreadPool(3);
+                executor = Executors.newFixedThreadPool(THREADPOOL_NUM_THREADS);
                 imageCapture.takePicture(executor, new TakePictureCallback(imageCapture, this));
             } else {
                 executor.shutdown();

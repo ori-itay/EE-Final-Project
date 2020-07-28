@@ -1,14 +1,24 @@
 package com.android.visualcrypto;
 
 import android.graphics.Bitmap;
+import android.util.Log;
 import android.widget.ImageView;
+
+import org.apache.commons.collections4.queue.CircularFifoQueue;
+
+import java.util.Iterator;
+
+import static com.android.visualcrypto.VideoProcessing.THREADPOOL_NUM_THREADS;
+
 
 public class ConsumerSideQueue implements Runnable {
 
     private  VideoProcessing videoProcessing;
     private  ImageView processedImgView;
+    private int rounds = 1;
+    private int sleepingTime = 800;
 
-    private static final int SLEEPING_TIME_MILLI = 1000;
+    public static final CircularFifoQueue<Integer> lastTimes = new CircularFifoQueue<>(6);
 
     public ConsumerSideQueue(VideoProcessing videoProcessing, ImageView processedImgView) {
         this.videoProcessing = videoProcessing;
@@ -19,7 +29,20 @@ public class ConsumerSideQueue implements Runnable {
     public void run() {
         while (true){
             try {
-                Thread.sleep(SLEEPING_TIME_MILLI);
+                if (rounds % 6 == 0) {
+                    int sum = 0;
+                    Iterator<Integer> elements = lastTimes.iterator();
+                    int size = lastTimes.size();
+                    while (elements.hasNext()) {
+                        sum += elements.next();
+                    }
+                    sleepingTime = sum/(size*THREADPOOL_NUM_THREADS);
+                    rounds = 1;
+                }
+
+                rounds++;
+                Log.d("queue", "Sleeping for  " + sleepingTime + " milli before trying to fetch finalBitmap");
+                Thread.sleep(sleepingTime);
                 Bitmap finalBitmap = VideoProcessing.finishedQueue.take();
                 videoProcessing.runOnUiThread(() -> processedImgView.setImageBitmap(finalBitmap));
             } catch (InterruptedException e) {

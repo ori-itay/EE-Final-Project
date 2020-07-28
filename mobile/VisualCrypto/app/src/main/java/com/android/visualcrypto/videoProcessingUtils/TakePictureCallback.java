@@ -9,6 +9,7 @@ import androidx.camera.core.ImageCapture;
 import androidx.camera.core.ImageCaptureException;
 import androidx.camera.core.ImageProxy;
 
+import com.android.visualcrypto.ConsumerSideQueue;
 import com.android.visualcrypto.VideoProcessing;
 import com.android.visualcrypto.flow.Flow;
 
@@ -126,7 +127,12 @@ public class TakePictureCallback extends ImageCapture.OnImageCapturedCallback {
             }
             VideoProcessing.finishedQueue.put(finalBitmap);
             Log.d("performance", "mili,insertToQueue took: " + (System.nanoTime() - s) / 1e6);
-            Log.d("performance", "mili, ~~~~~EndToEnd~~~~~ took: " + (System.nanoTime() - endToEndStart) / 1e6);
+            int endToEnd = (int) ((System.nanoTime() - endToEndStart) / 1e6);
+            Log.d("performance", "mili, ~~~~~EndToEnd~~~~~ took: " + endToEnd);
+
+            synchronized (ConsumerSideQueue.lastTimes) {
+                ConsumerSideQueue.lastTimes.add(endToEnd);
+            }
 
         } catch (IOException | NoSuchAlgorithmException | InvalidAlgorithmParameterException | InvalidKeyException | NoSuchPaddingException e) {
             e.printStackTrace();

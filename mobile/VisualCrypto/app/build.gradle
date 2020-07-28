@@ -50,6 +50,8 @@ dependencies {
     implementation 'org.boofcv:boofcv-core:0.35'
     implementation 'org.boofcv:boofcv-android:0.35'
 
+    implementation group: 'org.apache.commons', name: 'commons-collections4', version: '4.0'
+
     // cameraX
     def cameraxVersion = "1.0.0-beta05"
     implementation "androidx.camera:camera-core:${cameraxVersion}"
