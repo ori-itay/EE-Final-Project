@@ -1,5 +1,6 @@
 package com.pc.cli;
 
+import com.pc.Flow;
 import com.pc.checksum.Checksum;
 import com.pc.FlowUtils;
 import com.pc.configuration.Constants;
@@ -31,7 +32,6 @@ import static com.pc.configuration.Constants.*;
 
 
 public class EncodeDecodeCLI {
-	public static boolean GAMMA = false;
 
 	public static void main(String... args) throws Exception {
 	    Scanner scanner = new Scanner(System.in);  // Create a Scanner object
@@ -56,9 +56,10 @@ public class EncodeDecodeCLI {
     				ImageIO.write(encodedImage, "png", new File(splitedCommand[2]));
 					System.out.println((Constants.MODULES_IN_ENCODED_IMAGE_DIM - Parameters.modulesInMargin*2) +
 							" modules in dimension (without margins).");
-					EncodeDecodeCLI.GAMMA = true;
+
+					Flow.gamma = 0.75;
 					BufferedImage withGamma = executeEncodingProccess(splitedCommand[1], const_key);
-					ImageIO.write(encodedImage, "png", new File("gamma_"+splitedCommand[2]));
+					ImageIO.write(withGamma, "png", new File("gamma_"+splitedCommand[2]));
     			}
 //    			else if(splitedCommand[0].toLowerCase().equals("decode")) {
 ////					BufferedImage decodedImage = executeDecodingProccess(splitedCommand[1], const_key);

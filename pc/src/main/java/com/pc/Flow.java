@@ -8,6 +8,7 @@ import com.pc.encoderDecoder.DisplayEncoder;
 import com.pc.encryptorDecryptor.EncryptorDecryptor;
 import com.pc.encryptorDecryptor.encryptor.Encryptor;
 import com.pc.shuffleDeshuffle.shuffle.Shuffle;
+import com.sun.tools.javac.util.StringUtils;
 import net.coobird.thumbnailator.Thumbnails;
 
 import javax.crypto.*;
@@ -37,6 +38,9 @@ import java.util.concurrent.TimeUnit;
 public class Flow {
 
 	private static final JFrame frame = new JFrame("VisualCrypto");
+	private static final JLabel gammaIsText = new JLabel("gamma: 1");
+
+	private static int secondsPerFrame = 700;
 	private static String username;
 	private static SecretKey userSecretKey;
 	private static JLabel imgLabel;
@@ -46,6 +50,10 @@ public class Flow {
 	protected static Rectangle screenRect;
 
 	private static final String LAST_LOGIN = "lastlogin";
+	public static double gamma = 1;
+	public static final String password = "barakitkin123";
+	static Connection conn = null;
+	static KeyStore ks = null;
 
 	static {
 		try {
@@ -129,39 +137,7 @@ public class Flow {
 		toggleButton.addItemListener((itemEvent) -> {
 			int state = itemEvent.getStateChange();
 			if (state == ItemEvent.SELECTED) {
-				executor = Executors.newSingleThreadScheduledExecutor();
-				executor.scheduleAtFixedRate(()-> {
-					BufferedImage img = robot.createScreenCapture(screenRect);
-
-//					BufferedImage scaledImg =
-//							Scalr.resize(img, Scalr.Method.ULTRA_QUALITY, img.getWidth()/2, img.getHeight()/2);
-
-					BufferedImage scaledImg = null;
-					try {
-						scaledImg =
-								Thumbnails.of(img)
-										.size(img.getWidth()/4, img.getHeight()/4)
-										.asBufferedImage();
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-
-
-//					int SCALE = 2;
-//					Image tmp = img.getScaledInstance(w/SCALE, h/SCALE, BufferedImage.SCALE_SMOOTH);
-//					BufferedImage scaledImg = new BufferedImage(w/SCALE, h/SCALE, BufferedImage.TYPE_INT_ARGB);
-//					scaledImg.getGraphics().drawImage(tmp, 0, 0, null);
-//
-					try {
-						ImageIO.write(img, "png", new File("not_scaled.jpg"));
-						ImageIO.write(scaledImg, "png", new File("scaled.jpg"));
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-
-
-					flow(scaledImg);
-				}, 0, 700, TimeUnit.MILLISECONDS);
+				repeatedEncodeTask();
 				toggleButton.setText("On");
 			} else {
 				executor.shutdown();
@@ -179,7 +155,7 @@ public class Flow {
 			}
 		});
 
-		JButton changeRectangleBtn = new JButton("Change rectangle");
+		JButton changeRectangleBtn = new JButton("Switch area");
 		changeRectangleBtn.setPreferredSize(new Dimension(10,10));
 		changeRectangleBtn.addMouseListener(new MouseAdapter() {
 			public void mouseClicked(MouseEvent e) {
@@ -187,16 +163,70 @@ public class Flow {
 			}
 		});
 
+		JLabel gammaChange = new JLabel("  (Change)");
+		gammaChange.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+		gammaChange.setForeground(Color.GRAY);
+		gammaChange.addMouseListener(new MouseAdapter() {
+			public void mouseClicked(MouseEvent e) {
+				String gammaInput = JOptionPane.showInputDialog("Please enter the gamma factor (from 0 to 1 inclusive)");
+				try {
+					double gamma = Double.parseDouble(gammaInput);
+					if (gamma <= 0 || gamma > 1) {
+						throw new NumberFormatException("Invalid gamma value!");
+					} else {
+						Flow.gamma = gamma;
+						gammaIsText.setText("gamma: " + gamma);
+					}
+				} catch (NumberFormatException numberFormatException) {
+					JOptionPane.showMessageDialog(null, "Invalid input!");
+				}
+			}
+		});
+
+		JLabel timeBetweenEncoding = new JLabel("fps: 1.42");
+		JLabel changeTimeBetweenEncoding = new JLabel("  (Change)");
+		changeTimeBetweenEncoding.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+		changeTimeBetweenEncoding.setForeground(Color.GRAY);
+		changeTimeBetweenEncoding.addMouseListener(new MouseAdapter() {
+			public void mouseClicked(MouseEvent e) {
+				String gammaInput = JOptionPane.showInputDialog("Please enter frame per second value:");
+				try {
+					double fps = Double.parseDouble(gammaInput);
+					if (fps <= 0) {
+						throw new NumberFormatException("Invalid fps value!");
+					} else {
+						Flow.secondsPerFrame = (int) (1000/fps);
+						executor.shutdown();
+						repeatedEncodeTask(); // start the tasks with the updated time between frames
+						timeBetweenEncoding.setText("fps: " + fps);
+					}
+				} catch (NumberFormatException numberFormatException) {
+					JOptionPane.showMessageDialog(null, "Invalid input!");
+				}
+			}
+		});
+
+
 		JPanel leftPanel = new JPanel(new BorderLayout());
 //		JPanel loggingPanel = new JPanel(new BorderLayout());
 //		loggingPanel.add(loggedInAs, BorderLayout.WEST);
 //		loggingPanel.add(logOut, BorderLayout.EAST);
 //		leftPanel.add(loggingPanel, BorderLayout.WEST);
-		JPanel loggingPanel = new JPanel(new GridLayout(2,1));
-		loggingPanel.add(loggedInAs);
-		loggingPanel.add(logOut);
-		loggingPanel.add(changeRectangleBtn);
-		leftPanel.add(loggingPanel, BorderLayout.WEST);
+		JPanel innerLeftPanel = new JPanel(new GridLayout(4,2));
+		innerLeftPanel.add(loggedInAs);
+		innerLeftPanel.add(logOut);
+		innerLeftPanel.add(gammaIsText);
+		innerLeftPanel.add(gammaChange);
+		innerLeftPanel.add(timeBetweenEncoding);
+		innerLeftPanel.add(changeTimeBetweenEncoding);
+		innerLeftPanel.add(changeRectangleBtn);
+
+//		JPanel underLoggingPanel = new JPanel(new GridLayout(2,1));
+//		underLoggingPanel.add(gammaIsText);
+//		underLoggingPanel.add(gammaChange);
+
+		leftPanel.add(innerLeftPanel, BorderLayout.WEST);
+		//leftPanel.add(underLoggingPanel, BorderLayout.WEST);
 		leftPanel.add(imgLabel, BorderLayout.CENTER);
 
 		frame.add(leftPanel, BorderLayout.CENTER);
@@ -214,6 +244,34 @@ public class Flow {
 		frame.setVisible(true);
 		frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
 		ScreenCaptureRectangle.jFrame.toFront();
+	}
+
+	private static void repeatedEncodeTask() {
+		executor = Executors.newSingleThreadScheduledExecutor();
+		executor.scheduleAtFixedRate(()-> {
+			BufferedImage img = robot.createScreenCapture(screenRect);
+
+//					BufferedImage scaledImg =
+//							Scalr.resize(img, Scalr.Method.ULTRA_QUALITY, img.getWidth()/2, img.getHeight()/2);
+
+			BufferedImage scaledImg = null;
+			try {
+				scaledImg =
+						Thumbnails.of(img)
+								.size(img.getWidth()/4, img.getHeight()/4)
+								.asBufferedImage();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+
+
+//					int SCALE = 2;
+//					Image tmp = img.getScaledInstance(w/SCALE, h/SCALE, BufferedImage.SCALE_SMOOTH);
+//					BufferedImage scaledImg = new BufferedImage(w/SCALE, h/SCALE, BufferedImage.TYPE_INT_ARGB);
+//					scaledImg.getGraphics().drawImage(tmp, 0, 0, null);
+//
+			flow(scaledImg);
+		}, 0, secondsPerFrame, TimeUnit.MILLISECONDS);
 	}
 
 	private static boolean removeLastLoggedFromDB() {
@@ -311,9 +369,6 @@ public class Flow {
 		t.start();
 	}
 
-	public static final String password = "barakitkin123";
-	static Connection conn = null;
-	static KeyStore ks = null;
 	private static boolean openConnection() {
 		try {
 			Class.forName("org.sqlite.JDBC");
