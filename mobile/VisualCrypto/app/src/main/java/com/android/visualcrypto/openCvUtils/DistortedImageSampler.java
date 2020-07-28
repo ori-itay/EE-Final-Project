@@ -137,7 +137,11 @@ public class DistortedImageSampler extends StdImageSampler {
         }
 
         List<PositionPatternNode> pointsQueue = detector.getDetectPositionPatterns().getPositionPatterns().toList();
-        if (failures.size() == 0 && detections.size() == 0 && pointsQueue.size() == 3) {
+        if (failures.size() == 0 && detections.size() == 0) {
+            Log.d("DistortedImageSampler", "Couldn't detect QR position detectors");
+            MainActivity.lastDetectedRoi = null;
+            return 1;
+        } else if (pointsQueue.size() == 3) {
             //pointsQueue.get(0).
             Point2D_F64 boofPt0 = pointsQueue.get(0).square.get(3); // PT0         PT1
             //Point2D_F64 boofPt0 = pointsQueue.get(0).square.get(2);
@@ -152,11 +156,6 @@ public class DistortedImageSampler extends StdImageSampler {
             double x3 = pts[3].x + (pts[1].x - pts[0].x);
             double y3 = pts[3].y + (pts[1].y - pts[0].y);
             pts[2] = new Point(x3, y3);
-
-        } else if (failures.size() == 0 && detections.size() == 0) {
-            Log.d("DistortedImageSampler", "Couldn't detect QR position detectors");
-            MainActivity.lastDetectedRoi = null;
-            return 1;
         }
 
         double[] xValues = new double[] {pts[0].x, pts[1].x, pts[2].x, pts[3].x};
@@ -173,7 +172,7 @@ public class DistortedImageSampler extends StdImageSampler {
         /********************ROI****************************/
         try {
             Rect roi = new Rect(new Point(xMin-10, yMin-10), new Point(xMax+10, yMax+10));
-            MainActivity.lastDetectedRoi = new Rect(new Point(Math.max(xMin-50, 0), Math.max(yMin-50, 0)), new Point(xMax+50, yMax+50));
+            //MainActivity.lastDetectedRoi = new Rect(new Point(Math.max(xMin-50, 0), Math.max(yMin-50, 0)), new Point(xMax+50, yMax+50));
 
             //Rect roi = new Rect(new Point(xMin-10, yMin-10), new Point(xMax, yMax));
             this.distortedImage = new Mat(this.distortedImage, roi);
@@ -534,7 +533,7 @@ public class DistortedImageSampler extends StdImageSampler {
         }
         else{
             double[] channels = this.distortedImage.get((int) Math.round(indexRow), (int) Math.round(indexCol));
-            medianChannels[0] = (int) channels[0];
+ב            medianChannels[0] = (int) channels[0];
             medianChannels[1] = (int) channels[1];
             medianChannels[2] = (int) channels[2];
         }

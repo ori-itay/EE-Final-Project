@@ -44,6 +44,15 @@ public class ConsumerSideQueue implements Runnable {
                 Log.d("queue", "Sleeping for  " + sleepingTime + " milli before trying to fetch finalBitmap");
                 Thread.sleep(sleepingTime);
                 Bitmap finalBitmap = VideoProcessing.finishedQueue.take();
+
+                //TODO: if this section is used - put it also in decode last captured
+//                long s = System.nanoTime();
+//                Mat src = new Mat(); Mat dst = new Mat();
+//                Utils.bitmapToMat(finalBitmap,src);
+//                Photo.fastNlMeansDenoisingColored(src, dst, 3, 3, 7, 21);
+//                Utils.matToBitmap(dst, finalBitmap);
+//                Log.d("fastNlMeansDenoisingColored", "took: (milli) " +  (System.nanoTime() - s) / 1e6);
+
                 videoProcessing.runOnUiThread(() -> processedImgView.setImageBitmap(finalBitmap));
             } catch (InterruptedException e) {
                 e.printStackTrace();

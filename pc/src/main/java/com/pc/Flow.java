@@ -161,7 +161,7 @@ public class Flow {
 
 
 					flow(scaledImg);
-				}, 0, 800, TimeUnit.MILLISECONDS);
+				}, 0, 700, TimeUnit.MILLISECONDS);
 				toggleButton.setText("On");
 			} else {
 				executor.shutdown();

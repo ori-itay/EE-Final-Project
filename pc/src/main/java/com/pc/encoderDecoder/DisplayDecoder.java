@@ -166,7 +166,7 @@ public class DisplayDecoder {
 		if ((!dims1 && !isValidDimensionsChecksum(imageSampler, imageSampler.getDimsAndChecksum2())) || (!iv1 && !Checksum.isValidChecksum(imageSampler.getIV2Checksum(), imageSampler.getIV2()))) {
 			return false;
 		}
-		
+
 		if (!iv1) {
 			imageSampler.setIV(imageSampler.getIV2());
 		}

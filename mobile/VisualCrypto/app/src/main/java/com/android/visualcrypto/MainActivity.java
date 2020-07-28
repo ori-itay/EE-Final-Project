@@ -281,18 +281,18 @@ public class MainActivity extends AppCompatActivity {
         try {
             //long startTime = System.currentTimeMillis();
             /*******************DECODE BY FILE NAME*****************************************/
-            String imageName = "6bits_100_100.jpg";
-            InputStream encodedStream = getAssets().open(imageName);
-            File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + imageName);
-
-            Bitmap encodedBitmap = BitmapFactory.decodeStream(encodedStream);
-            /*           Bitmap rotatedBitmap = encodedBitmap; //del*/
-            Bitmap rotatedBitmap = CameraRotationFix.fixRotation(encodedBitmap, file.getAbsolutePath());
+//            String imageName = "6bits_100_100.jpg";
+//            InputStream encodedStream = getAssets().open(imageName);
+//            File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/" + imageName);
+//
+//            Bitmap encodedBitmap = BitmapFactory.decodeStream(encodedStream);
+//            /*           Bitmap rotatedBitmap = encodedBitmap; //del*/
+//            Bitmap rotatedBitmap = CameraRotationFix.fixRotation(encodedBitmap, file.getAbsolutePath());
             /*******************************************************************************/
 
             /*******************DECODE LAST TAKEN FILE AUTOMATICALLY************************/
-//            Bitmap encodedBitmap = BitmapFactory.decodeFile(currentPhotoPath);
-//            Bitmap rotatedBitmap = CameraRotationFix.fixRotation(encodedBitmap, currentPhotoPath);
+            Bitmap encodedBitmap = BitmapFactory.decodeFile(currentPhotoPath);
+            Bitmap rotatedBitmap = CameraRotationFix.fixRotation(encodedBitmap, currentPhotoPath);
             /*******************************************************************************/
 
             Mat capturedImage = new Mat();
