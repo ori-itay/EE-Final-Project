@@ -121,16 +121,17 @@ public class DistortedImageSampler extends StdImageSampler {
 
         QrCode boofCorners = null;
         Point[] pts = new Point[4]; //opencv Points
+        Point2D_F64[] boofPts;
+        Point2D_F64 rightLowerPos0 = null;
 
         List<QrCode> failures = detector.getFailures();
-        Log.d("fail", String.valueOf(failures.size()));//TODO Delete
         if (failures.size() >= 1) {
             boofCorners = failures.get(0);
             convertBoofToOpenPoints(boofCorners, pts);
+            rightLowerPos0 = failures.get(0).ppCorner.vertexes.data[2];
         }
 
         List<QrCode> detections = detector.getDetections();
-        Log.d("fail", String.valueOf(detections.size()));//TODO Delete
         if (detections.size() >= 1) {
             boofCorners = detections.get(0);
             convertBoofToOpenPoints(boofCorners, pts);
@@ -141,8 +142,7 @@ public class DistortedImageSampler extends StdImageSampler {
             Log.d("DistortedImageSampler", "Couldn't detect QR position detectors");
             MainActivity.lastDetectedRoi = null;
             return 1;
-        } else if (pointsQueue.size() == 3) {
-            //pointsQueue.get(0).
+        } else if (pointsQueue.size() == 3 && failures.size() == 0) {
             Point2D_F64 boofPt0 = pointsQueue.get(0).square.get(3); // PT0         PT1
             //Point2D_F64 boofPt0 = pointsQueue.get(0).square.get(2);
             Point2D_F64 boofPt1 = pointsQueue.get(1).square.get(0); //PT3          PT2
@@ -150,12 +150,22 @@ public class DistortedImageSampler extends StdImageSampler {
             Point2D_F64 boofPt3 = pointsQueue.get(2).square.get(2);
             //Point2D_F64 boofPt3 = pointsQueue.get(2).square.get(1);
 
-            Point2D_F64[] boofPts = new Point2D_F64[] {boofPt0,boofPt1,boofPt3};
+            boofPts = new Point2D_F64[] {boofPt0,boofPt1,boofPt3};
             Arrays.sort(boofPts, (b1,b2)-> Integer.compare((int)(b1.x + b1.y), (int)(b2.x + b2.y)));
-
-            //double[] sums = new double[] {, boofPt1.x+boofPt1.y, boofPt3.x+boofPt3.y};
-
-
+            if (boofPts[0] == boofPt0) {
+                Point2D_F64[] qr0Pos =  {pointsQueue.get(0).square.get(0),pointsQueue.get(0).square.get(1), pointsQueue.get(0).square.get(2)};
+                Arrays.sort(qr0Pos, (b1,b2)-> Integer.compare((int)(b1.x + b1.y), (int)(b2.x + b2.y)));
+                rightLowerPos0 = qr0Pos[0];
+            } else if (boofPts[0] == boofPt1) {
+                Point2D_F64[] qr0Pos =  {pointsQueue.get(1).square.get(3),pointsQueue.get(1).square.get(1), pointsQueue.get(1).square.get(2)};
+                Arrays.sort(qr0Pos, (b1,b2)-> Integer.compare((int)(b1.x + b1.y), (int)(b2.x + b2.y)));
+                rightLowerPos0 = qr0Pos[0];
+            } else {
+                Point2D_F64[] qr0Pos =  {pointsQueue.get(2).square.get(0),pointsQueue.get(2).square.get(1), pointsQueue.get(2).square.get(3)};
+                Arrays.sort(qr0Pos, (b1,b2)-> Integer.compare((int)(b1.x + b1.y), (int)(b2.x + b2.y)));
+                rightLowerPos0 = qr0Pos[0];
+            }
+            
             pts[0] = new Point(boofPts[0].x, boofPts[0].y);
             if (boofPts[1].y > boofPts[2].y) {
                 pts[1] = new Point(boofPts[2].x, boofPts[2].y);
@@ -182,24 +192,19 @@ public class DistortedImageSampler extends StdImageSampler {
 
         start = System.currentTimeMillis();// performance
         /********************ROI****************************/
-        int cutValue = 10;
+        int cutValue = 20;
         try {
             Rect roi = new Rect(new Point(Math.max(0,xMin-cutValue), Math.max(0,yMin-cutValue)), new Point(xMax+cutValue, yMax+cutValue));
-            //MainActivity.lastDetectedRoi = new Rect(new Point(Math.max(xMin-50, 0), Math.max(yMin-50, 0)), new Point(xMax+50, yMax+50));
-
-            //Rect roi = new Rect(new Point(xMin-10, yMin-10), new Point(xMax, yMax));
             this.distortedImage = new Mat(this.distortedImage, roi);
             Log.d("performance", "roi took: " + (System.currentTimeMillis() - start));//performance
         } catch (Exception e) {
             Log.d("roi", "roi threw exception");
-            Log.d("DELETE", pts[2].toString());
             MainActivity.lastDetectedRoi = null;
             return 1;
         }
         /***************************************************/
 
         start = System.currentTimeMillis(); //performance
-        Log.d("bw dimensions", this.distortedImage.size().toString());
         Mat bw = new Mat(this.distortedImage.size(), CvType.CV_8UC4);
         cvtColor(this.distortedImage, bw, Imgproc.COLOR_BGR2GRAY);
         //adaptiveThreshold(bw, bw, 255, ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY, 7, 25);
@@ -223,7 +228,6 @@ public class DistortedImageSampler extends StdImageSampler {
 
         Mat H = Calib3d.findHomography(corners1, corners2);
         Mat inverseH = H.inv();
-
         this.inverseH = inverseH;
 
         double minPixelStride = 1 / getMaxDistance(pts[0], pts[1], pts[2], pts[3]);
@@ -244,17 +248,14 @@ public class DistortedImageSampler extends StdImageSampler {
         }
 
         start = System.currentTimeMillis(); // performance
-        Rect roi = new Rect(new Point(pts[0].x+10+150, pts[0].y-10+150), new Point(pts[2].x+10-100, pts[2].y+10-100));
+        Rect roi = new Rect(new Point(pts[0].x+150, pts[0].y+150), new Point(pts[2].x-100, pts[2].y-100));
         Mat croppedMatForHisto;
         try {
             croppedMatForHisto = new Mat(this.distortedImage, roi);
         } catch (Exception e) {
-            Log.d("DELETE", "RECT: "+roi.toString());
-            Log.d("DELETE", "distortedImage: "+this.distortedImage.toString());
-            Log.d("DELETE", "pts[0]: " + pts[0].toString() + "|    pts[2]: " + pts[2].toString());
-            throw e;
+            Log.d("croppedMatForHisot", "threw an exception: " + e.getCause());
+            return 1;
         }
-        Log.d("DELETE", "GOOD: pts[0]: " + pts[0].toString() + "|    pts[2]: " + pts[2].toString());
 
         Log.d("performance", "cropped for histo(milli): " + (System.currentTimeMillis() - start));
 
@@ -268,9 +269,9 @@ public class DistortedImageSampler extends StdImageSampler {
         this.tileWidth = distortedImage.width() / gridSplitSize;
         findPercentilesValues(croppedMatForHisto);
         Log.d("performance", "findPercentilesValues(milli): " + (System.currentTimeMillis() - start));
-        Point rightLowerOfPts0 = new Point(failures.get(0).ppCorner.vertexes.data[2].x - xMin + 10,
-                failures.get(0).ppCorner.vertexes.data[2].y - yMin + 10);
-        //Point leftLowerOfPts0 = new Point(pointsQueue.get(0).square.vertexes.get(0).x, pointsQueue.get(0).square.vertexes.get(0).y);
+        Point rightLowerOfPts0 = new Point(rightLowerPos0.x - xMin + cutValue,
+                rightLowerPos0.y - yMin + cutValue);
+
         start = System.currentTimeMillis(); // performance
         double estimatedModuleSize = computeModuleSize(pts[0], rightLowerOfPts0, H, Math.sqrt(2 * 49));
         Log.d("performance", "computeModuleSize took: " + (System.currentTimeMillis() - start));
@@ -301,15 +302,6 @@ public class DistortedImageSampler extends StdImageSampler {
                 (Constants.MODULES_FROM_UPPER_LEFT_TO_ALIGNMENT_BOTTOM_RIGHT-1) * (Constants.MODULES_FROM_UPPER_LEFT_TO_ALIGNMENT_BOTTOM_RIGHT-1))));
         Log.d("performance", "computeModuleSize took: " + (System.currentTimeMillis() - start));
         int effectiveModulesInDim = (int) Math.round(1.0 / this.getModuleSize());
-
-//        if (MainActivity.DEBUG) {
-//            try (FileWriter fw = new FileWriter( + "/information.txt")) {
-//                fw.write("alignment: " + distortedPoint.x + "," + distortedPoint.y);
-//                fw.write("\nModules in dim: " + (1.0 / this.getModuleSize()));
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//            }
-//        }
 
         this.setModulesInDim(effectiveModulesInDim);
 
