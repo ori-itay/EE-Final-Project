@@ -5,6 +5,9 @@ import android.util.Log;
 import android.widget.ImageView;
 
 import org.apache.commons.collections4.queue.CircularFifoQueue;
+import org.opencv.android.Utils;
+import org.opencv.core.Mat;
+import org.opencv.photo.Photo;
 
 import java.util.Iterator;
 
@@ -46,12 +49,12 @@ public class ConsumerSideQueue implements Runnable {
                 Bitmap finalBitmap = VideoProcessing.finishedQueue.take();
 
                 //TODO: if this section is used - put it also in decode last captured
-//                long s = System.nanoTime();
-//                Mat src = new Mat(); Mat dst = new Mat();
-//                Utils.bitmapToMat(finalBitmap,src);
-//                Photo.fastNlMeansDenoisingColored(src, dst, 3, 3, 7, 21);
-//                Utils.matToBitmap(dst, finalBitmap);
-//                Log.d("fastNlMeansDenoisingColored", "took: (milli) " +  (System.nanoTime() - s) / 1e6);
+                long s = System.nanoTime();
+                Mat src = new Mat(); Mat dst = new Mat();
+                Utils.bitmapToMat(finalBitmap,src);
+                Photo.fastNlMeansDenoisingColored(src, dst, 3, 3, 7, 21);
+                Utils.matToBitmap(dst, finalBitmap);
+                Log.d("fastNlMeansDenoisingColored", "took: (milli) " +  (System.nanoTime() - s) / 1e6);
 
                 videoProcessing.runOnUiThread(() -> processedImgView.setImageBitmap(finalBitmap));
             } catch (InterruptedException e) {

@@ -13,6 +13,7 @@ import net.coobird.thumbnailator.Thumbnails;
 import javax.crypto.*;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ItemEvent;
@@ -135,7 +136,16 @@ public class Flow {
 		toggleButton.addItemListener((itemEvent) -> {
 			int state = itemEvent.getStateChange();
 			if (state == ItemEvent.SELECTED) {
+				BufferedImage encodedImage = null;
+//				try {
+//					encodedImage = ImageIO.read(new File("C:\\Users\\user\\Desktop\\EE-Final-Project\\pc\\2level_50_50_gamma.jpg"));
+//					imgLabel.setIcon(new ImageIcon(new ImageIcon(encodedImage).getImage().getScaledInstance(-1 ,frame.getContentPane().getBounds().height,Image.SCALE_SMOOTH)));
+//				} catch (IOException e) {
+//					e.printStackTrace();
+//				}
+
 				repeatedEncodeTask();
+
 				toggleButton.setText("On");
 			} else {
 				executor.shutdown();

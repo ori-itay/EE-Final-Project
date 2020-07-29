@@ -27,7 +27,6 @@ import androidx.core.content.FileProvider;
 import com.android.visualcrypto.cameraUtils.CameraRotationFix;
 import com.android.visualcrypto.flow.BitmapWrapper;
 import com.android.visualcrypto.flow.Flow;
-import com.android.visualcrypto.videoProcessingUtils.TakePictureCallback;
 import com.google.android.material.textfield.TextInputEditText;
 import com.pc.configuration.Constants;
 
@@ -327,6 +326,9 @@ public class MainActivity extends AppCompatActivity {
         } catch (InvalidAlgorithmParameterException | NoSuchAlgorithmException | InvalidKeyException | NoSuchPaddingException | IOException | InterruptedException e) {
             showAlert(this, "Exception in decodeImage: " + e);
             Log.e("decodeImage", "decodeFile exception", e);
+        } catch (Exception rest) {
+            Log.d("onCaptureSuccess", "General exception occured!");
+            rest.printStackTrace();
         }
     }
 
