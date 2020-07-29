@@ -105,7 +105,7 @@ public class TakePictureCallback extends ImageCapture.OnImageCapturedCallback {
             assert bitmapWrapper != null;
             Log.d("performance", "mili, executeAndroidFlow took: " + (System.nanoTime() - start) / 1e6);
             if (bitmapWrapper.error()) {
-                BitmapWrapper.notifyUser(errorMsgView, bitmapWrapper.getErrorType(), 1000);
+                BitmapWrapper.notifyUser(errorMsgView, bitmapWrapper.getErrorType(), 1000, videoProcessing);
                 Log.d("finalBitmap", "finalBitmap is null");
                 return;
             }

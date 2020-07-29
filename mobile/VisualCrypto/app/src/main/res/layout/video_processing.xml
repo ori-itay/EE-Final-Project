@@ -16,26 +16,6 @@
 <!--        app:layout_constraintRight_toRightOf="parent"-->
 <!--        app:layout_constraintTop_toTopOf="parent" />-->
 
-    <TextView
-        android:id="@+id/errorMsgView"
-        android:layout_width="158dp"
-        android:layout_height="78dp"
-        android:layout_gravity="start|bottom"
-        android:text="AAAAAAAAAA"
-        android:textStyle="bold"
-        android:visibility="visible"
-        app:layout_constraintEnd_toEndOf="@+id/processedImgView"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/processedImgView"
-        tools:visibility="visible" />
-
-    <ImageView
-        android:id="@+id/processedImgView"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_gravity="center"
-        android:contentDescription="@string/displays_processed_image" />
-
 
     <FrameLayout
         android:id="@+id/container"
@@ -56,6 +36,23 @@
 <!--            android:scaleType="centerInside"-->
 <!--            android:src="@mipmap/camera_round" />-->
 
+        <ImageView
+            android:id="@+id/processedImgView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_gravity="center"
+            android:contentDescription="@string/displays_processed_image" />
+
+        <ToggleButton
+            android:id="@+id/toggleButton"
+            android:layout_width="70dp"
+            android:layout_height="78dp"
+            android:layout_gravity="bottom|center_horizontal"
+            android:contentDescription="@string/camera_button"
+            android:cropToPadding="false"
+            android:scaleType="centerInside"
+            android:text="ToggleButton" />
+
         <androidx.camera.view.PreviewView
             android:id="@+id/previewView"
             android:layout_width="match_parent"
@@ -68,16 +65,28 @@
 
         </androidx.camera.view.PreviewView>
 
-        <ToggleButton
-            android:id="@+id/toggleButton"
-            android:layout_width="70dp"
-            android:layout_height="78dp"
-            android:layout_gravity="bottom|center_horizontal"
-            android:contentDescription="@string/camera_button"
-            android:cropToPadding="false"
-            android:scaleType="centerInside"
-            android:text="ToggleButton" />
+    </FrameLayout>
 
+    <FrameLayout
+        android:id="@+id/errorMsgContainer"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+
+        <TextView
+            android:id="@+id/errorMsgView"
+            android:layout_width="158dp"
+            android:layout_height="78dp"
+            android:layout_gravity="start|bottom"
+            android:textAlignment="viewStart"
+            android:textColor="#F35757"
+            android:textStyle="bold"
+            android:visibility="visible"
+            tools:visibility="visible" />
     </FrameLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

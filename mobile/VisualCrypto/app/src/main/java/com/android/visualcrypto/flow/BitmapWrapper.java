@@ -1,8 +1,11 @@
 package com.android.visualcrypto.flow;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.view.View;
 import android.widget.TextView;
+
+import com.android.visualcrypto.VideoProcessing;
 
 
 public class BitmapWrapper {
@@ -29,7 +32,7 @@ public class BitmapWrapper {
 
     public Bitmap getBitmap() {  return this.bp;}
 
-    public static void notifyUser(TextView errorMsgView, BitmapWrapper.Error errorType, long delayMillis) {
+    public static void notifyUser(TextView errorMsgView, BitmapWrapper.Error errorType, long delayMillis, VideoProcessing videoProcessing) {
         String msg = "";
         if (errorType == BitmapWrapper.Error.ALIGNMENT_PATTERN_NOT_FOUND) {
             msg = "Alignment pattern undetected";
@@ -42,8 +45,14 @@ public class BitmapWrapper {
         }
 
         errorMsgView.setText(msg);
-        errorMsgView.setVisibility(View.VISIBLE);
-        errorMsgView.postDelayed(() -> errorMsgView.setVisibility(View.INVISIBLE), delayMillis);
+//        errorMsgView.setVisibility(View.VISIBLE);
+        errorMsgView.postDelayed(() -> {
+            if (videoProcessing != null) {
+                videoProcessing.runOnUiThread(()->errorMsgView.setText(""));
+            } else {
+                errorMsgView.setText("");
+            }
+        }, delayMillis);
     }
 
 }

@@ -43,7 +43,7 @@ public class VideoProcessing extends AppCompatActivity {
     private ListenableFuture<ProcessCameraProvider> cameraProviderFuture;
     Context context;
 
-    public static ExecutorService executor;
+    public static ExecutorService executor = null;
     public static final BlockingQueue<Bitmap> finishedQueue = new ArrayBlockingQueue<>(8, true);
     public static final Integer THREADPOOL_NUM_THREADS = 3;
 
@@ -67,6 +67,13 @@ public class VideoProcessing extends AppCompatActivity {
         cameraProviderFuture.addListener(() -> {
             while (true){
                 try {
+                    if (executor != null) {
+                        executor.shutdown();
+                    }
+                    if (toggleButton.isChecked()){
+                        toggleButton.setChecked(false);
+                    }
+
                     ProcessCameraProvider cameraProvider = cameraProviderFuture.get();
                     bindPreviewAndCapture(cameraProvider);
                     break;

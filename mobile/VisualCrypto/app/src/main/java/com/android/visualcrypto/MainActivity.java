@@ -315,7 +315,7 @@ public class MainActivity extends AppCompatActivity {
 
             assert resBitmapWrapper != null;
             if (resBitmapWrapper.error()) {
-                BitmapWrapper.notifyUser(this.findViewById(R.id.errorMsgSingle), resBitmapWrapper.getErrorType(), 2000);
+                BitmapWrapper.notifyUser(this.findViewById(R.id.errorMsgSingle), resBitmapWrapper.getErrorType(), 2000, null);
                 return;
             }
 
