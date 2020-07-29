@@ -65,7 +65,7 @@ public class MainActivity extends AppCompatActivity {
     private String currentPhotoPath;
     public static byte[] privateKey;
 
-    public static final boolean DEBUG = false;
+    public static final boolean DEBUG = true;
     public static boolean DEBUG_READ_IMAGE_FROM_FILE = false;
 
     public static Rect lastDetectedRoi = null;

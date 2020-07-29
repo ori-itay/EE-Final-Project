@@ -150,12 +150,24 @@ public class DistortedImageSampler extends StdImageSampler {
             Point2D_F64 boofPt3 = pointsQueue.get(2).square.get(2);
             //Point2D_F64 boofPt3 = pointsQueue.get(2).square.get(1);
 
-            pts[0] = new Point(boofPt0.x, boofPt0.y);
-            pts[1] = new Point(boofPt1.x, boofPt1.y);
-            pts[3] = new Point(boofPt3.x, boofPt3.y);
-            double x3 = pts[3].x + (pts[1].x - pts[0].x);
-            double y3 = pts[3].y + (pts[1].y - pts[0].y);
-            pts[2] = new Point(x3, y3);
+            Point2D_F64[] boofPts = new Point2D_F64[] {boofPt0,boofPt1,boofPt3};
+            Arrays.sort(boofPts, (b1,b2)-> Integer.compare((int)(b1.x + b1.y), (int)(b2.x + b2.y)));
+
+            //double[] sums = new double[] {, boofPt1.x+boofPt1.y, boofPt3.x+boofPt3.y};
+
+
+            pts[0] = new Point(boofPts[0].x, boofPts[0].y);
+            if (boofPts[1].y > boofPts[2].y) {
+                pts[1] = new Point(boofPts[2].x, boofPts[2].y);
+                pts[3] = new Point(boofPts[1].x, boofPts[1].y);
+            } else {
+                pts[1] = new Point(boofPts[1].x, boofPts[1].y);
+                pts[3] = new Point(boofPts[2].x, boofPts[2].y);
+            }
+
+            double x2 = pts[3].x + Math.abs(pts[1].x - pts[0].x);
+            double y2 = pts[3].y + Math.abs(pts[1].y - pts[0].y);
+            pts[2] = new Point(x2, y2);
         }
 
         double[] xValues = new double[] {pts[0].x, pts[1].x, pts[2].x, pts[3].x};
@@ -170,8 +182,9 @@ public class DistortedImageSampler extends StdImageSampler {
 
         start = System.currentTimeMillis();// performance
         /********************ROI****************************/
+        int cutValue = 10;
         try {
-            Rect roi = new Rect(new Point(xMin-10, yMin-10), new Point(xMax+10, yMax+10));
+            Rect roi = new Rect(new Point(Math.max(0,xMin-cutValue), Math.max(0,yMin-cutValue)), new Point(xMax+cutValue, yMax+cutValue));
             //MainActivity.lastDetectedRoi = new Rect(new Point(Math.max(xMin-50, 0), Math.max(yMin-50, 0)), new Point(xMax+50, yMax+50));
 
             //Rect roi = new Rect(new Point(xMin-10, yMin-10), new Point(xMax, yMax));
@@ -179,6 +192,7 @@ public class DistortedImageSampler extends StdImageSampler {
             Log.d("performance", "roi took: " + (System.currentTimeMillis() - start));//performance
         } catch (Exception e) {
             Log.d("roi", "roi threw exception");
+            Log.d("DELETE", pts[2].toString());
             MainActivity.lastDetectedRoi = null;
             return 1;
         }
@@ -192,8 +206,8 @@ public class DistortedImageSampler extends StdImageSampler {
         adaptiveThreshold(bw, bw, 255, ADAPTIVE_THRESH_GAUSSIAN_C, Imgproc.THRESH_BINARY, 31, 45);
         cvtColor(bw, bw, Imgproc.THRESH_BINARY);
 
-        pts[0].x -= (xMin - 10); pts[1].x -= (xMin - 10); pts[2].x -= (xMin - 10); pts[3].x -= (xMin - 10);
-        pts[0].y -= (yMin - 10); pts[1].y -= (yMin - 10); pts[2].y -= (yMin - 10); pts[3].y -= (yMin - 10);
+        pts[0].x -= (xMin - cutValue); pts[1].x -= (xMin - cutValue); pts[2].x -= (xMin - cutValue); pts[3].x -= (xMin - cutValue);
+        pts[0].y -= (yMin - cutValue); pts[1].y -= (yMin - cutValue); pts[2].y -= (yMin - cutValue); pts[3].y -= (yMin - cutValue);
         if (MainActivity.DEBUG) {
             this.debugBW = bw.clone();
         }
@@ -231,7 +245,17 @@ public class DistortedImageSampler extends StdImageSampler {
 
         start = System.currentTimeMillis(); // performance
         Rect roi = new Rect(new Point(pts[0].x+10+150, pts[0].y-10+150), new Point(pts[2].x+10-100, pts[2].y+10-100));
-        Mat croppedMatForHisto = new Mat(this.distortedImage, roi);
+        Mat croppedMatForHisto;
+        try {
+            croppedMatForHisto = new Mat(this.distortedImage, roi);
+        } catch (Exception e) {
+            Log.d("DELETE", "RECT: "+roi.toString());
+            Log.d("DELETE", "distortedImage: "+this.distortedImage.toString());
+            Log.d("DELETE", "pts[0]: " + pts[0].toString() + "|    pts[2]: " + pts[2].toString());
+            throw e;
+        }
+        Log.d("DELETE", "GOOD: pts[0]: " + pts[0].toString() + "|    pts[2]: " + pts[2].toString());
+
         Log.d("performance", "cropped for histo(milli): " + (System.currentTimeMillis() - start));
 
         if (MainActivity.DEBUG) {
@@ -533,7 +557,7 @@ public class DistortedImageSampler extends StdImageSampler {
         }
         else{
             double[] channels = this.distortedImage.get((int) Math.round(indexRow), (int) Math.round(indexCol));
-ב            medianChannels[0] = (int) channels[0];
+            medianChannels[0] = (int) channels[0];
             medianChannels[1] = (int) channels[1];
             medianChannels[2] = (int) channels[2];
         }
