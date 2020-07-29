@@ -33,7 +33,8 @@ import javax.crypto.spec.SecretKeySpec;
 
 public class Flow {
 
-    public static Bitmap executeAndroidFlow(Mat capturedImg, Bitmap encodedBitmap, Context context) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidAlgorithmParameterException, InvalidKeyException, IOException, InterruptedException {
+    public static BitmapWrapper executeAndroidFlow(Mat capturedImg, Bitmap encodedBitmap, Context context) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidAlgorithmParameterException, InvalidKeyException, IOException, InterruptedException {
+        int retVal;
         DistortedImageSampler distortedImageSampler = new DistortedImageSampler(capturedImg, encodedBitmap);
 
         if (MainActivity.DEBUG) {
@@ -55,8 +56,15 @@ public class Flow {
             distortedImageSampler.errCounterGreen = 0; distortedImageSampler.errCounterBlue = 0;
         }
 
-        if (distortedImageSampler.initParameters() != 0) {
-            return null;
+        if ((retVal = distortedImageSampler.initParameters()) != 0) {
+            if (retVal == 1) {
+                return new BitmapWrapper(null, true, BitmapWrapper.Error.QR_POS_NOT_DETECTED);
+            } else if (retVal == 2) {
+                return new BitmapWrapper(null, true, BitmapWrapper.Error.INVALID_ROI);
+            } else if (retVal == 3) {
+                return new BitmapWrapper(null, true, BitmapWrapper.Error.ALIGNMENT_PATTERN_NOT_FOUND);
+            }
+            return null; // shouldn't get here
         }
 
         long start = System.currentTimeMillis();
@@ -66,7 +74,7 @@ public class Flow {
         start = System.currentTimeMillis();
         if (!DisplayDecoder.decodePixelMatrix(distortedImageSampler, pixelArr)){ // checks for iv and dimensions validity
             Log.d("decodePixelMatrix", "decodePixelMatrix returned null");
-            return null;
+            return new BitmapWrapper(null, true, BitmapWrapper.Error.IV_OR_DIMS_CHECKSUM);
         }
         Log.d("performance", "decodePixelMatrix took: " + (System.currentTimeMillis() - start));
 
@@ -118,6 +126,8 @@ public class Flow {
         MainActivity.setBitmapPixels(bmp, imageBytes, width, height);
         Log.d("performance", "createBitmap took: " + (System.currentTimeMillis() - start));
 
-        return bmp;
+        return new BitmapWrapper(bmp, false, null);
     }
+
+
 }

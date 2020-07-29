@@ -13,8 +13,8 @@ import static com.android.visualcrypto.VideoProcessing.THREADPOOL_NUM_THREADS;
 
 public class ConsumerSideQueue implements Runnable {
 
-    private  VideoProcessing videoProcessing;
-    private  ImageView processedImgView;
+    private VideoProcessing videoProcessing;
+    private ImageView processedImgView;
     private int rounds = 1;
     private int sleepingTime = 800;
 

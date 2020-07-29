@@ -4,8 +4,10 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Surface;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.ToggleButton;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -36,6 +38,7 @@ public class VideoProcessing extends AppCompatActivity {
 
     PreviewView previewView;
     ToggleButton toggleButton;
+    TextView errorMsgTextView;
 
     private ListenableFuture<ProcessCameraProvider> cameraProviderFuture;
     Context context;
@@ -57,16 +60,23 @@ public class VideoProcessing extends AppCompatActivity {
         previewView = findViewById(R.id.previewView);
         toggleButton = findViewById(R.id.toggleButton);
 
+        errorMsgTextView = this.findViewById(R.id.errorMsgView);
+
 
         cameraProviderFuture = ProcessCameraProvider.getInstance(this);
         cameraProviderFuture.addListener(() -> {
-            try {
-                ProcessCameraProvider cameraProvider = cameraProviderFuture.get();
-                bindPreviewAndCapture(cameraProvider);
-            } catch (ExecutionException | InterruptedException e) {
-                // No errors need to be handled for this Future.
-                // This should never be reached.
+            while (true){
+                try {
+                    ProcessCameraProvider cameraProvider = cameraProviderFuture.get();
+                    bindPreviewAndCapture(cameraProvider);
+                    break;
+                } catch (ExecutionException | InterruptedException e) {
+                    Log.d("cameraXBind", "Error at starting cameraX API");
+                    // No errors need to be handled for this Future.
+                    // This should never be reached.
+                }
             }
+
         }, ContextCompat.getMainExecutor(this));
     }
 
@@ -82,7 +92,7 @@ public class VideoProcessing extends AppCompatActivity {
         toggleButton.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (isChecked) {
                 executor = Executors.newFixedThreadPool(THREADPOOL_NUM_THREADS);
-                imageCapture.takePicture(executor, new TakePictureCallback(imageCapture, this));
+                imageCapture.takePicture(executor, new TakePictureCallback(imageCapture, this, errorMsgTextView));
             } else {
                 executor.shutdown();
             }

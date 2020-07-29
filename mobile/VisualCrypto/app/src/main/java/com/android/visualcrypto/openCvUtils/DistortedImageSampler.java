@@ -200,7 +200,7 @@ public class DistortedImageSampler extends StdImageSampler {
         } catch (Exception e) {
             Log.d("roi", "roi threw exception");
             MainActivity.lastDetectedRoi = null;
-            return 1;
+            return 2;
         }
         /***************************************************/
 
@@ -254,7 +254,7 @@ public class DistortedImageSampler extends StdImageSampler {
             croppedMatForHisto = new Mat(this.distortedImage, roi);
         } catch (Exception e) {
             Log.d("croppedMatForHisot", "threw an exception: " + e.getCause());
-            return 1;
+            return 2;
         }
 
         Log.d("performance", "cropped for histo(milli): " + (System.currentTimeMillis() - start));
@@ -290,7 +290,7 @@ public class DistortedImageSampler extends StdImageSampler {
 
         if (alignmentBottomRight == null) {
             Log.d("DistortedImageSampler", "findAlignmentBottomRight returned null");
-            return 1;
+            return 3;
         }
         Log.d("performance", "FindAlignmentBottomRight took: " + (System.currentTimeMillis() - start));
         Mat alignmentBottomRightMat = new Mat(1, 3, CvType.CV_64F);

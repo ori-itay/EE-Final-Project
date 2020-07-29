@@ -3,6 +3,8 @@ package com.android.visualcrypto.videoProcessingUtils;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.util.Log;
+import android.view.View;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.camera.core.ImageCapture;
@@ -10,7 +12,9 @@ import androidx.camera.core.ImageCaptureException;
 import androidx.camera.core.ImageProxy;
 
 import com.android.visualcrypto.ConsumerSideQueue;
+import com.android.visualcrypto.R;
 import com.android.visualcrypto.VideoProcessing;
+import com.android.visualcrypto.flow.BitmapWrapper;
 import com.android.visualcrypto.flow.Flow;
 
 import org.opencv.android.Utils;
@@ -28,10 +32,12 @@ public class TakePictureCallback extends ImageCapture.OnImageCapturedCallback {
 
     private static ImageCapture imageCapture;
     private VideoProcessing videoProcessing;
+    private TextView errorMsgView;
 
-    public TakePictureCallback(ImageCapture imageCapture, VideoProcessing videoProcessing) {
+    public TakePictureCallback(ImageCapture imageCapture, VideoProcessing videoProcessing, TextView errorMsgView) {
         TakePictureCallback.imageCapture = imageCapture;
         this.videoProcessing = videoProcessing;
+        this.errorMsgView = errorMsgView;
     }
 
     @Override
@@ -47,14 +53,8 @@ public class TakePictureCallback extends ImageCapture.OnImageCapturedCallback {
         Log.d("performance", "mili, buffer to bitmap: " + (System.nanoTime() - start) / 1e6);
         image.close();
 
-        imageCapture.takePicture(VideoProcessing.executor, new TakePictureCallback(imageCapture, videoProcessing));
+        imageCapture.takePicture(VideoProcessing.executor, new TakePictureCallback(imageCapture, videoProcessing, errorMsgView));
 
-
-
-//                    Mat mat = new Mat(image.getHeight(), image.getWidth(), CvType.CV_8UC3);
-//                    mat.put(0,0,bytes);
-//                    Bitmap bp = Bitmap.createBitmap(image.getWidth(), image.getHeight(), Bitmap.Config.ARGB_8888);
-//                    Utils.matToBitmap(mat, bp); // update bitmap as well
         start = System.nanoTime();
         Bitmap bp = BitmapFactory.decodeByteArray(bytes, 0, bytes.length, null);
         Log.d("performance", "mili, decodeByteArray: " + (System.nanoTime() - start) / 1e6);
@@ -70,12 +70,6 @@ public class TakePictureCallback extends ImageCapture.OnImageCapturedCallback {
         start = System.nanoTime();
         Mat mat = new Mat();
         Utils.bitmapToMat(bp, mat);
-
-//        try {
-//            bitmapToFile(bp);
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
 
         /*********WITH CALIBRATION**************/
 //                    Mat afterCalibrationMatrix = OpenCvUtils.calibrateImage(mat, false);
@@ -101,21 +95,17 @@ public class TakePictureCallback extends ImageCapture.OnImageCapturedCallback {
 //        } else {
 //            afterCalibrationMatrix = mat;
 //        }
-
         Mat afterCalibrationMatrix = mat;
         /***************************************/
 
-//        try {
-//            bitmapToFile(bp);
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
 
         try {
             start = System.nanoTime();
-            final Bitmap finalBitmap = Flow.executeAndroidFlow(afterCalibrationMatrix, bp, videoProcessing.getApplicationContext());
+            final BitmapWrapper bitmapWrapper = Flow.executeAndroidFlow(afterCalibrationMatrix, bp, videoProcessing.getApplicationContext());
+            assert bitmapWrapper != null;
             Log.d("performance", "mili, executeAndroidFlow took: " + (System.nanoTime() - start) / 1e6);
-            if (finalBitmap == null) {
+            if (bitmapWrapper.error()) {
+                BitmapWrapper.notifyUser(errorMsgView, bitmapWrapper.getErrorType(), 1000);
                 Log.d("finalBitmap", "finalBitmap is null");
                 return;
             }
@@ -125,7 +115,7 @@ public class TakePictureCallback extends ImageCapture.OnImageCapturedCallback {
                 Log.d("finishedQueue", "finishedQueue was full!");
                 VideoProcessing.finishedQueue.take();
             }
-            VideoProcessing.finishedQueue.put(finalBitmap);
+            VideoProcessing.finishedQueue.put(bitmapWrapper.getBitmap());
             Log.d("performance", "mili,insertToQueue took: " + (System.nanoTime() - s) / 1e6);
             int endToEnd = (int) ((System.nanoTime() - endToEndStart) / 1e6);
             Log.d("performance", "mili, ~~~~~EndToEnd~~~~~ took: " + endToEnd);
@@ -141,8 +131,6 @@ public class TakePictureCallback extends ImageCapture.OnImageCapturedCallback {
             rest.printStackTrace();
         }
     }
-
-
 
     @Override
     public void onError(@NonNull final ImageCaptureException exception) {

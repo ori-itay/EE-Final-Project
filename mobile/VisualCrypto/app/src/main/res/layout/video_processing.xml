@@ -16,6 +16,19 @@
 <!--        app:layout_constraintRight_toRightOf="parent"-->
 <!--        app:layout_constraintTop_toTopOf="parent" />-->
 
+    <TextView
+        android:id="@+id/errorMsgView"
+        android:layout_width="158dp"
+        android:layout_height="78dp"
+        android:layout_gravity="start|bottom"
+        android:text="AAAAAAAAAA"
+        android:textStyle="bold"
+        android:visibility="visible"
+        app:layout_constraintEnd_toEndOf="@+id/processedImgView"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/processedImgView"
+        tools:visibility="visible" />
+
     <ImageView
         android:id="@+id/processedImgView"
         android:layout_width="match_parent"
@@ -33,16 +46,7 @@
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <androidx.camera.view.PreviewView
-            android:id="@+id/previewView"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintRight_toRightOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-<!--        <ImageButton-->
+        <!--        <ImageButton-->
 <!--            android:id="@+id/toggleButton"-->
 <!--            android:layout_width="70dp"-->
 <!--            android:layout_height="78dp"-->
@@ -51,6 +55,18 @@
 <!--            android:cropToPadding="false"-->
 <!--            android:scaleType="centerInside"-->
 <!--            android:src="@mipmap/camera_round" />-->
+
+        <androidx.camera.view.PreviewView
+            android:id="@+id/previewView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+
+        </androidx.camera.view.PreviewView>
 
         <ToggleButton
             android:id="@+id/toggleButton"

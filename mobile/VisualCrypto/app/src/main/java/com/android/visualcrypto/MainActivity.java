@@ -25,7 +25,9 @@ import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 
 import com.android.visualcrypto.cameraUtils.CameraRotationFix;
+import com.android.visualcrypto.flow.BitmapWrapper;
 import com.android.visualcrypto.flow.Flow;
+import com.android.visualcrypto.videoProcessingUtils.TakePictureCallback;
 import com.google.android.material.textfield.TextInputEditText;
 import com.pc.configuration.Constants;
 
@@ -65,7 +67,7 @@ public class MainActivity extends AppCompatActivity {
     private String currentPhotoPath;
     public static byte[] privateKey;
 
-    public static final boolean DEBUG = true;
+    public static final boolean DEBUG = false;
     public static boolean DEBUG_READ_IMAGE_FROM_FILE = false;
 
     public static Rect lastDetectedRoi = null;
@@ -300,7 +302,7 @@ public class MainActivity extends AppCompatActivity {
 
             //TODO: pay attention whether calibrateimage is commented
             /**********NO CALIBRATION***************/
-            Bitmap resBitmap = Flow.executeAndroidFlow(capturedImage, rotatedBitmap, this);
+            BitmapWrapper resBitmapWrapper = Flow.executeAndroidFlow(capturedImage, rotatedBitmap, this);
             /***************************************/
 
 
@@ -311,20 +313,17 @@ public class MainActivity extends AppCompatActivity {
 //            Bitmap resBitmap = Flow.executeAndroidFlow(afterCalibrationMatrix, rotatedBitmap, this);
             /***************************************/
 
-            if (resBitmap == null) {
+            assert resBitmapWrapper != null;
+            if (resBitmapWrapper.error()) {
+                BitmapWrapper.notifyUser(this.findViewById(R.id.errorMsgSingle), resBitmapWrapper.getErrorType(), 2000);
                 return;
             }
 
             /* display the image */
             ImageView iView = findViewById(R.id.decodedImgId);
-            bitmapToFile(resBitmap);
-            iView.setImageBitmap(Bitmap.createScaledBitmap(resBitmap, iView.getWidth(), iView.getHeight(), false));
+            iView.setImageBitmap(Bitmap.createScaledBitmap(resBitmapWrapper.getBitmap(), iView.getWidth(), iView.getHeight(), false));
 
-            //Log.d("performance", String.format("took: %s", System.currentTimeMillis() - startTime));
             Log.d("performance", String.format("End time: %d", System.currentTimeMillis()));
-
-            /* display configuration information */
-            //showConfigurationInfo(rotatedImageSampler, height, width);
         } catch (InvalidAlgorithmParameterException | NoSuchAlgorithmException | InvalidKeyException | NoSuchPaddingException | IOException | InterruptedException e) {
             showAlert(this, "Exception in decodeImage: " + e);
             Log.e("decodeImage", "decodeFile exception", e);
@@ -417,55 +416,4 @@ public class MainActivity extends AppCompatActivity {
     }
 
 }
-
-
-//    private void showConfigurationInfo(RotatedImageSampler rotatedImageSampler, int height, int width) {
-//        TextView moduleSizeText = (TextView) findViewById(R.id.moduleSizeCfg);
-//        moduleSizeText.setText("Pixels in module dimension: " + rotatedImageSampler.getModuleSize());
-//
-//        TextView imageHeightText = (TextView) findViewById(R.id.imageHeightCfg);
-//        imageHeightText.setText("Image Height: " + height);
-//
-//        TextView imageWidthText = (TextView) findViewById(R.id.imageWidthCfg);
-//        imageWidthText.setText("Image Width: " + width);
-//    }
-
-
-/* Example of setSpan with colors etc
-                imgFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "out.png");
-                        if (!imgFile.exists()) {
-                        showAlert("Couldn't find 'out.png' in Downloads");
-                        return;
-                        }
-                        pixelArr = get2DPixelArray(imgFile);
-                        rotatedImageSampler = DisplayDecoder.decodePixelMatrix(pixelArr);
-
-                        TextView dataCfgText = (TextView) findViewById(R.id.dataCfg);
-                        SpannableStringBuilder dataTxt = new SpannableStringBuilder(getString(R.string.dataText));
-                        dataTxt.setSpan(new android.text.style.StyleSpan(Typeface.BOLD), 0, dataTxt.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-                        dataTxt.setSpan(new RelativeSizeSpan(2f), 0, dataTxt.length(), 0);
-                        dataTxt.setSpan(new ForegroundColorSpan(Color.BLACK), 0, dataTxt.length(), 0);
-                        dataCfgText.setText(dataTxt.append(new String(rotatedImageSampler.getDecodedData())));
-                        }
-
-                        if (imgFile == null){
-                        return;
-                        }
-
-                        TextView dataLengthCfgText = (TextView) findViewById(R.id.dataLengthCfg);
-                        TextView moduleSizeCfgText = (TextView) findViewById(R.id.moduleSizeCfg);
-
-                        SpannableStringBuilder dataLengthTxt = new SpannableStringBuilder(getString(R.string.dataLengthText));
-                        dataLengthTxt.setSpan(new android.text.style.StyleSpan(Typeface.BOLD), 0, dataLengthTxt.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-                        dataLengthTxt.setSpan(new RelativeSizeSpan(2f), 0, dataLengthTxt.length(), 0);
-                        dataLengthTxt.setSpan(new ForegroundColorSpan(Color.BLACK), 0, dataLengthTxt.length(), 0);
-
-
-                        SpannableStringBuilder moduleSizeTxt = new SpannableStringBuilder(getString(R.string.moduleSizeText));
-                        moduleSizeTxt.setSpan(new android.text.style.StyleSpan(Typeface.BOLD), 0, moduleSizeTxt.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-                        moduleSizeTxt.setSpan(new RelativeSizeSpan(2f), 0, moduleSizeTxt.length(), 0);
-                        moduleSizeTxt.setSpan(new ForegroundColorSpan(Color.BLACK), 0, moduleSizeTxt.length(), 0);
-
-                        dataLengthCfgText.setText(dataLengthTxt.append(String.valueOf(rotatedImageSampler.getDataLength())));
-                        moduleSizeCfgText.setText(moduleSizeTxt.append(String.valueOf(rotatedImageSampler.getModuleSize())));*/
 

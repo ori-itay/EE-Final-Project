@@ -53,10 +53,10 @@ dependencies {
     implementation group: 'org.apache.commons', name: 'commons-collections4', version: '4.0'
 
     // cameraX
-    def cameraxVersion = "1.0.0-beta05"
+    def cameraxVersion = "1.0.0-beta07"
     implementation "androidx.camera:camera-core:${cameraxVersion}"
     implementation "androidx.camera:camera-camera2:${cameraxVersion}"
     implementation "androidx.camera:camera-lifecycle:${cameraxVersion}"
-    implementation "androidx.camera:camera-view:1.0.0-alpha12"
+    implementation "androidx.camera:camera-view:1.0.0-alpha14"
     implementation 'com.google.android.material:material:1.1.0'
 }
