@@ -123,7 +123,7 @@ public class Server  extends Thread {
     }
 
     public static boolean insertEntry(String email, byte[] userSecretKey, SecretKey privateSecretKey) throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
-        final Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+        final Cipher cipher = Cipher.getInstance("AES/CTR/PKCS5Padding");
         try {
             cipher.init(Cipher.ENCRYPT_MODE, privateSecretKey, new IvParameterSpec(new byte[] {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}));
         } catch (InvalidAlgorithmParameterException e) {

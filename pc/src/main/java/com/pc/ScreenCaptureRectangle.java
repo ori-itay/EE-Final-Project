@@ -84,8 +84,10 @@ public class ScreenCaptureRectangle {
             Point end = me.getPoint();
             captureRect = new Rectangle(start,
                     new Dimension(end.x-start.x, end.y-start.y));
+
             repaint(screen, screenCopy);
             screenLabel.repaint();
+            captureRect.y += jFrame.getInsets().top;
             selectionLabel.setText("Rectangle: " + captureRect);
         }
     });

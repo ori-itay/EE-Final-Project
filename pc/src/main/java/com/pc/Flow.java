@@ -9,6 +9,7 @@ import com.pc.encryptorDecryptor.EncryptorDecryptor;
 import com.pc.encryptorDecryptor.encryptor.Encryptor;
 import com.pc.shuffleDeshuffle.shuffle.Shuffle;
 import net.coobird.thumbnailator.Thumbnails;
+import org.imgscalr.Scalr;
 
 import javax.crypto.*;
 import javax.crypto.spec.IvParameterSpec;
@@ -295,24 +296,32 @@ public class Flow {
 		executor.scheduleAtFixedRate(()-> {
 			BufferedImage img = robot.createScreenCapture(screenRect);
 
-//					BufferedImage scaledImg =
-//							Scalr.resize(img, Scalr.Method.ULTRA_QUALITY, img.getWidth()/2, img.getHeight()/2);
+					BufferedImage scaledImg =
+							Scalr.resize(img, Scalr.Method.ULTRA_QUALITY, img.getWidth(), img.getHeight());//TODO
 
-			BufferedImage scaledImg = null;
+//			BufferedImage scaledImg = null;
+//			try {
+//				scaledImg =
+//						Thumbnails.of(img)
+//								.size(img.getWidth()/4, img.getHeight()/4)
+//								.asBufferedImage();
+//			} catch (IOException e) {
+//				e.printStackTrace();
+//			}
+
+//			int SCALE = 2;
+//			Image tmp = img.getScaledInstance(img.getWidth()/SCALE, img.getHeight()/SCALE, BufferedImage.SCALE_SMOOTH);
+//			BufferedImage scaledImg = new BufferedImage(img.getWidth()/SCALE, img.getHeight()/SCALE, BufferedImage.TYPE_INT_ARGB);
+//			scaledImg.getGraphics().drawImage(tmp, 0, 0, null);
+
+
 			try {
-				scaledImg =
-						Thumbnails.of(img)
-								.size(img.getWidth()/4, img.getHeight()/4)
-								.asBufferedImage();
+				ImageIO.write(scaledImg, "png", new File("scaled.jpg"));
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 
 
-//					int SCALE = 2;
-//					Image tmp = img.getScaledInstance(w/SCALE, h/SCALE, BufferedImage.SCALE_SMOOTH);
-//					BufferedImage scaledImg = new BufferedImage(w/SCALE, h/SCALE, BufferedImage.TYPE_INT_ARGB);
-//					scaledImg.getGraphics().drawImage(tmp, 0, 0, null);
 //
 			flow(scaledImg);
 		}, 0, secondsPerFrame, TimeUnit.MILLISECONDS);
@@ -394,7 +403,7 @@ public class Flow {
 				String pw = rs.getString("pw");
 				if (pw != null && !pw.equals("lastlogin")) {
 					byte[] bytesKeyEncrypted = Base64.getDecoder().decode(pw);
-					final Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+					final Cipher cipher = Cipher.getInstance("AES/CTR/PKCS5Padding");
 					cipher.init(Cipher.DECRYPT_MODE, privateSecretKey, new IvParameterSpec(new byte[] {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}));
 					byte[] decrypted = cipher.doFinal(bytesKeyEncrypted);
 					return new SecretKeySpec(decrypted, 0, decrypted.length, "AES");
