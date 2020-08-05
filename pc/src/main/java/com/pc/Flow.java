@@ -41,12 +41,12 @@ public class Flow {
 	private static final JLabel gammaIsText = new JLabel("gamma: 1");
 
 	private static int secondsPerFrame = 700;
+	private static final int SCALE_FACTOR = 4;
 	private static String username;
 	private static SecretKey userSecretKey;
 	private static JLabel imgLabel;
 
 	private static ScheduledExecutorService executor;
-	private static Robot robot = null;
 	protected static Rectangle screenRect;
 
 	private static final String LAST_LOGIN = "lastlogin";
@@ -55,13 +55,6 @@ public class Flow {
 	static Connection conn = null;
 	static KeyStore ks = null;
 
-	static {
-		try {
-			robot = new Robot();
-		} catch (AWTException e) {
-			e.printStackTrace();
-		}
-	}
 
 	public static void main(String[] args) {
 		if (!initDB()) {
@@ -122,13 +115,9 @@ public class Flow {
 			registerUI();
 		}
 
-
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
 		GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
-		//Dimension dim = new Dimension(gd.getDisplayMode().getWidth(),gd.getDisplayMode().getHeight() - 25);
-		//frame.setPreferredSize(dim);
-
 
 		JPanel panel = new JPanel();
 		imgLabel = new JLabel("", SwingConstants.CENTER);
@@ -137,14 +126,6 @@ public class Flow {
 		toggleButton.addItemListener((itemEvent) -> {
 			int state = itemEvent.getStateChange();
 			if (state == ItemEvent.SELECTED) {
-				BufferedImage encodedImage = null;
-//				try {
-//					encodedImage = ImageIO.read(new File("C:\\Users\\user\\Desktop\\EE-Final-Project\\pc\\2level_50_50_gamma.jpg"));
-//					imgLabel.setIcon(new ImageIcon(new ImageIcon(encodedImage).getImage().getScaledInstance(-1 ,frame.getContentPane().getBounds().height,Image.SCALE_SMOOTH)));
-//				} catch (IOException e) {
-//					e.printStackTrace();
-//				}
-
 				repeatedEncodeTask();
 				toggleButton.setText("On");
 			} else {
@@ -174,8 +155,9 @@ public class Flow {
 				for (GraphicsDevice g : gs) {
 					screenSizes = screenSizes.union(g.getDefaultConfiguration().getBounds());
 				}
-				ScreenCaptureRectangle.captureRect = screenSizes;
-				BufferedImage screen = ScreenCaptureRectangle.robot.createScreenCapture(ScreenCaptureRectangle.captureRect);
+				//ScreenCaptureRectangle.captureRectAdjusted = screenSizes;
+				screenRect = new Rectangle(screenSizes.x, screenSizes.y + ScreenCaptureRectangle.jFrame.getInsets().top, screenSizes.width, screenSizes.height);
+				BufferedImage screen = ScreenCaptureRectangle.robot.createScreenCapture(screenRect);
 				final BufferedImage screenCopy = new BufferedImage(
 						screen.getWidth(),
 						screen.getHeight(),
@@ -294,35 +276,17 @@ public class Flow {
 	private static void repeatedEncodeTask() {
 		executor = Executors.newSingleThreadScheduledExecutor();
 		executor.scheduleAtFixedRate(()-> {
-			BufferedImage img = robot.createScreenCapture(screenRect);
+			BufferedImage img = ScreenCaptureRectangle.robot.createScreenCapture(screenRect);
 
-					BufferedImage scaledImg =
-							Scalr.resize(img, Scalr.Method.ULTRA_QUALITY, img.getWidth(), img.getHeight());//TODO
+			BufferedImage scaledImg = Scalr.resize(img, Scalr.Method.ULTRA_QUALITY, img.getWidth()/SCALE_FACTOR, img.getHeight()/SCALE_FACTOR);
 
-//			BufferedImage scaledImg = null;
+//
 //			try {
-//				scaledImg =
-//						Thumbnails.of(img)
-//								.size(img.getWidth()/4, img.getHeight()/4)
-//								.asBufferedImage();
+//				ImageIO.write(scaledImg, "png", new File("scaled.jpg"));
 //			} catch (IOException e) {
 //				e.printStackTrace();
 //			}
 
-//			int SCALE = 2;
-//			Image tmp = img.getScaledInstance(img.getWidth()/SCALE, img.getHeight()/SCALE, BufferedImage.SCALE_SMOOTH);
-//			BufferedImage scaledImg = new BufferedImage(img.getWidth()/SCALE, img.getHeight()/SCALE, BufferedImage.TYPE_INT_ARGB);
-//			scaledImg.getGraphics().drawImage(tmp, 0, 0, null);
-
-
-			try {
-				ImageIO.write(scaledImg, "png", new File("scaled.jpg"));
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-
-
-//
 			flow(scaledImg);
 		}, 0, secondsPerFrame, TimeUnit.MILLISECONDS);
 	}

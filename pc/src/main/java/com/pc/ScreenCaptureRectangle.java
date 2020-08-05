@@ -8,7 +8,8 @@ import javax.swing.*;
 
 public class ScreenCaptureRectangle {
 
-    public static Rectangle captureRect;
+    public static Rectangle captureRectAdjusted;
+    private static Rectangle captureRect;
     public static final JFrame jFrame = new JFrame("Select a rectangle");
     public static final JLabel screenLabel = new JLabel();
     public static Robot robot = null;
@@ -54,7 +55,7 @@ public class ScreenCaptureRectangle {
         JButton okButton = new JButton("OK");
         okButton.setBackground(Color.GRAY);
         okButton.addActionListener((actionEvent)->{
-            Flow.screenRect = captureRect;
+            Flow.screenRect = captureRectAdjusted;
             jFrame.setVisible(false);
         });
         jFrame.add(okButton, BorderLayout.PAGE_END);
@@ -69,28 +70,28 @@ public class ScreenCaptureRectangle {
     static void addMouseListener() {
         screenLabel.addMouseMotionListener(new MouseMotionAdapter() {
 
-        Point start = new Point();
+            Point start = new Point();
 
-        @Override
-        public void mouseMoved(MouseEvent me) {
-            start = me.getPoint();
-            repaint(screen, screenCopy);
-            selectionLabel.setText("Start Point: " + start);
-            screenLabel.repaint();
-        }
+            @Override
+            public void mouseMoved(MouseEvent me) {
+                start = me.getPoint();
+                repaint(screen, screenCopy);
+                selectionLabel.setText("Start Point: " + start);
+                screenLabel.repaint();
+            }
 
-        @Override
-        public void mouseDragged(MouseEvent me) {
-            Point end = me.getPoint();
-            captureRect = new Rectangle(start,
-                    new Dimension(end.x-start.x, end.y-start.y));
+            @Override
+            public void mouseDragged(MouseEvent me) {
+                Point end = me.getPoint();
+                captureRect = new Rectangle(start,
+                        new Dimension(end.x-start.x, end.y-start.y));
 
-            repaint(screen, screenCopy);
-            screenLabel.repaint();
-            captureRect.y += jFrame.getInsets().top;
-            selectionLabel.setText("Rectangle: " + captureRect);
-        }
-    });
+                repaint(screen, screenCopy);
+                screenLabel.repaint();
+                captureRectAdjusted = new Rectangle(captureRect.x, captureRect.y + jFrame.getInsets().top, captureRect.width, captureRect.height);
+                selectionLabel.setText("Rectangle: " + captureRect);
+            }
+        });
     }
 
     public static void repaint(BufferedImage orig, BufferedImage copy) {
