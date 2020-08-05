@@ -145,7 +145,6 @@ public class Flow {
 //				}
 
 				repeatedEncodeTask();
-
 				toggleButton.setText("On");
 			} else {
 				executor.shutdown();
@@ -168,6 +167,31 @@ public class Flow {
 		changeRectangleBtn.addMouseListener(new MouseAdapter() {
 			public void mouseClicked(MouseEvent e) {
 				ScreenCaptureRectangle.jFrame.setVisible(true);
+			}
+		});
+
+		JLabel encodingLevelsText = new JLabel("encodingLevels: " + Parameters.encodingColorLevels);
+		JLabel encodingLevelsChange = new JLabel("  (Change)");
+		encodingLevelsChange.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+		encodingLevelsChange.setForeground(Color.GRAY);
+		encodingLevelsChange.addMouseListener(new MouseAdapter() {
+			public void mouseClicked(MouseEvent e) {
+				String encodingLevelsInput = JOptionPane.showInputDialog("Please enter encoding color levels (2,4, or 8)");
+				try {
+					int encodingLevels = Integer.parseInt(encodingLevelsInput);
+					if (encodingLevels != 2 && encodingLevels != 4 && encodingLevels != 8) {
+						throw new NumberFormatException("Invalid value");
+					} else {
+						Parameters.encodingColorLevels = encodingLevels;
+						Constants.COLOR_SCALE_DELTA = Math.floorDiv(255 , (Parameters.encodingColorLevels-1));
+						Constants.ENCODING_BIT_GROUP_SIZE = (int) (Math.log(Parameters.encodingColorLevels)/ Math.log(2) );
+						Constants.BIT_GROUP_MASK_OF_ONES = (1 << Constants.ENCODING_BIT_GROUP_SIZE) -1;
+						encodingLevelsText.setText("encodingLevels: " + encodingLevels);
+					}
+
+				} catch (NumberFormatException numberFormatException) {
+					JOptionPane.showMessageDialog(null, "Invalid input!");
+				}
 			}
 		});
 
@@ -216,25 +240,18 @@ public class Flow {
 
 
 		JPanel leftPanel = new JPanel(new BorderLayout());
-//		JPanel loggingPanel = new JPanel(new BorderLayout());
-//		loggingPanel.add(loggedInAs, BorderLayout.WEST);
-//		loggingPanel.add(logOut, BorderLayout.EAST);
-//		leftPanel.add(loggingPanel, BorderLayout.WEST);
-		JPanel innerLeftPanel = new JPanel(new GridLayout(4,2));
+		JPanel innerLeftPanel = new JPanel(new GridLayout(5,2));
 		innerLeftPanel.add(loggedInAs);
 		innerLeftPanel.add(logOut);
 		innerLeftPanel.add(gammaIsText);
 		innerLeftPanel.add(gammaChange);
+		innerLeftPanel.add(encodingLevelsText);
+		innerLeftPanel.add(encodingLevelsChange);
 		innerLeftPanel.add(timeBetweenEncoding);
 		innerLeftPanel.add(changeTimeBetweenEncoding);
 		innerLeftPanel.add(changeRectangleBtn);
 
-//		JPanel underLoggingPanel = new JPanel(new GridLayout(2,1));
-//		underLoggingPanel.add(gammaIsText);
-//		underLoggingPanel.add(gammaChange);
-
 		leftPanel.add(innerLeftPanel, BorderLayout.WEST);
-		//leftPanel.add(underLoggingPanel, BorderLayout.WEST);
 		leftPanel.add(imgLabel, BorderLayout.CENTER);
 
 		frame.add(leftPanel, BorderLayout.CENTER);
