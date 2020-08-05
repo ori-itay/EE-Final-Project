@@ -3,7 +3,6 @@ package com.android.visualcrypto.videoProcessingUtils;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.util.Log;
-import android.view.View;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -12,7 +11,6 @@ import androidx.camera.core.ImageCaptureException;
 import androidx.camera.core.ImageProxy;
 
 import com.android.visualcrypto.ConsumerSideQueue;
-import com.android.visualcrypto.R;
 import com.android.visualcrypto.VideoProcessing;
 import com.android.visualcrypto.flow.BitmapWrapper;
 import com.android.visualcrypto.flow.Flow;
@@ -105,7 +103,7 @@ public class TakePictureCallback extends ImageCapture.OnImageCapturedCallback {
             assert bitmapWrapper != null;
             Log.d("performance", "mili, executeAndroidFlow took: " + (System.nanoTime() - start) / 1e6);
             if (bitmapWrapper.error()) {
-                BitmapWrapper.notifyUser(errorMsgView, bitmapWrapper.getErrorType(), 1000, videoProcessing);
+                BitmapWrapper.notifyUser(errorMsgView, bitmapWrapper.getErrorType(), 1300, videoProcessing);
                 Log.d("finalBitmap", "finalBitmap is null");
                 return;
             }

@@ -27,7 +27,6 @@ import androidx.core.content.FileProvider;
 import com.android.visualcrypto.cameraUtils.CameraRotationFix;
 import com.android.visualcrypto.flow.BitmapWrapper;
 import com.android.visualcrypto.flow.Flow;
-import com.google.android.material.textfield.TextInputEditText;
 import com.pc.configuration.Constants;
 
 import org.opencv.android.OpenCVLoader;
@@ -101,7 +100,7 @@ public class MainActivity extends AppCompatActivity {
     private void setSignInButton(SharedPreferences sharedPref) {
         Button signInButton = this.findViewById(R.id.signInBTN);
         EditText email = this.findViewById(R.id.signInEmailTXT);
-        EditText secretKey = this.findViewById(R.id.signInSecretKeyTXT);
+        EditText secretKey = this.findViewById(R.id.signInEmailTXT);
 
         signInButton.setOnClickListener((v)-> {
             String emailStr = Objects.requireNonNull(email.getText()).toString();
@@ -122,8 +121,8 @@ public class MainActivity extends AppCompatActivity {
 
     private void setRegisterButton(SharedPreferences sharedPref) {
         Button registerBTN = this.findViewById(R.id.registerBTN);
-        TextInputEditText email = this.findViewById(R.id.inputEmail);
-        TextInputEditText serverAddr = this.findViewById(R.id.serverAddr);
+        EditText email = this.findViewById(R.id.inputEmail);
+        EditText serverAddr = this.findViewById(R.id.serverAddr);
 
         registerBTN.setOnClickListener((v)-> {
             String emailStr = Objects.requireNonNull(email.getText()).toString();
