@@ -166,6 +166,25 @@ public class Flow {
 		changeRectangleBtn.setPreferredSize(new Dimension(10,10));
 		changeRectangleBtn.addMouseListener(new MouseAdapter() {
 			public void mouseClicked(MouseEvent e) {
+				Rectangle screenSizes = new Rectangle(0, 0, 0, 0);
+				GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+				GraphicsDevice[] gs = ge.getScreenDevices();
+
+				for (GraphicsDevice g : gs) {
+					screenSizes = screenSizes.union(g.getDefaultConfiguration().getBounds());
+				}
+				ScreenCaptureRectangle.captureRect = screenSizes;
+				BufferedImage screen = ScreenCaptureRectangle.robot.createScreenCapture(ScreenCaptureRectangle.captureRect);
+				final BufferedImage screenCopy = new BufferedImage(
+						screen.getWidth(),
+						screen.getHeight(),
+						screen.getType());
+				ScreenCaptureRectangle.screen = screen;
+				ScreenCaptureRectangle.screenCopy = screenCopy;
+				ScreenCaptureRectangle.screenLabel.setIcon(new ImageIcon(screenCopy));
+				ScreenCaptureRectangle.repaint(screen, screenCopy);
+				ScreenCaptureRectangle.screenLabel.repaint();
+
 				ScreenCaptureRectangle.jFrame.setVisible(true);
 			}
 		});
