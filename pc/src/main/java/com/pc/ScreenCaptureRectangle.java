@@ -27,7 +27,14 @@ public class ScreenCaptureRectangle {
         }
         GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
         GraphicsDevice[] gs = ge.getScreenDevices();
-
+        GraphicsDevice b = gs[1];
+        gs[1] = gs[0];
+        gs[0] = b;
+//        Rectangle b1 = gs[1].getDefaultConfiguration().getBounds();
+//        b1.y = 0;
+//        Rectangle b0 = gs[1].getDefaultConfiguration().getBounds();
+//        screenSizes = screenSizes.union(b0);
+//        screenSizes = screenSizes.union(b1);
         for (GraphicsDevice g : gs) {
             screenSizes = screenSizes.union(g.getDefaultConfiguration().getBounds());
         }

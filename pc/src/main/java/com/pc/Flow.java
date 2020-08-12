@@ -38,10 +38,10 @@ import java.util.concurrent.TimeUnit;
 public class Flow {
 
 	private static final JFrame frame = new JFrame("VisualCrypto");
-	private static final JLabel gammaIsText = new JLabel("gamma: 1");
+	private static final JLabel gammaIsText = new JLabel("gamma: 0.75");
 
 	private static int secondsPerFrame = 700;
-	private static final int SCALE_FACTOR = 4;
+	private static final double SCALE_FACTOR = 3;
 	private static String username;
 	private static SecretKey userSecretKey;
 	private static JLabel imgLabel;
@@ -50,7 +50,7 @@ public class Flow {
 	protected static Rectangle screenRect;
 
 	private static final String LAST_LOGIN = "lastlogin";
-	public static double gamma = 1;
+	public static double gamma = 0.75;
 	public static final String password = "barakitkin123";
 	static Connection conn = null;
 	static KeyStore ks = null;
@@ -278,9 +278,9 @@ public class Flow {
 		executor.scheduleAtFixedRate(()-> {
 			BufferedImage img = ScreenCaptureRectangle.robot.createScreenCapture(screenRect);
 
-			BufferedImage scaledImg = Scalr.resize(img, Scalr.Method.ULTRA_QUALITY, img.getWidth()/SCALE_FACTOR, img.getHeight()/SCALE_FACTOR);
+			BufferedImage scaledImg = Scalr.resize(img, Scalr.Method.ULTRA_QUALITY, (int)(img.getWidth()/SCALE_FACTOR), (int)(img.getHeight()/SCALE_FACTOR));
 
-//
+			//DEBUG
 //			try {
 //				ImageIO.write(scaledImg, "png", new File("scaled.jpg"));
 //			} catch (IOException e) {

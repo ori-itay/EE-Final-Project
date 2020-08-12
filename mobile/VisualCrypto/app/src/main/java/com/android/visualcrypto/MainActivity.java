@@ -100,7 +100,7 @@ public class MainActivity extends AppCompatActivity {
     private void setSignInButton(SharedPreferences sharedPref) {
         Button signInButton = this.findViewById(R.id.signInBTN);
         EditText email = this.findViewById(R.id.signInEmailTXT);
-        EditText secretKey = this.findViewById(R.id.signInEmailTXT);
+        EditText secretKey = this.findViewById(R.id.signInSecretKeyTXT);
 
         signInButton.setOnClickListener((v)-> {
             String emailStr = Objects.requireNonNull(email.getText()).toString();
