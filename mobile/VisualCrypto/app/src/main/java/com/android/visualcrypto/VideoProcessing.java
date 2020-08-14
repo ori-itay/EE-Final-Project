@@ -28,14 +28,15 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-
+/**
+ * This class handles capturing images in video mode. The Actual process of the images are done in
+ * @TakePictureCallback
+ */
 public class VideoProcessing extends AppCompatActivity {
 
     ImageView processedImgView;
-
     Preview preview;
     ImageCapture imageCapture;
-
     PreviewView previewView;
     ToggleButton toggleButton;
     TextView errorMsgTextView;
@@ -47,7 +48,10 @@ public class VideoProcessing extends AppCompatActivity {
     public static final BlockingQueue<Bitmap> finishedQueue = new ArrayBlockingQueue<>(8, true);
     public static final Integer THREADPOOL_NUM_THREADS = 3;
 
-
+    /**
+     * Get pointers to the objects, assign listener to the camera provider future
+     * @param savedInstanceState - The Bundle state
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -61,7 +65,6 @@ public class VideoProcessing extends AppCompatActivity {
         toggleButton = findViewById(R.id.toggleButton);
 
         errorMsgTextView = this.findViewById(R.id.errorMsgView);
-
 
         cameraProviderFuture = ProcessCameraProvider.getInstance(this);
         cameraProviderFuture.addListener(() -> {
@@ -87,6 +90,10 @@ public class VideoProcessing extends AppCompatActivity {
         }, ContextCompat.getMainExecutor(this));
     }
 
+    /**
+     * Bind Preview and ImageCapture use-case to CameraX API
+     * @param cameraProvider - The camera provider
+     */
     @SuppressLint("ClickableViewAccessibility")
     private void bindPreviewAndCapture(ProcessCameraProvider cameraProvider) {
         preview = setPreview();
@@ -110,6 +117,10 @@ public class VideoProcessing extends AppCompatActivity {
         Camera camera = cameraProvider.bindToLifecycle(this, cameraSelector, imageCapture, preview);
     }
 
+    /**
+     * Set ImageCapture use-case
+     * @return the ImageCapture
+     */
     private ImageCapture setImageCapture() {
         ImageCapture imageCapture = new ImageCapture.Builder()
                 .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
@@ -119,6 +130,10 @@ public class VideoProcessing extends AppCompatActivity {
         return imageCapture;
     }
 
+    /**
+     * Set the Preview use-case
+     * @return the preview
+     */
     private Preview setPreview() {
         Preview preview = new Preview.Builder().build();
         preview.setSurfaceProvider(previewView.createSurfaceProvider());

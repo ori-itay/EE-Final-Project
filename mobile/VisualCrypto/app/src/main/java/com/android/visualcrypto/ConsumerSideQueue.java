@@ -14,6 +14,10 @@ import java.util.Iterator;
 import static com.android.visualcrypto.VideoProcessing.THREADPOOL_NUM_THREADS;
 
 
+/**
+ * This class is ran by a single thread that is responsible for fetching Bitmaps from finishedQueue
+ * at a dynamic calculated pace and displaying it to the user.
+ */
 public class ConsumerSideQueue implements Runnable {
 
     private VideoProcessing videoProcessing;
@@ -48,7 +52,6 @@ public class ConsumerSideQueue implements Runnable {
                 Thread.sleep(sleepingTime);
                 Bitmap finalBitmap = VideoProcessing.finishedQueue.take();
 
-                //TODO: if this section is used - put it also in decode last captured
                 long s = System.nanoTime();
                 Mat src = new Mat(); Mat dst = new Mat();
                 Utils.bitmapToMat(finalBitmap,src);

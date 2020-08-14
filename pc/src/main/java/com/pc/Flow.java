@@ -8,13 +8,11 @@ import com.pc.encoderDecoder.DisplayEncoder;
 import com.pc.encryptorDecryptor.EncryptorDecryptor;
 import com.pc.encryptorDecryptor.encryptor.Encryptor;
 import com.pc.shuffleDeshuffle.shuffle.Shuffle;
-import net.coobird.thumbnailator.Thumbnails;
 import org.imgscalr.Scalr;
 
 import javax.crypto.*;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
-import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ItemEvent;
@@ -35,6 +33,9 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 
+/**
+ * This class is responsible for the PC GUI flow
+ */
 public class Flow {
 
 	private static final JFrame frame = new JFrame("VisualCrypto");
@@ -48,14 +49,21 @@ public class Flow {
 
 	private static ScheduledExecutorService executor;
 	protected static Rectangle screenRect;
+	private static JLabel loggedInAs = new JLabel();
 
 	private static final String LAST_LOGIN = "lastlogin";
 	public static double gamma = 0.75;
 	public static final String password = "barakitkin123";
 	static Connection conn = null;
-	static KeyStore ks = null;
+
+	private static final String keystoreName = "keyStore.jks";
+	private static final String privateKeyAlias = "private";
+	public static final SecretKey privateSecretKey = initKeyStore();
 
 
+	/**
+	 *  Init the database, server and the GUI
+	 */
 	public static void main(String[] args) {
 		if (!initDB()) {
 			System.out.println("No connection to DB");
@@ -67,6 +75,10 @@ public class Flow {
 		startUI();
 	}
 
+	/**
+	 * VisualCrypto flow for creating an encoded image
+	 * @param image - The original image
+	 */
 	public static void flow(BufferedImage image) {
 		byte[] imageBytes = FlowUtils.convertToBytesUsingGetRGB(image);
 
@@ -91,16 +103,15 @@ public class Flow {
 			byte[] shuffledEncryptedImg = Shuffle.shuffleImgPixels(encryptedImg, iv);
 
 			encodedImage = DisplayEncoder.encodeBytes(shuffledEncryptedImg, dimsArr, iv.getIV(),  chksumIV);
-			System.out.println((Constants.MODULES_IN_ENCODED_IMAGE_DIM - Parameters.modulesInMargin*2) +
-					" modules in dimension (without margins).");
-
 			imgLabel.setIcon(new ImageIcon(new ImageIcon(encodedImage).getImage().getScaledInstance(-1 ,frame.getContentPane().getBounds().height,Image.SCALE_SMOOTH)));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 
-	static JLabel loggedInAs = new JLabel();
+	/**
+	 * Boots up the UI
+	 */
 	private static void startUI() {
 		String emailStr;
 
@@ -155,7 +166,6 @@ public class Flow {
 				for (GraphicsDevice g : gs) {
 					screenSizes = screenSizes.union(g.getDefaultConfiguration().getBounds());
 				}
-				//ScreenCaptureRectangle.captureRectAdjusted = screenSizes;
 				screenRect = new Rectangle(screenSizes.x, screenSizes.y + ScreenCaptureRectangle.jFrame.getInsets().top, screenSizes.width, screenSizes.height);
 				BufferedImage screen = ScreenCaptureRectangle.robot.createScreenCapture(screenRect);
 				final BufferedImage screenCopy = new BufferedImage(
@@ -273,24 +283,22 @@ public class Flow {
 		ScreenCaptureRectangle.jFrame.toFront();
 	}
 
+	/**
+	 * This is the task of sampling the region of interest and do the VisualCyrpto logic on it, and display it to the user
+	 */
 	private static void repeatedEncodeTask() {
 		executor = Executors.newSingleThreadScheduledExecutor();
 		executor.scheduleAtFixedRate(()-> {
 			BufferedImage img = ScreenCaptureRectangle.robot.createScreenCapture(screenRect);
-
 			BufferedImage scaledImg = Scalr.resize(img, Scalr.Method.ULTRA_QUALITY, (int)(img.getWidth()/SCALE_FACTOR), (int)(img.getHeight()/SCALE_FACTOR));
-
-			//DEBUG
-//			try {
-//				ImageIO.write(scaledImg, "png", new File("scaled.jpg"));
-//			} catch (IOException e) {
-//				e.printStackTrace();
-//			}
-
 			flow(scaledImg);
 		}, 0, secondsPerFrame, TimeUnit.MILLISECONDS);
 	}
 
+	/**
+	 * Removes the user who was last logged to the system
+	 * @return whether it failed or succeeded
+	 */
 	private static boolean removeLastLoggedFromDB() {
 		String removeLastLoggedInStr = "DELETE FROM Users WHERE pw='lastlogin'";
 
@@ -304,6 +312,9 @@ public class Flow {
 		return false;
 	}
 
+	/**
+	 * Shows the register UI
+	 */
 	private static void registerUI() {
 		String emailStr;
 		while (true) {
@@ -324,6 +335,11 @@ public class Flow {
 		}
 	}
 
+	/**
+	 * Inset to the DB the most recent logged in user
+	 * @param emailStr - The email address of that user
+	 * @return whether the operation succeeded
+	 */
 	private static boolean insertLastLoggedInToDB(String emailStr) {
 		String insetStr = "INSERT INTO Users (email,pw) VALUES(?, ?)";
 
@@ -339,6 +355,10 @@ public class Flow {
 		return true;
 	}
 
+	/**
+	 * Get the most recent logged in user
+	 * @return the username of that user
+	 */
 	private static String fetchLastLoggedInUser() {
 		String lastLoggedInStr = "SELECT * FROM Users WHERE pw='" + LAST_LOGIN +"'";
 		PreparedStatement getUsername;
@@ -355,6 +375,11 @@ public class Flow {
 		return null;
 	}
 
+	/**
+	 * Get the secret key that belongs to username
+	 * @param username - The username
+	 * @return the secret key of that user
+	 */
 	private static SecretKey fetchUserKey(String username) {
 		String insertStr = "SELECT * FROM Users WHERE email = ?";
 
@@ -381,11 +406,18 @@ public class Flow {
 		return null;
 	}
 
+	/**
+	 * Starts the server which listens for secret key exchange requests
+	 */
 	private static void initServerThread() {
 		Thread t = new Server();
 		t.start();
 	}
 
+	/**
+	 * Open connection to the DB
+	 * @return whether the operation succeeded
+	 */
 	private static boolean openConnection() {
 		try {
 			Class.forName("org.sqlite.JDBC");
@@ -397,6 +429,9 @@ public class Flow {
 		}
 	}
 
+	/**
+	 * Close connection to the DB
+	 */
 	private static void closeConnection() {
 		try {
 			conn.close();
@@ -405,17 +440,16 @@ public class Flow {
 		}
 	}
 
-	private static final String keystoreName = "keyStore.jks";
-	private static final String privateKeyAlias = "private";
-	public static final SecretKey privateSecretKey = initKeyStore();
-
-
+	/**
+	 * Init the key store
+	 * @return the secret key that is used to encrypt entries in the DB
+	 */
 	public static SecretKey initKeyStore() {
 		File ksFile = new File(keystoreName);
 		char[] pwdArr = password.toCharArray();
 
 		try {
-			ks = KeyStore.getInstance("pkcs12");
+			KeyStore ks = KeyStore.getInstance("pkcs12");
 			SecretKey key;
 			if (!ksFile.exists()) {
 				ks.load(null, pwdArr);
@@ -443,9 +477,10 @@ public class Flow {
 		return null;
 	}
 
-
-
-
+	/**
+	 * Init the database
+	 * @return whether the operation succeeded
+	 */
 	public static boolean initDB() {
 		if (!openConnection())
 			return false;
@@ -460,7 +495,5 @@ public class Flow {
 		}
 		return true;
 	}
-
-
 
 }

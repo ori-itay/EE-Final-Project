@@ -3,12 +3,14 @@ package com.android.visualcrypto.cameraUtils;
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
 import android.util.Log;
-import android.util.TimingLogger;
 
 import androidx.exifinterface.media.ExifInterface;
 
 import java.io.IOException;
 
+/**
+ * Fixes the image rotation from the Exif Data
+ */
 public class CameraRotationFix {
 
     public static Bitmap fixRotation(Bitmap bitmap, String photoPath) throws IOException {
@@ -19,7 +21,6 @@ public class CameraRotationFix {
 
         Bitmap rotatedBitmap;
         switch(orientation) {
-
             case ExifInterface.ORIENTATION_ROTATE_90:
                 rotatedBitmap = rotateImage(bitmap, 90);
                 break;

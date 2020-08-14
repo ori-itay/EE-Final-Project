@@ -1,13 +1,17 @@
 package com.pc;
 
 import com.pc.checksum.Checksum;
-import com.pc.configuration.Constants;
 import com.pc.configuration.Parameters;
+
 import java.awt.image.BufferedImage;
 
 import static com.pc.configuration.Constants.*;
 
+/**
+ * A utility class of @Flow
+ */
 public class FlowUtils {
+
     public static byte[] convertToBytesUsingGetRGB(BufferedImage image) {
 
         int width = image.getWidth();
@@ -34,7 +38,6 @@ public class FlowUtils {
 
 
     public static int computeMinDimensionAndReturnMaxEncodedLength(int bytesDataLen) {
-
         int modulesForIVChecksum =  2*(int)(( (BITS_IN_BYTE*CHECKSUM_LENGTH + ENCODING_BIT_GROUP_SIZE - 1)/(double)ENCODING_BIT_GROUP_SIZE));
         int modulesForIV = 2*(int)(( (BITS_IN_BYTE*Parameters.ivLength + ENCODING_BIT_GROUP_SIZE - 1)/(double)ENCODING_BIT_GROUP_SIZE));
         int modulesForDims = 2*(int)( ((BITS_IN_BYTE*(IMAGE_DIMS_ENCODING_LENGTH+CHECKSUM_LENGTH) + ENCODING_BIT_GROUP_SIZE - 1)

@@ -5,7 +5,9 @@ import java.awt.event.*;
 import java.awt.image.*;
 import javax.swing.*;
 
-
+/**
+ * This class responsible for the gui handling of the region of interest selection by the user
+ */
 public class ScreenCaptureRectangle {
 
     public static Rectangle captureRectAdjusted;
@@ -19,6 +21,9 @@ public class ScreenCaptureRectangle {
     public static BufferedImage screen;
     public static BufferedImage screenCopy;
 
+    /**
+     * Creates the GUI for region of interest selection
+     */
     public static void assignCapturedRectangle() {
         try {
             robot = new Robot();
@@ -27,14 +32,7 @@ public class ScreenCaptureRectangle {
         }
         GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
         GraphicsDevice[] gs = ge.getScreenDevices();
-        GraphicsDevice b = gs[1];
-        gs[1] = gs[0];
-        gs[0] = b;
-//        Rectangle b1 = gs[1].getDefaultConfiguration().getBounds();
-//        b1.y = 0;
-//        Rectangle b0 = gs[1].getDefaultConfiguration().getBounds();
-//        screenSizes = screenSizes.union(b0);
-//        screenSizes = screenSizes.union(b1);
+
         for (GraphicsDevice g : gs) {
             screenSizes = screenSizes.union(g.getDefaultConfiguration().getBounds());
         }
@@ -50,7 +48,6 @@ public class ScreenCaptureRectangle {
 
         JPanel panel = new JPanel(new BorderLayout());
         panel.add(screenScroll, BorderLayout.CENTER);
-
 
         panel.add(selectionLabel, BorderLayout.SOUTH);
 
@@ -74,7 +71,10 @@ public class ScreenCaptureRectangle {
         jFrame.setVisible(true);
     }
 
-    static void addMouseListener() {
+    /**
+     * A listener that reacts when the user mouse or drag his mouse
+     */
+    private static void addMouseListener() {
         screenLabel.addMouseMotionListener(new MouseMotionAdapter() {
 
             Point start = new Point();
@@ -101,6 +101,9 @@ public class ScreenCaptureRectangle {
         });
     }
 
+    /**
+     * Repaints the red rectangle chosen by the user
+     */
     public static void repaint(BufferedImage orig, BufferedImage copy) {
         Graphics2D g = copy.createGraphics();
         g.drawImage(orig,0,0, null);

@@ -58,6 +58,9 @@ import java.util.Objects;
 import javax.crypto.NoSuchPaddingException;
 
 
+/**
+ * This class handle the main content screen and the use-case of single capture mode. For video mode see @VideoProcessing
+ */
 public class MainActivity extends AppCompatActivity {
 
     private static final int CAMERA_REQUEST = 1888;
@@ -80,8 +83,6 @@ public class MainActivity extends AppCompatActivity {
         }
         getPermissions(); // gets camera and write permissions
 
-
-
         SharedPreferences sharedPref = this.getPreferences(Context.MODE_PRIVATE);
         Map<String, ?> preferencesMap = sharedPref.getAll();
         if (preferencesMap.size() == 1) {
@@ -97,6 +98,9 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Callback of the sign in button
+     */
     private void setSignInButton(SharedPreferences sharedPref) {
         Button signInButton = this.findViewById(R.id.signInBTN);
         EditText email = this.findViewById(R.id.signInEmailTXT);
@@ -119,6 +123,9 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    /**
+     * Callback of the register button
+     */
     private void setRegisterButton(SharedPreferences sharedPref) {
         Button registerBTN = this.findViewById(R.id.registerBTN);
         EditText email = this.findViewById(R.id.inputEmail);
@@ -159,8 +166,12 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * Contacts VisualCrypto server and requests a secret key exchange
+     * @param serverAddr - The server IP address
+     * @param emailStr - The user's email address (username)
+     */
     private void requestSecretKey(String serverAddr, String emailStr) {
-
         try (Socket socket = new Socket(InetAddress.getByName(serverAddr), 32326)) {
             BufferedWriter out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
             out.write("keyrequest:" + emailStr + "\nover");
@@ -170,6 +181,9 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Set the main content view and assign listeners
+     */
     private void setMainContentView(String emailStr, SharedPreferences sharedPref) {
         setContentView(R.layout.activity_main);
         Button captureImageBTN = this.findViewById(R.id.captureImageBTN);
@@ -183,10 +197,8 @@ public class MainActivity extends AppCompatActivity {
             startActivityForResult(intent, VIDEO_PROCESS_INTENT);
         });
 
-
         TextView loggedInAs = this.findViewById(R.id.loggedInAs);
         loggedInAs.setText("Logged in as: " + emailStr);
-
 
         TextView deleteAllUsers = this.findViewById(R.id.deleteAllUsersBTN);
         deleteAllUsers.setOnClickListener((v) -> {
@@ -197,6 +209,9 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * Utility to create an image file
+     */
     private File createImageFile() throws IOException {
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
         String imageFileName = "TEMP_" + timeStamp + "_";
@@ -207,12 +222,13 @@ public class MainActivity extends AppCompatActivity {
                 storageDir      /* directory */
         );
 
-        // Save a file: path for use with ACTION_VIEW intents
         currentPhotoPath = image.getAbsolutePath();
         return image;
     }
 
-
+    /**
+     * Takes single picture (uses Camera 1 API)
+     */
     private void takePicture() {
         Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
@@ -233,8 +249,9 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    Bitmap rotatedBp;
-
+    /**
+     * Handle the camera capture activity
+     */
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -246,7 +263,6 @@ public class MainActivity extends AppCompatActivity {
                     Bitmap bmap = MediaStore.Images.Media.getBitmap(getContentResolver(), Uri.fromFile(file));
                     if (bmap != null) {
                         Bitmap rotatedBitmap = CameraRotationFix.fixRotation(bmap, file.getAbsolutePath());
-                        this.rotatedBp = rotatedBitmap;
                         ImageView iView = findViewById(R.id.decodedImgId);
                         iView.setImageBitmap(rotatedBitmap);
                     }
@@ -254,16 +270,19 @@ public class MainActivity extends AppCompatActivity {
                     e.printStackTrace();
                 } finally {
                     if (file.exists()) {
-                        //boolean res = file.delete();
-                        //if (!res) {
-                        Log.d("Cleaning", "Unable to delete captured photo");
-                        // }
+                        boolean res = file.delete();
+                        if (!res) {
+                            Log.d("Cleaning", "Unable to delete captured photo");
+                        }
                     }
                 }
             }
         }
     }
 
+    /**
+     * Shows a encoded image on main screen
+     */
     private void showEncodedImage() {
         InputStream encodedStream;
         try {
@@ -277,6 +296,9 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Decode single-captured photo
+     */
     private void decodeImage() {
         try {
             //long startTime = System.currentTimeMillis();
@@ -297,19 +319,7 @@ public class MainActivity extends AppCompatActivity {
 
             Mat capturedImage = new Mat();
             Utils.bitmapToMat(rotatedBitmap, capturedImage);
-
-            //TODO: pay attention whether calibrateimage is commented
-            /**********NO CALIBRATION***************/
             BitmapWrapper resBitmapWrapper = Flow.executeAndroidFlow(capturedImage, rotatedBitmap, this);
-            /***************************************/
-
-
-            /*********WITH CALIBRATION**************/
-//            Mat afterCalibrationMatrix = OpenCvUtils.calibrateImage(capturedImage, false);
-//            Utils.matToBitmap(afterCalibrationMatrix, rotatedBitmap);
-//            //rotatedBitmap = convertMatToBitmap(afterCalibrationMatrix); // update bitmap as well
-//            Bitmap resBitmap = Flow.executeAndroidFlow(afterCalibrationMatrix, rotatedBitmap, this);
-            /***************************************/
 
             assert resBitmapWrapper != null;
             if (resBitmapWrapper.error()) {
@@ -331,8 +341,12 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-
-    public static void showAlert(Context context, String msg) {
+    /**
+     * Shows an alert to the user
+     * @param context - The context
+     * @param msg - The message to the user
+     */
+    private static void showAlert(Context context, String msg) {
         AlertDialog alertDialog = new AlertDialog.Builder(context).create();
         alertDialog.setTitle("Alert");
         alertDialog.setMessage(msg);
@@ -341,7 +355,11 @@ public class MainActivity extends AppCompatActivity {
         alertDialog.show();
     }
 
-
+    /**
+     * Get two dimensional int array from a bitmap
+     * @param bMap - The bitmap
+     * @return the bitmap data in a two dimensional int array
+     */
     public static int[][] get2DPixelArray(Bitmap bMap) {
         int[][] twoDimPixels;
         int width = bMap.getWidth();
@@ -360,13 +378,13 @@ public class MainActivity extends AppCompatActivity {
         return twoDimPixels;
     }
 
-    public static void bitmapToFile(Bitmap bp) throws IOException {
-        File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "output.jpg");
-        OutputStream os = new BufferedOutputStream(new FileOutputStream(file));
-        bp.compress(Bitmap.CompressFormat.JPEG, 100, os);
-        os.close();
-    }
-
+    /**
+     * Sets data to the bitmap from a byte array
+     * @param bmp - The bitmap
+     * @param imageBytes - The data
+     * @param width - Width of the photo
+     * @param height - Height of the photo
+     */
     public static void setBitmapPixels(Bitmap bmp, byte[] imageBytes, int width, int height) {
         final byte ALPHA_VALUE = (byte) 0xff;
         final int METADATA_LENGTH = 0;
@@ -390,6 +408,9 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Sends permission requests to the user
+     */
     private void getPermissions() {
         if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE) !=
                 PackageManager.PERMISSION_GRANTED) {
@@ -407,14 +428,5 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
-
-
-    private byte[] convertBitmapToByteArray(Bitmap bp) {
-        ByteArrayOutputStream stream = new ByteArrayOutputStream();
-        bp.compress(Bitmap.CompressFormat.JPEG, 100, stream);
-        byte[] byteArray = stream.toByteArray();
-        return byteArray;
-    }
-
 }
 

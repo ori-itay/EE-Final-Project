@@ -50,7 +50,9 @@ import static org.opencv.imgproc.Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C;
 import static org.opencv.imgproc.Imgproc.adaptiveThreshold;
 import static org.opencv.imgproc.Imgproc.cvtColor;
 
-
+/**
+ * A class that handles the image processing
+ */
 public class DistortedImageSampler extends StdImageSampler {
     private static final int gridSplitSize = 1;
 
@@ -69,7 +71,6 @@ public class DistortedImageSampler extends StdImageSampler {
     public int errCounterGreen = 0;
     public int errCounterBlue = 0;
 
-
     public Mat debugBW;
     public Mat debugPathtaken;
     public Path DEBUG_FOLDER;
@@ -85,16 +86,8 @@ public class DistortedImageSampler extends StdImageSampler {
     static {
         orisCamConfigDst.put(0,0,    1.88976465e-01, -8.27046848e-01, -6.61431273e-04,  4.78026017e-04, 1.01532664e+00);
         orisCamConfigMtx.put(0,0, 3.57877704e+03, 0D,1.73734294e+03,   0D, 3.58348580e+03, 2.30337522e+03,    0D, 0D, 1.0D);
-        //vertical calib stills
-//        itaysCamConfigDst.put(0,0,   3.90420233e-01, -1.54381552e+00, -9.02378490e-04, 1.83526192e-03 ,1.79797055e+00);
-//        itaysCamConfigMtx.put(0,0, 3.14574313e+03, 0, 1.49381470e+03, 0, 3.14831362e+03, 1.95266442e+03, 0, 0, 1);
-        // horizontal calib stills NEW PHONE
         itaysCamConfigDst.put(0,0, 1.12401533e-01, -5.59376588e-01, -4.51872138e-04, -5.01959503e-04, 8.00293967e-01);
         itaysCamConfigMtx.put(0,0, 3.17223621e+03, 0, 2.08430378e+03,  0, 3.16876503e+03, 1.46472194e+03, 0, 0, 1D);
-        //horizontal calib stills OLD PHONE
-/*        itaysCamConfigDst.put(0,0,   3.60968325e-01, -1.43901162, -2.30152260e-04, -5.11623902e-04 ,1.71109927);
-        itaysCamConfigMtx.put(0,0, 3.19049211e+03, 0, 1.95151504e+03,  0, 3.19034069e+03, 1.52657925e+03, 0, 0, 1);*/
-        //vertical calib video
         itaysCamConfigDstVideo.put(0,0, 2.97261556e+03, 0, 1.85805949e+03, 0, 2.97191363e+03, 1.10037754e+03, 0, 0, 1);
         itaysCamConfigMtxVideo.put(0,0,   3.75570453e-01, -1.45061390e+00, -9.40469522e-04, 7.57586055e-04 , 1.59684301e+00);
     }
@@ -105,6 +98,10 @@ public class DistortedImageSampler extends StdImageSampler {
         this.distortedBitmap = distortedBitmap;
     }
 
+    /**
+     * This is where the image processing takes place - finding ROI and alignment, modules in dim etc
+     * @return error number
+     */
     public int initParameters() {
         Log.d("performance", "start of initParameters");
         this.setModulesInMargin(0);
@@ -310,18 +307,14 @@ public class DistortedImageSampler extends StdImageSampler {
         return 0;
     }
 
-    private boolean inQrCenter(QrCode qrCode, Point2D_F64 centerPoint) {
-        if (qrCode == null) {
-            return false;
-        }
-
-        Polygon2D_F64 qr1 = qrCode.ppCorner;
-        Polygon2D_F64 qr2 = qrCode.ppRight;
-        Polygon2D_F64 qr3 = qrCode.ppDown;
-
-        return qr1.isInside(centerPoint) || qr2.isInside(centerPoint) || qr3.isInside(centerPoint);
-    }
-
+    /**
+     * Finds QR corner, is used for the lower-right corner since BoofCV doesn't find it correctly
+     * @param img - The image in black and white
+     * @param val - 0 black, 1 white
+     * @param top - Whether this is a top corner
+     * @param left - Whether this is left or right corner
+     * @return the coordinate of the corner
+     */
     private Point findCorner(Mat img, int val, boolean top, boolean left) {
         d = 0;
         Pair p = scanDiagonalFromCorner(img.size(), top, left);
@@ -336,6 +329,9 @@ public class DistortedImageSampler extends StdImageSampler {
         return new Point((int) p.second, (int) p.first);
     }
 
+    /**
+     * Utility for findCorner: scans the image
+     */
     private Pair scan(int height, int width) {
         int startRow = Math.max(0, d - (width - 1));
         int endRow = Math.min(d, height - 1);
@@ -352,6 +348,9 @@ public class DistortedImageSampler extends StdImageSampler {
         return new Pair(row++, col);
     }
 
+    /**
+     * Utility for findCorner: scans the image in a diagonal way
+     */
     private Pair scanDiagonalFromCorner(Size size, boolean top, boolean left) {
         int height = (int) size.height;
         int width = (int) size.width;
@@ -368,7 +367,14 @@ public class DistortedImageSampler extends StdImageSampler {
         return new Pair(row, col);
     }
 
-
+    /**
+     * Compture the module size by calculating the distance between upper-left and lower-right QR corner
+     * @param upperLeft - The upper-left point
+     * @param lowerRight - The lower-right point
+     * @param H - The homography matrix
+     * @param expectedModulesDistance - The expected module distane between @upperLeft and @lowerRight
+     * @return the computed module size
+     */
     private double computeModuleSize(Point upperLeft, Point lowerRight, Mat H, double expectedModulesDistance) {
         Mat mat = new Mat(1, 3, CvType.CV_64F);
         mat.put(0, 0, upperLeft.x,  upperLeft.y, 1);
@@ -380,7 +386,11 @@ public class DistortedImageSampler extends StdImageSampler {
         return calcDistance(upperLeftPt, lowerPt) / expectedModulesDistance;
     }
 
-
+    /**
+     * This function is used for finding the percentiles value for color balancing. It calculates
+     * histogram for each RGB channel, and finds the percentiles according to the encoding color levels
+     * @param capturedImage - The captured image matrix
+     */
     private void findPercentilesValues(Mat capturedImage) {
         int tileWidth = capturedImage.width();
         int tileHeight = capturedImage.height();
@@ -449,6 +459,11 @@ public class DistortedImageSampler extends StdImageSampler {
         }
     }
 
+    /**
+     * Convert BoofCV points to OpenCV points
+     * @param qrCode - BoofCV points
+     * @param pts - Assigned OpenCV points
+     */
     private void convertBoofToOpenPoints(QrCode qrCode, Point[] pts) {
         Polygon2D_F64 polygon = qrCode.bounds;
         Point2D_F64 boofPoint0 = polygon.get(0);
@@ -461,6 +476,15 @@ public class DistortedImageSampler extends StdImageSampler {
         pts[3] = new Point(boofPoint3.x, boofPoint3.y);
     }
 
+    /**
+     * This function sample a pixel (or radius sample, aka 9 samples), color balance it and classify
+     * it to the appropriate value
+     * @param rowLoc - The row location
+     * @param colLoc - The column location
+     * @param duplicateChannels - Whether all the data in the RGB channels suppose to be equal
+     * @param radiusSample - Whether to radius sample
+     * @return the pixel value after all the logic
+     */
     @Override
     public int getPixel(double rowLoc, double colLoc, boolean duplicateChannels, boolean radiusSample) {
         Mat unDistortedImageMatCord = new Mat(1, 3, CvType.CV_64F);
@@ -468,7 +492,6 @@ public class DistortedImageSampler extends StdImageSampler {
         unDistortedImageMatCord.put(0, 1, colLoc);
         unDistortedImageMatCord.put(0, 2, 1);
         Point distortedIndex = switchCoordinates(unDistortedImageMatCord, inverseH);
-        //Log.d("nullpointer", distortedIndex.toString());
         if(MainActivity.DEBUG)
             Imgproc.circle(this.debugPathtaken, distortedIndex, 1, new Scalar(0,0,255), 1);
         int indexCol = (int) distortedIndex.x; int indexRow = (int) distortedIndex.y;
@@ -599,13 +622,7 @@ public class DistortedImageSampler extends StdImageSampler {
                             errCounterBlue++;
                         }
 
-                        // Mat alignmentBottomRightMat = new Mat(1, 3, CvType.CV_64F);
-                        // alignmentBottomRightMat.put(0, 0, alignmentBottomRight.x, alignmentBottomRight.y, 1);
-
-                        //double[] middleVals = DistortedImageSampler.distortedImage.get((int) Math.round(indexCol), (int) Math.round(indexRow));
-                        //Imgproc.rectangle(Flow.delete, new Point((int) Math.round(indexCol), (int) Math.round(indexRow)), new Point((int) Math.round(indexCol), (int) Math.round(indexRow)), new Scalar(255-middleVals[0],255-middleVals[1],255-middleVals[2]));
                         Imgproc.rectangle(this.debugPathtaken, new Point((int) Math.round(indexCol), (int) Math.round(indexRow)), new Point((int) Math.round(indexCol), (int) Math.round(indexRow)), new Scalar(0,0,0));
-                        //Log.d("DistortedImageSampler", "Module pixel value different than expected");
                     }
                 }
             }

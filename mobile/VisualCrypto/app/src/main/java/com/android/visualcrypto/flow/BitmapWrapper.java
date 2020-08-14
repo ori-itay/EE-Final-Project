@@ -1,15 +1,14 @@
 package com.android.visualcrypto.flow;
 
-import android.content.Context;
 import android.graphics.Bitmap;
-import android.view.View;
 import android.widget.TextView;
 
 import com.android.visualcrypto.VideoProcessing;
 
-
+/**
+ * A class that holds a decoded bitmap if no error occurred in the process, or an error otherwise
+ */
 public class BitmapWrapper {
-
     private boolean errorOccured;
     private Error errorType;
     private Bitmap bp;
@@ -32,6 +31,13 @@ public class BitmapWrapper {
 
     public Bitmap getBitmap() {  return this.bp;}
 
+    /**
+     * Notifies the user the reason why the captured image was not decoded correctly
+     * @param errorMsgView - The text to display the user
+     * @param errorType - Kind of error occured
+     * @param delayMillis - How much time to display the message
+     * @param videoProcessing - The android context
+     */
     public static void notifyUser(TextView errorMsgView, BitmapWrapper.Error errorType, long delayMillis, VideoProcessing videoProcessing) {
         String msg = "";
         if (errorType == BitmapWrapper.Error.ALIGNMENT_PATTERN_NOT_FOUND) {
@@ -45,7 +51,6 @@ public class BitmapWrapper {
         }
 
         errorMsgView.setText(msg);
-//        errorMsgView.setVisibility(View.VISIBLE);
         errorMsgView.postDelayed(() -> {
             if (videoProcessing != null) {
                 videoProcessing.runOnUiThread(()->errorMsgView.setText(""));

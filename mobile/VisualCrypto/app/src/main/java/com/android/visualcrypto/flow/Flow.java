@@ -31,8 +31,16 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
+/**
+ * This is where all the logic takes place - image processing, deshuffling, decrypting and finally decoding
+ */
 public class Flow {
-
+    /**
+     * @param capturedImg - The captured image in OpenCV's Mat object
+     * @param encodedBitmap - The captured image in a Bitmap
+     * @param context - The context
+     * @return an object that holds the ready bitmap if no error occurred, or otherwise the error itself
+     */
     public static BitmapWrapper executeAndroidFlow(Mat capturedImg, Bitmap encodedBitmap, Context context) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidAlgorithmParameterException, InvalidKeyException, IOException, InterruptedException {
         int retVal;
         DistortedImageSampler distortedImageSampler = new DistortedImageSampler(capturedImg, encodedBitmap);

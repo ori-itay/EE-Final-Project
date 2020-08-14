@@ -26,6 +26,10 @@ import java.security.NoSuchAlgorithmException;
 
 import javax.crypto.NoSuchPaddingException;
 
+/**
+ * This class is a task that runs by threads - fetches an image from captured image queue, processes
+ * them (VisualCrypto logic) and insert them to the finishQueue
+ */
 public class TakePictureCallback extends ImageCapture.OnImageCapturedCallback {
 
     private static ImageCapture imageCapture;
@@ -57,49 +61,13 @@ public class TakePictureCallback extends ImageCapture.OnImageCapturedCallback {
         Bitmap bp = BitmapFactory.decodeByteArray(bytes, 0, bytes.length, null);
         Log.d("performance", "mili, decodeByteArray: " + (System.nanoTime() - start) / 1e6);
 
-
-        /** ROTATION**/
-        //start = System.nanoTime();
-        //Bitmap fixedBitmap = CameraRotationFix.rotateImage(rotatedBitmap, image.getImageInfo().getRotationDegrees());
-        //Log.d("performance", "mili, rotateImage: " + (System.nanoTime() - start) / 1e6);
-        /*************/
-
-
         start = System.nanoTime();
         Mat mat = new Mat();
         Utils.bitmapToMat(bp, mat);
 
-        /*********WITH CALIBRATION**************/
-//                    Mat afterCalibrationMatrix = OpenCvUtils.calibrateImage(mat, false);
-//                    Utils.matToBitmap(afterCalibrationMatrix, bp); // update bitmap as well
-//                    Log.d("performance", "mili, bitmapToMat + calibration: " + (System.nanoTime() - start) / 1e6);
-        /***************************************/
-
-        /*********NO CALIBRATION**************/
-//        Mat afterCalibrationMatrix = null;
-//        if (lastDetectedRoi != null &&
-//                mat.rows() >= lastDetectedRoi.height  &&   mat.cols() >= lastDetectedRoi.width) {
-//            start = System.nanoTime();
-//            try {
-//                afterCalibrationMatrix = new Mat(mat, lastDetectedRoi);
-//            }catch (Exception e) {
-//                e.printStackTrace();
-//                return;
-//            }
-//
-//            bp = Bitmap.createBitmap(afterCalibrationMatrix.cols(), afterCalibrationMatrix.rows(), Bitmap.Config.ARGB_8888);
-//            Utils.matToBitmap(afterCalibrationMatrix, bp);
-//            Log.d("performance", "mili, crops for lastDetectodRoi took: " + (System.nanoTime() - start) / 1e6);
-//        } else {
-//            afterCalibrationMatrix = mat;
-//        }
-        Mat afterCalibrationMatrix = mat;
-        /***************************************/
-
-
         try {
             start = System.nanoTime();
-            final BitmapWrapper bitmapWrapper = Flow.executeAndroidFlow(afterCalibrationMatrix, bp, videoProcessing.getApplicationContext());
+            final BitmapWrapper bitmapWrapper = Flow.executeAndroidFlow(mat, bp, videoProcessing.getApplicationContext());
             assert bitmapWrapper != null;
             Log.d("performance", "mili, executeAndroidFlow took: " + (System.nanoTime() - start) / 1e6);
             if (bitmapWrapper.error()) {
@@ -124,7 +92,7 @@ public class TakePictureCallback extends ImageCapture.OnImageCapturedCallback {
 
         } catch (IOException | NoSuchAlgorithmException | InvalidAlgorithmParameterException | InvalidKeyException | NoSuchPaddingException e) {
             e.printStackTrace();
-        }  catch (Exception rest) {
+        } catch (Exception rest) {
             Log.d("onCaptureSuccess", "General exception occured!");
             rest.printStackTrace();
         }
