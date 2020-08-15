@@ -1,21 +1,22 @@
 package com.pc.shuffleDeshuffle.shuffle;
 
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-
-import javax.crypto.spec.IvParameterSpec;
-
 import com.pc.shuffleDeshuffle.ShuffleDeshuffle;
 
-import static com.pc.configuration.Constants.*;
+import javax.crypto.spec.IvParameterSpec;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
+
+import static com.pc.configuration.Constants.CHANNELS;
 
 public class Shuffle {
 
-	/*
-	 * @Pre: iv.length >= 4 
+	/**
+	 * Shuffles the image pixels (bytes)
+	 * @Pre - iv.length >= 4
+	 * @param imgBytes - The image bytes
+	 * @param iv - The IV
+	 * @return the shuffled image bytes
 	 */
 	public static byte[] shuffleImgPixels(byte[] imgBytes, IvParameterSpec iv) {
 		final int ivInt = ByteBuffer.wrap(iv.getIV(), 0, 4).getInt();
