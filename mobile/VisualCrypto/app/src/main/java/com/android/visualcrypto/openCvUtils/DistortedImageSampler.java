@@ -204,7 +204,6 @@ public class DistortedImageSampler extends StdImageSampler {
         start = System.currentTimeMillis(); //performance
         Mat bw = new Mat(this.distortedImage.size(), CvType.CV_8UC4);
         cvtColor(this.distortedImage, bw, Imgproc.COLOR_BGR2GRAY);
-        //adaptiveThreshold(bw, bw, 255, ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY, 7, 25);
         adaptiveThreshold(bw, bw, 255, ADAPTIVE_THRESH_GAUSSIAN_C, Imgproc.THRESH_BINARY, 31, 45);
         cvtColor(bw, bw, Imgproc.THRESH_BINARY);
 

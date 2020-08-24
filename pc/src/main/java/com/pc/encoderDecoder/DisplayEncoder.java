@@ -16,6 +16,16 @@ import static com.pc.configuration.Constants.*;
 public class DisplayEncoder {
 	static int encodedCnt;
 	static boolean[][] positions;
+
+
+	/**
+	 * Encode byte array to 2-dim code (all elements of the encoding)
+	 * @param binaryData - The byte array to be encoded
+	 * @param dimsArr - The dimensions of the original image
+	 * @param IV - The unique IV
+	 * @param ivchecksum - Checksum for the IV
+	 * @return The encoded image
+	 */
 	public static BufferedImage encodeBytes(byte[] binaryData, byte[] dimsArr, byte[] IV, byte[] ivchecksum) throws Exception {
 		encodedCnt = 0;
 		positions = new boolean[MODULES_IN_ENCODED_IMAGE_DIM][MODULES_IN_ENCODED_IMAGE_DIM];
@@ -35,24 +45,23 @@ public class DisplayEncoder {
 		encodeData(g, ivchecksum, pos, true); //encode IV checksum first time
 		encodeData(g, dimsArr, pos, true); //encode dims+checksum first time
 		encodeData(g, binaryData, pos, false); 	//encode actual picture data
-		//System.out.println(binaryData.length);
 		encodeData(g, IV, pos, true); //encode IV second time
 		encodeData(g, ivchecksum, pos, true); //encode IV checksum second time
 		encodeData(g, dimsArr, pos, true); //encode dims+checksum second time
-		//pad till end -maybe should be removed later because data is already padded to maximum
-		/*int x;
-		Random rand = new Random();
-		while(pos.rowModule<MODULES_IN_ENCODED_IMAGE_DIM - Parameters.modulesInMargin){
-			x = rand.nextInt(256);
-			encodeBlock((byte) x, (byte) x, (byte) x, g, pos);
-			StdImageSampler.imageCheckForColumnEnd(pos,MODULES_IN_ENCODED_IMAGE_DIM, Parameters.modulesInMargin);
-		}*/
 		pos.colModule = pos.rowModule = MODULES_IN_ENCODED_IMAGE_DIM - Parameters.modulesInMargin - 1;
 		encodeBlock((byte) 0, (byte) 0, (byte) 0, g, pos); //last module will be black for corner detection
 		return image;
 	}
 
-
+	/**
+	 * Encode data section - byte array to modules. Encoding according to the position pos in the 2-dim matrix.
+	 * metadata is encoded in all 3 RGB channels.
+	 * @param g - Graphics2D instance for the encoding
+	 * @param binaryData - The byte array to be encoded
+	 * @param pos - Module position (X,Y encoding coordinates) of the encoding beginning.
+	 * @param isMetadata - Indicates whether the data is metadata (IV/DIMS) - if so, data is encoded in all 3 RGB channels.
+	 * @return void
+	 */
 	private static void encodeData(Graphics2D g, byte[] binaryData, Position pos, boolean isMetadata) {
 		int nextElemStride, greenStride, blueStride, shift;
 		if(isMetadata) {
@@ -131,6 +140,15 @@ public class DisplayEncoder {
 
 	}
 
+	/**
+	 * Encode block with certain color according to the delivered channels data.
+	 * @param currentDataR - Data to encode in the Red channel
+	 * @param currentDataG - Data to encode in the Green channel
+	 * @param currentDataB - Data to encode in the Blue channel
+	 * @param g - Graphics2D instance for the encoding
+	 * @param pos - Position (X,Y encoding coordinates) of current block to be encoded
+	 * @return void
+	 */
 	private static void encodeBlock(byte currentDataR, byte currentDataG, byte currentDataB , Graphics2D g, Position pos) {
 		encodedCnt++;
 		if(positions[pos.rowModule][pos.colModule]){
@@ -171,7 +189,11 @@ public class DisplayEncoder {
 		RotatedImageSampler.imageCheckForColumnEnd(pos, MODULES_IN_ENCODED_IMAGE_DIM, Parameters.modulesInMargin);
 	}
 
-
+	/**
+	 * Draw 3 QR position detectors in corners of the encoding region.
+	 * @param g - Graphics2D instance for the encoding
+	 * @return void
+	 */
 	private static void createPositionDetectors(Graphics2D g) {
 
 		final int MID_LAYER_OFFSET_1 = 1; final int MID_LAYER_OFFSET_2 = 5;
@@ -215,6 +237,11 @@ public class DisplayEncoder {
 		}
 	}
 
+	/**
+	 * Draw alignment pattern withing a known constant distance from upper left corner.
+	 * @param g - Graphics2D instance for the encoding
+	 * @return void
+	 */
 	private static void createAlignmentPattern(Graphics2D g) {
 		for(int rowModuleDiff = 0; rowModuleDiff < MODULES_IN_ALIGNMENT_PATTERN_DIM; rowModuleDiff++){
 			for(int colModuleDiff = 0; colModuleDiff < MODULES_IN_ALIGNMENT_PATTERN_DIM; colModuleDiff++) {
